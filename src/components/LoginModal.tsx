@@ -7,18 +7,18 @@ import {
   loginSuccess,
   loginFailure,
 } from "../store/slices/authSlice";
-import { useLogin, type LoginCredentials } from "../services/authService";
+import { useLogin } from "../services/authService";
+import { Login } from "../types/Login";
 
 interface LoginModalProps {
   onClose: () => void;
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
-  const methods = useForm<LoginCredentials>({
+  const methods = useForm<Login>({
     defaultValues: {
       usernameOrPhoneNumber: "",
       password: "",
-      otp: "",
     },
   });
   const {
@@ -29,7 +29,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
   const dispatch = useDispatch();
   const loginMutation = useLogin();
 
-  const onSubmit = (data: LoginCredentials) => {
+  const onSubmit = (data: Login) => {
     dispatch(loginStart());
     loginMutation.mutate(data, {
       onSuccess: (response) => {
@@ -96,16 +96,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
                     {errors.password.message}
                   </p>
                 )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  OTP (Optional)
-                </label>
-                <input
-                  {...register("otp")}
-                  className="w-full p-3 mt-1 transition duration-200 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter OTP if 2FA is enabled"
-                />
               </div>
               {loginMutation.isError && (
                 <p className="text-sm text-red-600">

@@ -1,23 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
+import { User } from "../types/User";
+import { Login } from "../types/Login";
 
-export interface LoginCredentials {
-  usernameOrPhoneNumber: string;
-  password: string;
-  otp?: string;
-}
-
-export interface LoginResponse {
-  id: string;
-  username: string;
-  phoneNumber: string;
-  fullName: string;
-  token: string;
-  refreshToken: string;
-}
-
-const loginApi = async (
-  credentials: LoginCredentials
-): Promise<LoginResponse> => {
+const loginApi = async (credentials: Login): Promise<User> => {
   const response = await fetch("https://production.doca.love/api/v1/login", {
     method: "POST",
     headers: {
@@ -42,7 +27,7 @@ const loginApi = async (
 };
 
 export const useLogin = () => {
-  return useMutation<LoginResponse, Error, LoginCredentials>({
+  return useMutation<User, Error, Login>({
     mutationFn: loginApi,
   });
 };

@@ -5,15 +5,6 @@ import { logout } from "../store/slices/authSlice";
 import { Navigate } from "react-router-dom";
 
 // Giả lập các component cho từng vai trò
-const AdminPanel: React.FC = () => (
-  <div>Admin Panel: Manage users, logs, and settings.</div>
-);
-const UserDashboard: React.FC = () => (
-  <div>User Dashboard: Upload and search documents.</div>
-);
-const ViewerDashboard: React.FC = () => (
-  <div>Viewer Dashboard: Search and view documents.</div>
-);
 
 const Dashboard: React.FC = () => {
   const dispatch = useDispatch();
