@@ -1,54 +1,98 @@
-# React + TypeScript + Vite
+# DocAI - Document Management System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 📝 Introduction
 
-Currently, two official plugins are available:
+DocAI is a modern document management system built with React and TypeScript. The project utilizes the latest technologies and best practices in web development to deliver an exceptional user experience.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Key Features
 
-## Expanding the ESLint configuration
+- Modern UI interface with Tailwind CSS
+- Application state management with Redux Toolkit
+- Robust routing with React Router v7
+- Form handling with React Hook Form
+- API integration with Axios and React Query
+- UI components from Radix UI
+- Type safety with TypeScript
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🛠️ Technologies Used
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+- React 19
+- TypeScript
+- Vite
+- Redux Toolkit
+- React Router DOM
+- React Query
+- Tailwind CSS
+- Radix UI
+- Axios
+- ESLint
+
+## 📦 Installation
+
+1. Clone repository:
+
+```bash
+git clone <repository-url>
+cd docai
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+2. Install dependencies:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+```bash
+npm install
 ```
+
+3. Run the application in development mode:
+
+```bash
+npm run dev
+```
+
+## 🔧 Available Scripts
+
+- `npm run dev` - Run the application in development mode
+- `npm run build` - Build the application for production
+- `npm run lint` - Check for errors with ESLint
+- `npm run preview` - Preview the production build
+
+## 📁 Project Structure
+
+```
+src/
+├── assets/        # Static files (images, fonts, etc.)
+├── components/    # Reusable UI components
+├── config/        # Configuration files
+├── pages/         # Page components
+├── routes/        # Routing configuration
+├── services/      # API services
+├── store/         # Redux store configuration
+└── types/         # TypeScript type definitions
+```
+
+## 🔒 System Requirements
+
+- Node.js 18.0.0 or higher
+- npm 9.0.0 or higher
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a new branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is distributed under the MIT License. See `LICENSE` for more information.
+
+## 👥 Author
+
+- [Author Nguyen Huy Phuc] - [nguyenhuyphc@gmail.com/https://github.com/Nguyen-Huy-Phuc]
+
+## 📞 Contact
+
+Nguyen Huy Phuc - nguyenhuyphc@gmail.com
+Project Link: https://github.com/DocAI-DocumentAI/DocAI_FE
