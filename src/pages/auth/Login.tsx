@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
 import { AuthContainer } from "../../components/auth-container";
-import LayoutAuth from "../../components/layout/layoutAuth";
+import LayoutAuth from "../../components/layout/LayoutAuth";
 
- 
 export default function Login() {
   return (
     <LayoutAuth>
@@ -18,7 +17,7 @@ export default function Login() {
               id="email"
               name="email"
               defaultValue="saipul@gmail.com"
-              className="w-full rounded-md bg-gray-100 px-4 py-3"
+              className="w-full px-4 py-3 bg-gray-100 rounded-md"
               required
             />
           </div>
@@ -26,7 +25,10 @@ export default function Login() {
             <label htmlFor="password" className="block font-medium">
               Password
             </label>
-            <Link to="/forgot-password" className="text-sm text-blue-600 hover:underline">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-blue-600 hover:underline"
+            >
               Forgot password?
             </Link>
           </div>
@@ -35,20 +37,28 @@ export default function Login() {
             id="password"
             name="password"
             defaultValue="••••••••••••••••••••"
-            className="w-full rounded-md bg-gray-100 px-4 py-3"
+            className="w-full px-4 py-3 bg-gray-100 rounded-md"
             required
           />
           <div className="flex items-center">
-            <input type="checkbox" id="remember" name="remember" className="h-4 w-4 rounded border-gray-300" />
-            <label htmlFor="remember" className="ml-2 block text-sm">
+            <input
+              type="checkbox"
+              id="remember"
+              name="remember"
+              className="w-4 h-4 border-gray-300 rounded"
+            />
+            <label htmlFor="remember" className="block ml-2 text-sm">
               Keep me sign in
             </label>
           </div>
-          <button type="submit" className="w-full rounded-md bg-blue-800 py-3 font-medium text-white hover:bg-blue-900">
+          <button
+            type="submit"
+            className="w-full py-3 font-medium text-white bg-blue-800 rounded-md hover:bg-blue-900"
+          >
             Login
           </button>
         </form>
-        <p className="mt-6 text-center text-sm">
+        <p className="mt-6 text-sm text-center">
           Don&apos;t have an Account?{" "}
           <Link to="/signup" className="text-blue-600 hover:underline">
             Sign up here
@@ -56,5 +66,5 @@ export default function Login() {
         </p>
       </AuthContainer>
     </LayoutAuth>
-  )
+  );
 }

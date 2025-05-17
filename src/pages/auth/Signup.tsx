@@ -1,12 +1,10 @@
 import { Link } from "react-router-dom";
-import { AuthContainer } from "../../components/auth-container"; 
-import LayoutAuth from "../../components/layout/layoutAuth";
-
- 
+import { AuthContainer } from "../../components/auth-container";
+import LayoutAuth from "../../components/layout/LayoutAuth";
 
 export default function SignUp() {
   return (
-  <LayoutAuth>
+    <LayoutAuth>
       <AuthContainer>
         <h2 className="mb-6 text-2xl font-bold">Sign Up</h2>
         <form className="space-y-4">
@@ -21,7 +19,7 @@ export default function SignUp() {
                 name="firstName"
                 defaultValue="Marcus"
                 placeholder="First Name"
-                className="w-full rounded-md bg-gray-100 px-4 py-3"
+                className="w-full px-4 py-3 bg-gray-100 rounded-md"
                 required
               />
               <input
@@ -30,7 +28,7 @@ export default function SignUp() {
                 name="lastName"
                 defaultValue="Aurelius"
                 placeholder="Last Name"
-                className="w-full rounded-md bg-gray-100 px-4 py-3"
+                className="w-full px-4 py-3 bg-gray-100 rounded-md"
                 required
               />
             </div>
@@ -44,7 +42,7 @@ export default function SignUp() {
               id="email"
               name="email"
               defaultValue="aurelius@rocketmail.com"
-              className="w-full rounded-md bg-gray-100 px-4 py-3"
+              className="w-full px-4 py-3 bg-gray-100 rounded-md"
               required
             />
           </div>
@@ -57,7 +55,7 @@ export default function SignUp() {
               id="password"
               name="password"
               defaultValue="••••••••••••••••••••"
-              className="w-full rounded-md bg-gray-100 px-4 py-3"
+              className="w-full px-4 py-3 bg-gray-100 rounded-md"
               required
             />
           </div>
@@ -72,17 +70,20 @@ export default function SignUp() {
             </Link>{" "}
             dari Namanyajugabelajar.io
           </p>
-          <button type="submit" className="w-full rounded-md bg-blue-800 py-3 font-medium text-white hover:bg-blue-900">
+          <button
+            type="submit"
+            className="w-full py-3 font-medium text-white bg-blue-800 rounded-md hover:bg-blue-900"
+          >
             Sign Up
           </button>
         </form>
-        <p className="mt-6 text-center text-sm">
+        <p className="mt-6 text-sm text-center">
           Have an Account?{" "}
           <Link to="/login" className="text-blue-600 hover:underline">
             Login
           </Link>
         </p>
       </AuthContainer>
-  </LayoutAuth>
-  )
+    </LayoutAuth>
+  );
 }
