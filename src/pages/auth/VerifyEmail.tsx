@@ -65,19 +65,19 @@ export default function VerifyEmail() {
                     value={code[index]}
                     onChange={(e) => handleChange(index, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(index, e)}
-                    className="h-14 w-14 rounded-md border border-gray-300 text-center text-xl"
+                    className="text-xl text-center border border-gray-300 rounded-md h-14 w-14"
                   />
                 ))}
             </div>
           </div>
           <button
             type="submit"
-            className="w-full rounded-md bg-blue-800 py-3 font-medium text-white hover:bg-blue-900"
+            className="w-full py-3 font-medium text-white bg-blue-800 rounded-md hover:bg-blue-900"
           >
             Verify
           </button>
         </form>
-        <p className="mt-6 text-center text-sm">
+        <p className="mt-6 text-sm text-center">
           Don&apos;t see your email?{" "}
           <Link to="#" className="text-blue-600 hover:underline">
             Resend
