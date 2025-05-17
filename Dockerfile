@@ -1,6 +1,8 @@
 # --- Build stage ---
 FROM node:18-alpine AS builder
 WORKDIR /app
+# Install build tools for native dependencies (if needed)
+RUN apk add --no-cache python3 make g++
 COPY package.json package-lock.json ./
 RUN npm ci --frozen-lockfile
 COPY . .
