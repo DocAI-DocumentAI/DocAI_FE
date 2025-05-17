@@ -2,7 +2,7 @@
 FROM node:18-slim AS builder
 WORKDIR /app
 # Install build tools for native dependencies (tailwindcss, postcss, etc.)
-RUN apk add --no-cache python3 make g++ libc6-compat
+# RUN apk add --no-cache python3 make g++ libc6-compat
 COPY package.json package-lock.json ./
 RUN npm ci --frozen-lockfile
 COPY . .
