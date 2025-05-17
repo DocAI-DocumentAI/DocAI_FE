@@ -1,4 +1,3 @@
-
 import { RouteObject } from "react-router-dom";
 // import Login from "../pages/Login";
 import SignUp from "../pages/auth/Signup";
@@ -17,20 +16,23 @@ const publicRoutes: RouteObject[] = [
     path: "/",
     element: <HomePage />,
   },
-   {
+  {
     path: "/signup",
     element: <SignUp />,
   },
   {
     path: "/verify-email",
     element: <VerifyEmail />,
-  }, {
+  },
+  {
     path: "/reset-password",
     element: <ResetPassword />,
-  }, {
+  },
+  {
     path: "/forgot-password",
     element: <ForgotPassword />,
-  }, {
+  },
+  {
     path: "/login",
     element: <Login />,
   },
