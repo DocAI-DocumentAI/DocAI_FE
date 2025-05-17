@@ -11,6 +11,7 @@ RUN npm install
 # ENV VITE_API_URL=https://api.example.com
 RUN npm run build
 
+
 # --- Production stage ---
 FROM nginx:alpine
 # Clean up to reduce image size
