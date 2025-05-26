@@ -53,7 +53,7 @@ const SalesChannelChart: React.FC = () => {
             />
             <Legend />
             <Bar dataKey={"value"} fill="#8884d8">
-              {SALES_CHANNEL_DATA.map((entry, index) => (
+              {SALES_CHANNEL_DATA.map((_entry, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={COLORS[index % COLORS.length]}
