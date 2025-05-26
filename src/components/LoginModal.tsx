@@ -9,6 +9,7 @@ import {
 } from "../store/slices/authSlice";
 import { useLogin } from "../services/authService";
 import { Login } from "../types/Login";
+import { toast } from "react-toastify";
 
 interface LoginModalProps {
   onClose: () => void;
@@ -34,20 +35,22 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
     loginMutation.mutate(data, {
       onSuccess: (response) => {
         // response chính là LoginResponse từ API
-        dispatch(
-          loginSuccess({
-            id: response.id,
-            username: response.username,
-            phoneNumber: response.phoneNumber,
-            fullName: response.fullName,
-            token: response.token,
-            refreshToken: response.refreshToken,
-          })
-        );
+        const userData = {
+          id: response.id,
+          username: response.username,
+          phoneNumber: response.phoneNumber,
+          fullName: response.fullName,
+          token: response.token,
+          refreshToken: response.refreshToken,
+        };
+        dispatch(loginSuccess(userData));
+        console.log("User data vừa lưu vào redux:", userData);
+        toast.success("Đăng nhập thành công!");
         onClose();
       },
       onError: (error: any) => {
         dispatch(loginFailure(error.message || "Login failed"));
+        toast.error(error.message || "Đăng nhập thất bại!");
       },
     });
   };

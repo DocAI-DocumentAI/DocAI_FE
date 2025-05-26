@@ -3,7 +3,8 @@ import { User } from "../types/User";
 import { Login } from "../types/Login";
 
 const loginApi = async (credentials: Login): Promise<User> => {
-  const response = await fetch("https://production.doca.love/api/v1/login", {
+  // const response = await fetch("https://production.doca.love/api/v1/login", {
+  const response = await fetch("https://auth.doca.love/api/auth/login", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

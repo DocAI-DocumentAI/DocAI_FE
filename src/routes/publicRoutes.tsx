@@ -6,6 +6,7 @@ import ResetPassword from "../pages/auth/ResetPassword";
 import Login from "../pages/auth/Login";
 import ForgotPassword from "../pages/auth/ForgotPassword";
 import HomePage from "../pages/HomePage";
+import AdminPage from "../pages/admin/adminPage";
 
 const publicRoutes: RouteObject[] = [
   // {
@@ -19,6 +20,10 @@ const publicRoutes: RouteObject[] = [
   {
     path: "/signup",
     element: <SignUp />,
+  },
+  {
+    path: "/admin",
+    element: <AdminPage />,
   },
   {
     path: "/verify-email",
