@@ -3,15 +3,15 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import PublicRoutes from "./routes/PublicRoutes";
 // import PrivateRoute from "./routes/PrivateRoute";
 import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css"; // Corrected typo
+import "react-toastify/dist/ReactToastify.css"; // Đã sửa lỗi chính tả
 
 // Import admin pages
 import AdminPage from "./pages/admin/adminPage";
-import OverviewPage from "./pages/admin/Dashboard"; // Assuming Dashboard is OverviewPage
+import OverviewPage from "./pages/admin/Dashboard"; // Giả định Dashboard là OverviewPage
 import UsersPage from "./pages/admin/UsersPage";
 
 const App: React.FC = () => {
-  // privateRoutes is no longer used directly, its routes are nested under /admin
+  // privateRoutes không còn được sử dụng trực tiếp, các route của nó được lồng dưới /admin
   return (
     <BrowserRouter>
       <ToastContainer />
@@ -21,8 +21,8 @@ const App: React.FC = () => {
           <Route key={route.path} path={route.path} element={route.element} />
         ))}
 
-        {/* Private Routes with Admin Layout */}
-        {/* Uncomment the route below to use PrivateRoute */}
+        {/* Private Routes với Admin Layout */}
+        {/* Đảm bảo bỏ bình luận dòng dưới nếu muốn route /admin được bảo vệ */}
         <Route
           path="/admin"
           element={
@@ -31,19 +31,19 @@ const App: React.FC = () => {
             // </PrivateRoute>
           }
         >
-          {/* Nested Admin Routes - These paths are relative to the parent (/admin) */}
+          {/* Các Route Admin lồng nhau - Các đường dẫn này là tương đối so với route cha (/admin) */}
           <Route path="dashboard" element={<OverviewPage />} />
           <Route path="users" element={<UsersPage />} />
-          {/* Add other nested admin routes here */}
-          {/* Default route for /admin - redirects to /admin/dashboard */}
+          {/* Thêm các route admin lồng nhau khác tại đây */}
+          {/* Route mặc định cho /admin - chuyển hướng đến /admin/dashboard */}
           <Route index element={<Navigate to="dashboard" replace />} />
         </Route>
 
-        {/* Fallback/Redirect - Catch all unmatched paths */}
-        {/* This route will render if no other routes match */}
+        {/* Fallback/Redirect - Bắt tất cả các đường dẫn không khớp */}
+        {/* Route này sẽ được render nếu không có route nào khác khớp */}
         <Route path="*" element={<Navigate to="/login" replace />} />
 
-        {/* Redirect root path to login - Already exists */}
+        {/* Chuyển hướng root path đến login - Đã tồn tại */}
         {/* <Route path="/" element={<Navigate to="/login" replace />} /> */}
       </Routes>
     </BrowserRouter>
