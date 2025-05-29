@@ -8,7 +8,7 @@ import ForgotPassword from "../pages/auth/ForgotPassword";
 import HomePage from "../pages/HomePage";
 import AdminPage from "../pages/admin/adminPage";
 
-const publicRoutes: RouteObject[] = [
+const PublicRoutes: RouteObject[] = [
   // {
   //   path: "/login",
   //   element: <Login />,
@@ -43,4 +43,4 @@ const publicRoutes: RouteObject[] = [
   },
 ];
 
-export default publicRoutes;
+export default PublicRoutes;
