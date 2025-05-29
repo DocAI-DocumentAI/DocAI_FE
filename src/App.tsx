@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import PublicRoutes from "./routes/publicRoutes";
-import PrivateRoute from "./routes/PrivateRoute";
+import PublicRoutes from "./routes/PublicRoutes";
+// import PrivateRoute from "./routes/PrivateRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"; // Corrected typo
 
@@ -21,6 +21,8 @@ const App: React.FC = () => {
           <Route key={route.path} path={route.path} element={route.element} />
         ))}
 
+        {/* Private Routes with Admin Layout */}
+        {/* Uncomment the route below to use PrivateRoute */}
         <Route
           path="/admin"
           element={

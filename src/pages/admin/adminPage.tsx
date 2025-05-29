@@ -1,4 +1,3 @@
-import React from "react";
 import { Outlet } from "react-router-dom";
 
 import Sidebar from "../../components/common/Sidebar";
@@ -18,7 +17,7 @@ function AdminPage() {
 
       <Sidebar />
       {/* Render nested routes here */}
-      <div className="flex-1 p-6 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto p-6">
         <Outlet />
       </div>
     </div>
