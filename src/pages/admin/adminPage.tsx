@@ -8,7 +8,7 @@ import Sidebar from "../../components/common/Sidebar";
 
 function AdminPage() {
   return (
-    <div className="flex h-screen overflow-hidden text-gray-100 bg-gray-900">
+    <div className="flex overflow-hidden h-screen text-gray-100 bg-gray-900">
       {/* BG */}
       <div className="fixed inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 opacity-80" />
@@ -17,7 +17,7 @@ function AdminPage() {
 
       <Sidebar />
       {/* Render nested routes here */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="overflow-y-auto flex-1 p-6">
         <Outlet />
       </div>
     </div>

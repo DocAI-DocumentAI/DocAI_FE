@@ -9,6 +9,9 @@ import "react-toastify/dist/ReactToastify.css"; // Đã sửa lỗi chính tả
 import AdminPage from "./pages/admin/adminPage";
 import OverviewPage from "./pages/admin/Dashboard"; // Giả định Dashboard là OverviewPage
 import UsersPage from "./pages/admin/UsersPage";
+import DocumentPage from "./pages/admin/DocumentPage";
+import SettingsPage from "./pages/admin/SettingsPage";
+import NotifyPage from "./pages/admin/NotifyPage";
 
 const App: React.FC = () => {
   // privateRoutes không còn được sử dụng trực tiếp, các route của nó được lồng dưới /admin
@@ -31,20 +34,15 @@ const App: React.FC = () => {
             // </PrivateRoute>
           }
         >
-          {/* Các Route Admin lồng nhau - Các đường dẫn này là tương đối so với route cha (/admin) */}
           <Route path="dashboard" element={<OverviewPage />} />
           <Route path="users" element={<UsersPage />} />
-          {/* Thêm các route admin lồng nhau khác tại đây */}
-          {/* Route mặc định cho /admin - chuyển hướng đến /admin/dashboard */}
+          <Route path="documents" element={<DocumentPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="notifications" element={<NotifyPage />} />
           <Route index element={<Navigate to="dashboard" replace />} />
         </Route>
 
-        {/* Fallback/Redirect - Bắt tất cả các đường dẫn không khớp */}
-        {/* Route này sẽ được render nếu không có route nào khác khớp */}
         <Route path="*" element={<Navigate to="/login" replace />} />
-
-        {/* Chuyển hướng root path đến login - Đã tồn tại */}
-        {/* <Route path="/" element={<Navigate to="/login" replace />} /> */}
       </Routes>
     </BrowserRouter>
   );
