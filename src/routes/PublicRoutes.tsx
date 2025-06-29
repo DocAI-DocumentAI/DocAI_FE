@@ -16,8 +16,9 @@ import NewChatPage from "../pages/chat/ChatNew";
 import ChatDetail from "../pages/chat/ChatDetail";
 import UploadDocument from "../components/UploadDocument";
 import EditDocument from "../components/EditDocument";
+import AdminPage from "../pages/admin/adminPage";
 
-const publicRoutes: RouteObject[] = [
+const PublicRoutes: RouteObject[] = [
   // {
   //   path: "/login",
   //   element: <Login />,
@@ -29,6 +30,10 @@ const publicRoutes: RouteObject[] = [
   {
     path: "/signup",
     element: <SignUp />,
+  },
+  {
+    path: "/admin",
+    element: <AdminPage />,
   },
   {
     path: "/verify-email",
@@ -98,4 +103,4 @@ const publicRoutes: RouteObject[] = [
   }
 ];
 
-export default publicRoutes;
+export default PublicRoutes;

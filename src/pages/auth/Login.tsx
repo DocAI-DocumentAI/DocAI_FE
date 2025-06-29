@@ -13,10 +13,10 @@ export default function Login() {
               Email
             </label>
             <input
-              type="email"
-              id="email"
-              name="email"
-              defaultValue="saipul@gmail.com"
+              type="text"
+              // type="email"
+              // id="email"
+              // name="email"
               className="w-full px-4 py-3 bg-gray-100 rounded-md"
               required
             />
@@ -36,7 +36,6 @@ export default function Login() {
             type="password"
             id="password"
             name="password"
-            defaultValue="••••••••••••••••••••"
             className="w-full px-4 py-3 bg-gray-100 rounded-md"
             required
           />

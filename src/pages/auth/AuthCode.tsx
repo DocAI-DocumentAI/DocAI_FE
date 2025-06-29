@@ -1,42 +1,46 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef } from "react"
-import { AuthContainer } from "../../components/auth-container"
-import { Link } from "react-router-dom"
-   
+import { useState, useRef } from "react";
+import { AuthContainer } from "../../components/auth-container";
+import { Link } from "react-router-dom";
 
 export default function AuthCode() {
-  const [code, setCode] = useState<string[]>(Array(6).fill(""))
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+  const [code, setCode] = useState<string[]>(Array(6).fill(""));
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const handleChange = (index: number, value: string) => {
     if (value.length > 1) {
-      value = value[0]
+      value = value[0];
     }
 
-    const newCode = [...code]
-    newCode[index] = value
-    setCode(newCode)
+    const newCode = [...code];
+    newCode[index] = value;
+    setCode(newCode);
 
     // Move to next input if current one is filled
     if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus()
+      inputRefs.current[index + 1]?.focus();
     }
-  }
+  };
 
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (
+    index: number,
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
     // Move to previous input on backspace if current is empty
     if (e.key === "Backspace" && !code[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus()
+      inputRefs.current[index - 1]?.focus();
     }
-  }
+  };
 
   return (
     <AuthContainer>
       <h2 className="mb-2 text-2xl font-bold">Enter authentication code</h2>
-      <p className="mb-6 text-gray-600">We&apos;ve sent an email to becca@gmail.com, please enter the code below.</p>
+      <p className="mb-6 text-gray-600">
+        We&apos;ve sent an email to becc@gmail.com, please enter the code below.
+      </p>
       <form className="space-y-4">
         <div className="space-y-2">
           <label htmlFor="code" className="block font-medium">
@@ -48,27 +52,32 @@ export default function AuthCode() {
               .map((_, index) => (
                 <input
                   key={index}
-                  ref={(el) => { inputRefs.current[index] = el }}
+                  ref={(el) => {
+                    inputRefs.current[index] = el;
+                  }}
                   type="text"
                   maxLength={1}
                   value={code[index]}
                   onChange={(e) => handleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
-                  className="h-14 w-14 rounded-md border border-gray-300 text-center text-xl"
+                  className="text-xl text-center border border-gray-300 rounded-md h-14 w-14"
                 />
               ))}
           </div>
         </div>
-        <button type="submit" className="w-full rounded-md bg-blue-800 py-3 font-medium text-white hover:bg-blue-900">
+        <button
+          type="submit"
+          className="w-full py-3 font-medium text-white bg-blue-800 rounded-md hover:bg-blue-900"
+        >
           Continue
         </button>
       </form>
-      <p className="mt-6 text-center text-sm">
+      <p className="mt-6 text-sm text-center">
         Don&apos;t see your email?{" "}
         <Link to="#" className="text-blue-600 hover:underline">
           Resend
         </Link>
       </p>
     </AuthContainer>
-  )
+  );
 }
