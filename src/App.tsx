@@ -21,8 +21,21 @@ const App: React.FC = () => {
       <Routes>
         {/* Public Routes */}
         {PublicRoutes.map((route) => (
-          <Route key={route.path} path={route.path} element={route.element} />
-        ))}
+            <Route
+              key={route.path}
+              path={route.path}
+              element={route.element}
+            >
+              {route.children &&
+                route.children.map((child: any) => (
+                  <Route
+                    key={child.path}
+                    path={child.path}
+                    element={child.element}
+                  />
+                ))}
+            </Route>
+          ))}
 
         {/* Private Routes với Admin Layout */}
         {/* Đảm bảo bỏ bình luận dòng dưới nếu muốn route /admin được bảo vệ */}

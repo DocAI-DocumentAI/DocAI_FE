@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 export function Navbar() {
   //   const { user, logout } = useAuth()
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const user = {
     name: "John Doe",
     email: "123",
@@ -31,8 +32,31 @@ export function Navbar() {
         <button className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-blue-800">
           <Plus className="h-5 w-5" />
         </button>
-        <div className="relative w-64">
-          <div className="flex items-center rounded-md bg-white pl-2">
+        <div className="relative max-w-64 ">
+          {/* Mobile search button */}
+          <button
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-blue-800 sm:hidden"
+            onClick={() => setShowSearch(!showSearch)}
+            aria-label="Open search"
+            type="button" 
+          >
+            <Search className="h-5 w-5" />
+          </button>
+          {/* Mobile search input */}
+          {showSearch && (
+            <div className="absolute  right-0 top-10 z-10 w-64 rounded-md bg-white p-2 shadow-lg sm:hidden">
+              <div className="flex items-center rounded-md bg-white pl-2">
+                <Search className="h-5 w-5 text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Search feature"
+                  className="w-full rounded-md border-none bg-white px-2 py-1.5 text-sm text-black focus:outline-none focus:ring-0"
+                  autoFocus
+                />
+              </div>
+            </div>
+          )}
+          <div className="hidden sm:flex items-center rounded-md bg-white pl-2">
             <Search className="h-5 w-5 text-gray-500" />
             <input
               type="text"
