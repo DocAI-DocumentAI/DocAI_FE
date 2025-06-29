@@ -14,6 +14,8 @@ import PersonalizationSettings from "../pages/settings/Personalization";
 import NotificationsSettings from "../pages/settings/Notification";
 import NewChatPage from "../pages/chat/ChatNew";
 import ChatDetail from "../pages/chat/ChatDetail";
+import UploadDocument from "../components/UploadDocument";
+import EditDocument from "../components/EditDocument";
 
 const publicRoutes: RouteObject[] = [
   // {
@@ -51,6 +53,14 @@ const publicRoutes: RouteObject[] = [
   {
     path: "/chat/:id",
     element: <ChatDetail />,
+  },
+  {
+    path: "/document/up",
+    element: < UploadDocument/>,
+  },
+  {
+    path: "/document/edit",
+    element: < EditDocument/>,
   },
   {
     path: "/settings",
