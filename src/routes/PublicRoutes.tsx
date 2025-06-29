@@ -17,6 +17,9 @@ import ChatDetail from "../pages/chat/ChatDetail";
 import UploadDocument from "../components/UploadDocument";
 import EditDocument from "../components/EditDocument";
 import AdminPage from "../pages/admin/adminPage";
+import DocumentPage from "../pages/document/DocumentDetail";
+import Dashboard from "../pages/admin/Dashboard"; 
+import SearchPage from "../pages/search/SearchPage";
 
 const PublicRoutes: RouteObject[] = [
   // {
@@ -66,6 +69,16 @@ const PublicRoutes: RouteObject[] = [
   {
     path: "/document/edit",
     element: < EditDocument/>,
+  },
+ 
+  {
+    path: "/search",
+    element: <SearchPage />,
+  },
+  
+  {
+    path: "/document/:id",
+    element: <DocumentPage />,
   },
   {
     path: "/settings",
