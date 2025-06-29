@@ -9,9 +9,11 @@ import HomePage from "../pages/HomePage";
 import SettingsLayout from "../components/layout/SettingsLayout";
 import AccountSettings from "../pages/settings/Account";
 import AppearanceSettings from "../pages/settings/Appearance";
-import SecuritySettings from "../pages/settings/security";
+import SecuritySettings from "../pages/settings/Security";
 import PersonalizationSettings from "../pages/settings/Personalization";
 import NotificationsSettings from "../pages/settings/Notification";
+import NewChatPage from "../pages/chat/ChatNew";
+import ChatDetail from "../pages/chat/ChatDetail";
 
 const publicRoutes: RouteObject[] = [
   // {
@@ -41,6 +43,14 @@ const publicRoutes: RouteObject[] = [
   {
     path: "/login",
     element: <Login />,
+  },
+  {
+    path: "/chat",
+    element: <NewChatPage />,
+  },
+  {
+    path: "/chat/:id",
+    element: <ChatDetail />,
   },
   {
     path: "/settings",
