@@ -1,21 +1,20 @@
- 
-import { useState } from "react" 
-import { Navbar } from "../../components/layout/navbar"
-import { SearchBox } from "../../components/Search-box"
-import { SearchResults } from "../../components/Search-results"
-import { SearchFilter } from "../../components/Search-filter"
+import { useState } from "react";
+import { Navbar } from "../../components/layout/navbar";
+import { SearchBox } from "../../components/Search-box";
+import { SearchResults } from "../../components/Search-results";
+import { SearchFilter } from "../../components/Search-filter";
 
 export default function SearchPage() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [searchResults, setSearchResults] = useState<any[]>([])
-  const [isSearched, setIsSearched] = useState(false)
+  // Remove the unused searchQuery state variable since it's set but never used
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearched, setIsSearched] = useState(false);
 
   // Mock search function
   const handleSearch = (query: string) => {
-    if (!query.trim()) return
+    if (!query.trim()) return;
 
-    setSearchQuery(query)
-    setIsSearched(true)
+    // We're not using searchQuery anywhere, so we can remove setSearchQuery(query)
+    setIsSearched(true);
 
     // Mock data for search results
     const mockResults = [
@@ -55,19 +54,21 @@ export default function SearchPage() {
         category: "Tài chính",
         quarter: "Q4",
       },
-    ]
+    ];
 
-    setSearchResults(mockResults)
-  }
+    setSearchResults(mockResults);
+  };
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex flex-col min-h-screen bg-white">
       <Navbar />
       <main className="flex-1 p-6">
-        <div className="mx-auto max-w-6xl">
+        <div className="max-w-6xl mx-auto">
           <div className="mb-6">
             <h1 className="mb-1 text-2xl font-bold">AI Documents search</h1>
-            <p className="text-sm text-gray-600">Using prompt, filter and find related document</p>
+            <p className="text-sm text-gray-600">
+              Using prompt, filter and find related document
+            </p>
           </div>
 
           <div className="flex gap-4">
@@ -84,5 +85,5 @@ export default function SearchPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

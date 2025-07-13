@@ -1,12 +1,15 @@
 import React, { useState, useRef } from "react";
-import { FileText, Mic, Send } from "lucide-react";
+import { FileText, Mic } from "lucide-react";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
   placeholder?: string;
 }
 
-export function ChatInput({ onSend, placeholder = "Ask anything" }: ChatInputProps) {
+export function ChatInput({
+  onSend,
+  placeholder = "Ask anything",
+}: ChatInputProps) {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -28,7 +31,10 @@ export function ChatInput({ onSend, placeholder = "Ask anything" }: ChatInputPro
   return (
     <div className="w-full">
       <div className="relative flex items-end bg-white rounded-2xl border border-gray-200 px-4 py-2 shadow-sm">
-        <button type="button" className="mr-2 text-gray-400 hover:text-blue-500">
+        <button
+          type="button"
+          className="mr-2 text-gray-400 hover:text-blue-500"
+        >
           <FileText size={20} />
         </button>
         <textarea
@@ -48,7 +54,10 @@ export function ChatInput({ onSend, placeholder = "Ask anything" }: ChatInputPro
         >
           {/* <Send size={22} /> */}
         </button>
-        <button type="button" className="ml-2 text-gray-400 hover:text-blue-500">
+        <button
+          type="button"
+          className="ml-2 text-gray-400 hover:text-blue-500"
+        >
           <Mic size={20} />
         </button>
       </div>
@@ -56,4 +65,4 @@ export function ChatInput({ onSend, placeholder = "Ask anything" }: ChatInputPro
   );
 }
 
-export default ChatInput; 
+export default ChatInput;
