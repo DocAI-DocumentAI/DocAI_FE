@@ -18,7 +18,7 @@ import UploadDocument from "../components/UploadDocument";
 import EditDocument from "../components/EditDocument";
 import AdminPage from "../pages/admin/adminPage";
 import DocumentPage from "../pages/document/DocumentDetail";
-import Dashboard from "../pages/admin/Dashboard"; 
+// Remove the unused Dashboard import
 import SearchPage from "../pages/search/SearchPage";
 
 const PublicRoutes: RouteObject[] = [
@@ -64,25 +64,29 @@ const PublicRoutes: RouteObject[] = [
   },
   {
     path: "/document/up",
-    element: < UploadDocument/>,
+    element: <UploadDocument />,
   },
   {
     path: "/document/edit",
-    element: < EditDocument/>,
+    element: <EditDocument />,
   },
- 
+
   {
     path: "/search",
     element: <SearchPage />,
   },
-  
+
   {
     path: "/document/:id",
     element: <DocumentPage />,
   },
   {
     path: "/settings",
-    element: <SettingsLayout><Outlet /></SettingsLayout>,
+    element: (
+      <SettingsLayout>
+        <Outlet />
+      </SettingsLayout>
+    ),
     children: [
       {
         index: true,
@@ -96,24 +100,24 @@ const PublicRoutes: RouteObject[] = [
         path: "appearance",
         element: <AppearanceSettings />,
       },
-       {
+      {
         path: "notifications",
         element: <NotificationsSettings />,
       },
-       {
+      {
         path: "personalization",
         element: <PersonalizationSettings />,
       },
-       {
+      {
         path: "security",
         element: <SecuritySettings />,
       },
       {
         path: "*",
         element: <div>404</div>,
-      }
-    ]
-  }
+      },
+    ],
+  },
 ];
 
 export default PublicRoutes;
