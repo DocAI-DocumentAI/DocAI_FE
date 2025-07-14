@@ -67,17 +67,16 @@ const PublicRoutes: RouteObject[] = [
     path: "/chat/:id",
     element: <ChatDetail />,
   },
-
   {
     path: "/document/edit",
-    element: < EditDocument/>,
+    element: <EditDocument />,
   },
- 
+
   {
     path: "/search",
     element: <SearchPage />,
   },
-  
+
   {
     path: "/document/:id",
     element: <DocumentPage />,
@@ -110,7 +109,11 @@ const PublicRoutes: RouteObject[] = [
   },
   {
     path: "/settings",
-    element: <SettingsLayout><Outlet /></SettingsLayout>,
+    element: (
+      <SettingsLayout>
+        <Outlet />
+      </SettingsLayout>
+    ),
     children: [
       {
         index: true,
@@ -124,15 +127,15 @@ const PublicRoutes: RouteObject[] = [
         path: "appearance",
         element: <AppearanceSettings />,
       },
-       {
+      {
         path: "notifications",
         element: <NotificationsSettings />,
       },
-       {
+      {
         path: "personalization",
         element: <PersonalizationSettings />,
       },
-       {
+      {
         path: "security",
         element: <SecuritySettings />,
       },
@@ -140,9 +143,9 @@ const PublicRoutes: RouteObject[] = [
       {
         path: "*",
         element: <div>404</div>,
-      }
-    ]
-  }
+      },
+    ],
+  },
 ];
 
 export default PublicRoutes;
