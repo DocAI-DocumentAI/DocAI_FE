@@ -1,7 +1,7 @@
 import axios from "axios"
 
 export const api = axios.create({
-  baseURL:  "https://auth.docai.asia/api/",
+  baseURL:  "https://production.docai.asia/api",
   headers: {
     "Content-Type": "application/json",
   },
