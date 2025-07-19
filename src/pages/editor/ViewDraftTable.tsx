@@ -84,8 +84,7 @@ const ViewDraftTable = () => {
       title: "Hành động",
       key: "action",
       render: (_: any, record: any) => (
-        <Space>
-          <Button type="link">Chỉnh sửa</Button>
+        <Space> 
           <Button type="link" onClick={() => navigate(`/editor/view-draft/${record.documentId}/${record.versionId}`)}>Xem</Button>
         </Space>
       ),
