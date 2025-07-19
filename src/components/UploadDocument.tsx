@@ -64,8 +64,7 @@ if (typeof document !== 'undefined') {
 
 
 export default function UploadDocument({ onViewChange }: any) {
-  const [form] = Form.useForm()
-  const userId = useSelector((state: RootState) => state.auth.user?.id);
+  const [form] = Form.useForm() 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [htmlDescription, setHtmlDescription] = useState("");
   const [htmlSummary, setHtmlSummary] = useState("");
@@ -88,8 +87,13 @@ export default function UploadDocument({ onViewChange }: any) {
     try {
       // if (!userId) throw new Error("Không tìm thấy userId, vui lòng đăng nhập lại!");
       console.log(formValues);
-
-      await uploadDraftDocument(formValues, "1");
+      const userStr = localStorage.getItem("user");
+      if (!userStr) {
+        toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
+        return;
+      }
+      const user = JSON.parse(userStr);
+      await uploadDraftDocument(formValues, user.userId);
       toast.success("Upload document thành công!");
       onViewChange && onViewChange("queue");
     } catch (error: any) {

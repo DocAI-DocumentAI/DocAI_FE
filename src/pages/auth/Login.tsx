@@ -21,6 +21,7 @@ export default function Login() {
         password: values.password,
       });
       localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data));
       navigate("/");
     } catch (err: any) {
       setError(err?.response?.data?.message || "Login failed");
