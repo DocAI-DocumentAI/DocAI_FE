@@ -25,10 +25,10 @@ import ApprovalManagerTable from "../components/edited/ApprovalManagerTable";
 import ViewDraftTable from "../components/edited/ViewDraftTable";
 import ManagerTable from "../components/edited/ManagerTable";
 import EditedLayout from "../components/layout/EditedLayoutLayout";
-import ManagerLayoutLayout from "../components/layout/ManagerLayoutLayout";
-import DocumentManagement from "../pages/manager/documentManagement";
+import ManagerLayoutLayout from "../components/layout/ManagerLayoutLayout"; 
 import ApprovalQueue from "../pages/manager/ApprovalQueue";
 import DocumentReview from "../pages/manager/DocumentReview";
+import DocumentManagement from "../pages/manager/DocumentManagement";
 
 const PublicRoutes: RouteObject[] = [
   // {

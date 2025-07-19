@@ -1,37 +1,167 @@
 "use client"
 
-import { Layout, Typography, Card, Button, Input, Select, DatePicker, Upload, Form, Row, Col, Space } from "antd"
+import { Layout, Typography, Card, Button, Input, Select, DatePicker, Upload, Form, Row, Col, Space, Spin } from "antd"
 import { ArrowLeftOutlined, UploadOutlined, InboxOutlined } from "@ant-design/icons"
- 
+import { uploadDraftDocument, analyzeDocument } from "../lib/api/document";
+import { useSelector } from "react-redux";
+import { RootState } from "../store";
+import { useState } from "react";
+import React from "react";
+import WysiwygEditor from 'react-simple-wysiwyg';
+import toast from 'react-hot-toast';
+
 const { Title, Text } = Typography
 const { Content } = Layout
 const { TextArea } = Input
 const { Dragger } = Upload
- 
+
+// Custom CSS for Wysiwyg editor
+const editorStyles = `
+  .wysiwyg-editor {
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    min-height: 120px;
+  }
+  .wysiwyg-editor:focus-within {
+    border-color: #1890ff;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  }
+  .wysiwyg-editor .wysiwyg-toolbar {
+    border-bottom: 1px solid #d9d9d9;
+    padding: 8px;
+    background: #fafafa;
+  }
+  .wysiwyg-editor .wysiwyg-toolbar button {
+    margin-right: 4px;
+    padding: 4px 8px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+  }
+  .wysiwyg-editor .wysiwyg-toolbar button:hover {
+    background: #f0f0f0;
+  }
+  .wysiwyg-editor .wysiwyg-toolbar button.active {
+    background: #1890ff;
+    color: white;
+    border-color: #1890ff;
+  }
+  .wysiwyg-editor .wysiwyg-content {
+    padding: 12px;
+    min-height: 100px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+`;
+
+// Inject styles
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.textContent = editorStyles;
+  document.head.appendChild(style);
+}
+
 
 export default function UploadDocument({ onViewChange }: any) {
   const [form] = Form.useForm()
+  const userId = useSelector((state: RootState) => state.auth.user?.id);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [htmlDescription, setHtmlDescription] = useState("");
+  const [htmlSummary, setHtmlSummary] = useState("");
 
-  const handleSubmit = (values: any) => {
-    console.log("Form values:", values)
-    // Handle form submission
-    onViewChange("queue")
-  }
+  const handleSubmit = async (values: any) => {
+    // Map các trường form sang đúng tên API
+    const formValues = {
+      versionName: values.versionName || "",
+      summary: values.summary || "",
+      replacementDocumentId: values.replacementDocumentId || "",
+      departmentId: values.department || "", // <-- map for DepartmentId
+      effectiveFrom: values.effectiveFrom ? values.effectiveFrom.toISOString() : "",
+      signedBy: values.signedBy || "",
+      effectiveUntil: values.effectiveTo ? values.effectiveTo.toISOString() : "",
+      title: values.title || "",
+      tags: Array.isArray(values.tags) ? values.tags.filter(Boolean) : [],
+      description: values.description || "",
+      file: values.file?.file, // Antd Dragger lưu file ở values.file.file
+    };
+    try {
+      // if (!userId) throw new Error("Không tìm thấy userId, vui lòng đăng nhập lại!");
+      console.log(formValues);
+
+      await uploadDraftDocument(formValues, "1");
+      toast.success("Upload document thành công!");
+      onViewChange && onViewChange("queue");
+    } catch (error: any) {
+      toast.error(`Upload document thất bại. Vui lòng thử lại! ${error?.response?.data?.message}`);
+      console.error(error);
+    }
+  };
+
+  const handleFileUpload = async (info: any) => {
+    const { file } = info;
+    console.log("File info:", file);
+    console.log("File originFileObj:", file.originFileObj);
+
+    // Nếu file bị xóa
+    if (file.status === 'removed') {
+      form.setFieldsValue({ file: undefined });
+      return;
+    }
+
+    // Khi có file mới được chọn (status có thể undefined hoặc 'done')
+    if (!file.originFileObj) {
+      setIsAnalyzing(true);
+      try {
+        // Analyze document
+        console.log("Analyzing document...");
+        const analyzeResult = await analyzeDocument(file);
+
+        // Auto-fill form with analyzed data
+        const analyzedData = analyzeResult.data;
+
+        // Lưu HTML content cho hiển thị
+        setHtmlDescription(analyzedData.description || "");
+        setHtmlSummary(analyzedData.summary || "");
+
+        form.setFieldsValue({
+          title: analyzedData.title || "",
+          description: analyzedData.description || "",
+          summary: analyzedData.summary || "",
+          tags: analyzedData.tags || [],
+          effectiveFrom: analyzedData.effectiveFrom ? new Date(analyzedData.effectiveFrom) : null,
+          effectiveTo: analyzedData.effectiveUntil ? new Date(analyzedData.effectiveUntil) : null,
+          signedBy: analyzedData.signedBy || "",
+        });
+
+        toast.success("Document analyzed successfully!");
+      } catch (error) {
+        toast.error("Failed to analyze document. Please try again!");
+        console.error(error);
+      } finally {
+        setIsAnalyzing(false);
+      }
+    }
+  };
 
   const uploadProps = {
     name: "file",
-    multiple: false,
+    multiple: false, // Chỉ upload 1 file
     accept: ".pdf,.docx",
     beforeUpload: () => false, // Prevent auto upload
-    onChange(info: any) {
-      console.log("File info:", info)
+    onChange: handleFileUpload,
+    showUploadList: {
+      showPreviewIcon: true,
+      showRemoveIcon: true,
+      showDownloadIcon: false,
     },
+    maxCount: 1, // Chỉ cho phép 1 file
   }
 
   return (
     <Layout style={{ minHeight: "100vh", backgroundColor: "#f5f5f5" }}>
       <Content style={{ padding: "14px" }}>
-        <div style={{   margin: "0 auto" }}>
+        <div style={{ margin: "0 auto" }}>
           {/* Header */}
           <div style={{ marginBottom: 24 }}>
             <Button
@@ -57,6 +187,11 @@ export default function UploadDocument({ onViewChange }: any) {
                   <Title level={4} style={{ margin: 0 }}>
                     Document Upload
                   </Title>
+                  {isAnalyzing && (
+                    <Spin size="small" style={{ marginLeft: 8 }}>
+                      <span style={{ marginLeft: 8, fontSize: 12 }}>Analyzing...</span>
+                    </Spin>
+                  )}
                 </div>
                 <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
                   Upload a PDF or DOCX file. Our AI will automatically extract metadata to help you.
@@ -146,21 +281,73 @@ export default function UploadDocument({ onViewChange }: any) {
                 </Col>
               </Row>
 
-              <Form.Item name="description" label="Description">
-                <TextArea rows={3} placeholder="Brief description of the document" />
+              {/* Description with Wysiwyg editor */}
+              <Form.Item label="Description">
+                <Form.Item name="description" noStyle>
+                  <WysiwygEditor
+                    value={htmlDescription}
+                    onChange={(e) => setHtmlDescription(e.target.value)}
+                    placeholder="Brief description of the document"
+                    className="wysiwyg-editor"
+                  />
+                </Form.Item>
               </Form.Item>
 
-              <Form.Item name="summary" label="Summary">
-                <TextArea rows={4} placeholder="Document summary (can be auto-generated by AI)" />
+              {/* Summary with Wysiwyg editor */}
+              <Form.Item label="Summary">
+                <Form.Item name="summary" noStyle>
+                  <WysiwygEditor
+                    value={htmlSummary}
+                    onChange={(e) => setHtmlSummary(e.target.value)}
+                    placeholder="Document summary (can be auto-generated by AI)"
+                    className="wysiwyg-editor"
+                  />
+                </Form.Item>
               </Form.Item>
 
-              <Form.Item name="tags" label="Tags">
-                <Input placeholder="Enter tags separated by commas" />
+              <Form.Item label="Tags">
+                <Form.List name="tags">
+                  {(fields, { add, remove }) => (
+                    <>
+                      {fields.map((field, index) => (
+                        <Space key={field.key} align="baseline">
+                          <Form.Item
+                            {...field}
+                            rules={[{ required: true, message: "Please enter a tag" }]}
+                            style={{ marginBottom: 0 }}
+                          >
+                            <Input placeholder={`Tag ${index + 1}`} />
+                          </Form.Item>
+                          {fields.length > 1 && (
+                            <Button type="link" danger onClick={() => remove(field.name)}>
+                              Remove
+                            </Button>
+                          )}
+                        </Space>
+                      ))}
+                      <Button type="dashed" onClick={() => add()} style={{ marginTop: 8 }}>
+                        + Add Tag
+                      </Button>
+                    </>
+                  )}
+                </Form.List>
               </Form.Item>
 
               <Form.Item name="signedBy" label="Signed By">
                 <Input placeholder="Name of the person who signed the document" />
               </Form.Item>
+
+              <Row gutter={16}>
+                <Col xs={24} sm={12}>
+                  <Form.Item
+                    name="versionName"
+                    label="Version Name"
+                    rules={[{ required: true, message: "Please enter version name" }]}
+                  >
+                    <Input placeholder="Enter version name" />
+                  </Form.Item>
+                </Col>
+              </Row>
 
               {/* Action Buttons */}
               <Form.Item style={{ marginTop: 32 }}>

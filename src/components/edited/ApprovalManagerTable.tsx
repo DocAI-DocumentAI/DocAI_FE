@@ -1,22 +1,6 @@
 import { Table, Tag, Button, Input, Select, Space } from "antd";
-import { useState } from "react";
-
-const dataSource = [
-  {
-    key: "1",
-    name: "Báo cáo tài chính Q4 2023",
-    sender: "Nguyễn Văn B",
-    date: "10/11/2023",
-    status: "Pending",
-  },
-  {
-    key: "2",
-    name: "Báo cáo kiểm toán Q3 2023",
-    sender: "Trần Văn C",
-    date: "12/10/2023",
-    status: "Approved",
-  },
-];
+import { useEffect, useState } from "react";
+import { getDocuments } from "../../lib/api/document";
 
 const statusOptions = [
   { value: "All", label: "Tất cả" },
@@ -26,13 +10,38 @@ const statusOptions = [
 ];
 
 const ApprovalManagerTable = () => {
+  const [dataSource, setDataSource] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("All");
 
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const docs = await getDocuments(1, 10);
+        setDataSource(
+          docs.map((doc: any) => ({
+            key: doc.documentId,
+            name: doc.title,
+            sender: doc.submittedBy || doc.ownerId || "N/A",
+            date: doc.createdTime ? new Date(doc.createdTime).toLocaleDateString() : "",
+            status: doc.status,
+          }))
+        );
+      } catch (e) {
+        setDataSource([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   const filteredData = dataSource.filter(
     (item) =>
-      (item.name.toLowerCase().includes(search.toLowerCase()) ||
-        item.sender.toLowerCase().includes(search.toLowerCase())) &&
+      (item.name?.toLowerCase().includes(search.toLowerCase()) ||
+        item.sender?.toLowerCase().includes(search.toLowerCase())) &&
       (status === "All" || item.status === status)
   );
 
@@ -83,7 +92,7 @@ const ApprovalManagerTable = () => {
           style={{ width: 140 }}
         />
       </Space>
-      <Table dataSource={filteredData} columns={columns} />
+      <Table dataSource={filteredData} columns={columns} loading={loading} />
     </>
   );
 };
