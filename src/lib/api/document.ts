@@ -37,3 +37,8 @@ export const getDocuments = async (pageNumber = 1, pageSize = 10) => {
   return response.data.data.items;
 };
 
+export const getMyDocuments = async (userId: string, pageNumber = 1, pageSize = 10) => {
+  const response = await api.get(`/document/my-documents?userId=${userId}&pageNumber=${pageNumber}&pageSize=${pageSize}`);
+  return response.data.data;
+};
+
