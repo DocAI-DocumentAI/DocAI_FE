@@ -5,10 +5,15 @@ import { ArrowLeft, User, Calendar, FileText, Eye, Download, Bookmark } from "lu
 import { useParams } from "react-router-dom"
 import { Navbar } from "../../components/layout/navbar"
 import { Link } from "react-router-dom"
+import ManagerTable from "../../components/edited/ManagerTable";
+import ApprovalManagerTable from "../../components/edited/ApprovalManagerTable";
+import ViewDraftTable from "../../components/edited/ViewDraftTable";
 
 export default function DocumentPage() {
   const { id } = useParams()
-  const [activeTab, setActiveTab] = useState<"content" | "information">("content")
+  const [activeTab, setActiveTab] = useState<
+    "content" | "information" | "summary" | "original" | "version"
+  >("content")
 
   // Mock document data
   const document = {
@@ -148,29 +153,29 @@ export default function DocumentPage() {
           <div className="mb-6 border-b border-gray-200">
             <div className="flex">
               <button
-                className={`px-4 py-2 text-sm font-medium ${
-                  activeTab === "content"
-                    ? "border-b-2 border-blue-800 text-blue-800"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
+                className={`px-4 py-2 text-sm font-medium ${activeTab === "content" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
                 onClick={() => setActiveTab("content")}
-              >
-                Content
-              </button>
+              >Content</button>
               <button
-                className={`px-4 py-2 text-sm font-medium ${
-                  activeTab === "information"
-                    ? "border-b-2 border-blue-800 text-blue-800"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
+                className={`px-4 py-2 text-sm font-medium ${activeTab === "information" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
                 onClick={() => setActiveTab("information")}
-              >
-                Information
-              </button>
+              >Information</button>
+              <button
+                className={`px-4 py-2 text-sm font-medium ${activeTab === "summary" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
+                onClick={() => setActiveTab("summary")}
+              >Summary</button>
+              <button
+                className={`px-4 py-2 text-sm font-medium ${activeTab === "original" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
+                onClick={() => setActiveTab("original")}
+              >Original Document</button>
+              <button
+                className={`px-4 py-2 text-sm font-medium ${activeTab === "version" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
+                onClick={() => setActiveTab("version")}
+              >Version</button>
             </div>
           </div>
 
-          {activeTab === "content" ? (
+          {activeTab === "content" && (
             <div>
               <div className="mb-4 rounded-md border border-red-800 bg-red-50 p-2 text-center text-sm font-medium text-red-800">
                 PDF Viewer
@@ -180,7 +185,8 @@ export default function DocumentPage() {
                 dangerouslySetInnerHTML={{ __html: document.content }}
               />
             </div>
-          ) : (
+          )}
+          {activeTab === "information" && (
             <div className="rounded-md border border-gray-200 bg-white p-6">
               <h2 className="mb-4 text-lg font-medium">Document information</h2>
               <div className="space-y-2">
@@ -203,6 +209,90 @@ export default function DocumentPage() {
                 <div className="grid grid-cols-2 gap-2">
                   <div className="text-sm font-medium">Type of document:</div>
                   <div className="text-sm">{document.type}</div>
+                </div>
+              </div>
+            </div>
+          )}
+          {activeTab === "summary" && (
+            <div className="rounded-md border border-gray-200 bg-white p-6">
+              <h2 className="mb-4 text-lg font-medium">Summary</h2>
+              <div className="mb-2 text-sm">
+                Author: Nguyễn Văn B<br />
+                Size: 12MB<br />
+                version: 12123NHV<br />
+                Expiration Date: 12/2/2034<br />
+                Publish Date: 12/2/2025<br />
+                Status: Approved<br />
+                Document Type: Finance law<br />
+                Department: Finance<br />
+                Tag: Q1, Law, AI Chat<br />
+                Signed By: Nguyen van A<br />
+              </div>
+              <div className="text-sm">
+                <b>Summary:</b> Báo cáo tổng quan về tình hình tài chính của công ty trong quý 1 năm 2023, bao gồm doanh thu, chi phí và lợi nhuận.
+              </div>
+            </div>
+          )}
+          {activeTab === "original" && (
+            <div className="rounded-md border border-gray-200 bg-white p-6">
+              <h2 className="mb-4 text-lg font-medium">Báo cáo tài chính Q4 2023</h2>
+              <div className="mb-2 flex flex-wrap gap-2 text-xs text-gray-500">
+                <div className="flex items-center"><User className="mr-1 h-3 w-3" />Nguyễn Văn B</div>
+                <div className="flex items-center"><Calendar className="mr-1 h-3 w-3" />10/11/2023</div>
+                <div className="flex items-center"><Calendar className="mr-1 h-3 w-3" />10/11/2025</div>
+                <div className="flex items-center"><FileText className="mr-1 h-3 w-3" />Reports</div>
+              </div>
+              <div className="mb-2 text-sm">Báo cáo tổng quan về tình hình tài chính của công ty trong quý 1 năm 2023, bao gồm doanh thu, chi phí và lợi nhuận.</div>
+              <div className="flex gap-2">
+                <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs">Tài chính</span>
+                <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs">Q4</span>
+              </div>
+            </div>
+          )}
+          {activeTab === "version" && (
+            <div className="rounded-md border border-gray-200 bg-white p-6">
+              <div className="mb-4">
+                <div className="mb-4 border rounded-md p-4">
+                  <h3 className="mb-2 text-sm font-medium">Báo cáo tài chính Q4 2023</h3>
+                  <div className="mb-2 flex flex-wrap gap-2 text-xs text-gray-500">
+                    <div className="flex items-center"><User className="mr-1 h-3 w-3" />Nguyễn Văn B</div>
+                    <div className="flex items-center"><Calendar className="mr-1 h-3 w-3" />10/11/2023</div>
+                    <div className="flex items-center"><Calendar className="mr-1 h-3 w-3" />10/11/2025</div>
+                    <div className="flex items-center"><FileText className="mr-1 h-3 w-3" />Reports</div>
+                  </div>
+                  <div className="mb-2 text-sm">Báo cáo tổng quan về tình hình tài chính của công ty trong quý 1 năm 2023, bao gồm doanh thu, chi phí và lợi nhuận.</div>
+                  <div className="flex gap-2">
+                    <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs">Tài chính</span>
+                    <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs">Q4</span>
+                  </div>
+                </div>
+                <div className="mb-4 border rounded-md p-4">
+                  <h3 className="mb-2 text-sm font-medium">Báo cáo tài chính Q4 2020</h3>
+                  <div className="mb-2 flex flex-wrap gap-2 text-xs text-gray-500">
+                    <div className="flex items-center"><User className="mr-1 h-3 w-3" />Nguyễn Văn B</div>
+                    <div className="flex items-center"><Calendar className="mr-1 h-3 w-3" />10/11/2023</div>
+                    <div className="flex items-center"><Calendar className="mr-1 h-3 w-3" />10/11/2025</div>
+                    <div className="flex items-center"><FileText className="mr-1 h-3 w-3" />Reports</div>
+                  </div>
+                  <div className="mb-2 text-sm">Báo cáo tổng quan về tình hình tài chính của công ty trong quý 1 năm 2023, bao gồm doanh thu, chi phí và lợi nhuận.</div>
+                  <div className="flex gap-2">
+                    <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs">Tài chính</span>
+                    <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs">Q4</span>
+                  </div>
+                </div>
+                <div className="mb-4 border rounded-md p-4">
+                  <h3 className="mb-2 text-sm font-medium">Báo cáo tài chính Q4 2018</h3>
+                  <div className="mb-2 flex flex-wrap gap-2 text-xs text-gray-500">
+                    <div className="flex items-center"><User className="mr-1 h-3 w-3" />Nguyễn Văn B</div>
+                    <div className="flex items-center"><Calendar className="mr-1 h-3 w-3" />10/11/2023</div>
+                    <div className="flex items-center"><Calendar className="mr-1 h-3 w-3" />10/11/2025</div>
+                    <div className="flex items-center"><FileText className="mr-1 h-3 w-3" />Reports</div>
+                  </div>
+                  <div className="mb-2 text-sm">Báo cáo tổng quan về tình hình tài chính của công ty trong quý 1 năm 2023, bao gồm doanh thu, chi phí và lợi nhuận.</div>
+                  <div className="flex gap-2">
+                    <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs">Tài chính</span>
+                    <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs">Q4</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -242,6 +332,7 @@ export default function DocumentPage() {
           </div>
         </div>
       </main>
+   
     </div>
   )
 }

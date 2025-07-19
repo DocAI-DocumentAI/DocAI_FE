@@ -18,8 +18,17 @@ import UploadDocument from "../components/UploadDocument";
 import EditDocument from "../components/EditDocument";
 import AdminPage from "../pages/admin/adminPage";
 import DocumentPage from "../pages/document/DocumentDetail";
-// Remove the unused Dashboard import
+import Dashboard from "../pages/admin/Dashboard";
 import SearchPage from "../pages/search/SearchPage";
+import DocumentsTable from "../components/documentAdmin/DocumentsTable";
+import ApprovalManagerTable from "../components/edited/ApprovalManagerTable";
+import ViewDraftTable from "../components/edited/ViewDraftTable";
+import ManagerTable from "../components/edited/ManagerTable";
+import EditedLayout from "../components/layout/EditedLayoutLayout";
+import ManagerLayoutLayout from "../components/layout/ManagerLayoutLayout"; 
+import ApprovalQueue from "../pages/manager/ApprovalQueue";
+import DocumentReview from "../pages/manager/DocumentReview";
+import DocumentManagement from "../pages/manager/DocumentManagement";
 
 const PublicRoutes: RouteObject[] = [
   // {
@@ -63,10 +72,6 @@ const PublicRoutes: RouteObject[] = [
     element: <ChatDetail />,
   },
   {
-    path: "/document/up",
-    element: <UploadDocument />,
-  },
-  {
     path: "/document/edit",
     element: <EditDocument />,
   },
@@ -79,6 +84,52 @@ const PublicRoutes: RouteObject[] = [
   {
     path: "/document/:id",
     element: <DocumentPage />,
+  },
+  {
+    path: "/manager",
+    element: <ManagerLayoutLayout />,
+    children: [
+      {
+        path: "document-management",
+        element: <DocumentManagement />,
+
+      },
+      {
+        path: "approvalQueue",
+        element: <ApprovalQueue />,
+      },
+      {
+        path: "document-review",
+        element: <DocumentReview />,
+      },
+
+    ]
+  },
+  {
+    path: "/edited",
+    element: <EditedLayout />,
+    children: [
+      {
+        path: "upload-document",
+        element: <UploadDocument />,
+      },
+      {
+        path: "edit-document",
+        element: <EditDocument />,
+      },
+      {
+        path: "my-document",
+        element: <ManagerTable />,
+      },
+      {
+        path: "approval-manager",
+        element: <ApprovalManagerTable />,
+      },
+      {
+        path: "view-draft",
+        element: <ViewDraftTable />,
+      },
+    ],
   },
   {
     path: "/settings",
@@ -112,6 +163,7 @@ const PublicRoutes: RouteObject[] = [
         path: "security",
         element: <SecuritySettings />,
       },
+
       {
         path: "*",
         element: <div>404</div>,
