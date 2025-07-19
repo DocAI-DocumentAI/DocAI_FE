@@ -86,7 +86,7 @@ const ViewDraftTable = () => {
       render: (_: any, record: any) => (
         <Space>
           <Button type="link">Chỉnh sửa</Button>
-          <Button type="link" onClick={() => navigate(`/view-draft/${record.documentId}/${record.versionId}`)}>Xem</Button>
+          <Button type="link" onClick={() => navigate(`/editor/view-draft/${record.documentId}/${record.versionId}`)}>Xem</Button>
         </Space>
       ),
     },

@@ -71,11 +71,17 @@ export default function UploadDocument({ onViewChange }: any) {
 
   const handleSubmit = async (values: any) => {
     // Map các trường form sang đúng tên API
+    const userStr = localStorage.getItem("user");
+    if (!userStr) {
+      toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
+      return;
+    }
+    const users = JSON.parse(userStr);
     const formValues = {
       versionName: values.versionName || "",
       summary: values.summary || "",
       replacementDocumentId: values.replacementDocumentId || "",
-      departmentId: values.department || "", // <-- map for DepartmentId
+      departmentId: users?.department?.id, // <-- map for DepartmentId
       effectiveFrom: values.effectiveFrom ? values.effectiveFrom.toISOString() : "",
       signedBy: values.signedBy || "",
       effectiveUntil: values.effectiveTo ? values.effectiveTo.toISOString() : "",
@@ -254,22 +260,7 @@ export default function UploadDocument({ onViewChange }: any) {
                       <Select.Option value="manual">Manual</Select.Option>
                     </Select>
                   </Form.Item>
-                </Col>
-                <Col xs={24} sm={12}>
-                  <Form.Item
-                    name="department"
-                    label="Department"
-                    rules={[{ required: true, message: "Please select department" }]}
-                  >
-                    <Select placeholder="Select department">
-                      <Select.Option value="engineering">Engineering</Select.Option>
-                      <Select.Option value="design">Design</Select.Option>
-                      <Select.Option value="product">Product</Select.Option>
-                      <Select.Option value="marketing">Marketing</Select.Option>
-                      <Select.Option value="hr">Human Resources</Select.Option>
-                    </Select>
-                  </Form.Item>
-                </Col>
+                </Col> 
               </Row>
 
               <Row gutter={16}>

@@ -5,9 +5,9 @@ import { ArrowLeft, User, Calendar, FileText, Eye, Download, Bookmark } from "lu
 import { useParams } from "react-router-dom"
 import { Navbar } from "../../components/layout/navbar"
 import { Link } from "react-router-dom"
-import ManagerTable from "../../components/edited/ManagerTable";
-import ApprovalManagerTable from "../../components/edited/ApprovalManagerTable";
-import ViewDraftTable from "../../components/edited/ViewDraftTable";
+import ManagerTable from "../editor/ManagerTable";
+import ApprovalManagerTable from "../editor/ApprovalManagerTable";
+import ViewDraftTable from "../editor/ViewDraftTable";
 
 export default function DocumentPage() {
   const { id } = useParams()

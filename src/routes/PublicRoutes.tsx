@@ -21,14 +21,15 @@ import DocumentPage from "../pages/document/DocumentDetail";
 import Dashboard from "../pages/admin/Dashboard";
 import SearchPage from "../pages/search/SearchPage";
 import DocumentsTable from "../components/documentAdmin/DocumentsTable";
-import ApprovalManagerTable from "../components/edited/ApprovalManagerTable";
-import ViewDraftTable from "../components/edited/ViewDraftTable";
-import ManagerTable from "../components/edited/ManagerTable";
+import ApprovalManagerTable from "../pages/editor/ApprovalManagerTable";
+import ViewDraftTable from "../pages/editor/ViewDraftTable";
+import ManagerTable from "../pages/editor/ManagerTable";
 import EditedLayout from "../components/layout/EditedLayoutLayout";
 import ManagerLayoutLayout from "../components/layout/ManagerLayoutLayout"; 
 import ApprovalQueue from "../pages/manager/ApprovalQueue";
 import DocumentReview from "../pages/manager/DocumentReview";
 import DocumentManagement from "../pages/manager/DocumentManagement";
+import DocumentDetail from "../pages/editor/DocumentDetail";
 
 const PublicRoutes: RouteObject[] = [
   // {
@@ -106,7 +107,7 @@ const PublicRoutes: RouteObject[] = [
     ]
   },
   {
-    path: "/edited",
+    path: "/editor",
     element: <EditedLayout />,
     children: [
       {
@@ -128,6 +129,10 @@ const PublicRoutes: RouteObject[] = [
       {
         path: "view-draft",
         element: <ViewDraftTable />,
+      },
+      {
+        path: "view-draft/:id/:versionId",
+        element: <DocumentDetail />,
       },
     ],
   },

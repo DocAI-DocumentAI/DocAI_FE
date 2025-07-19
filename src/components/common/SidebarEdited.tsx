@@ -13,31 +13,31 @@ const SIDEBAR_ITEMS: {
     name: "Upload Document",
     icon: Upload,
     color: "#6366f1",
-    href: "/edited/upload-document",
+    href: "/editor/upload-document",
   },
   {
     name: "Approval Manager",
     icon: FileText,
     color: "#8B5CF6",
-    href: "/edited/approval-manager",
+    href: "/editor/approval-manager",
   }, 
   {
     name: "View Draft",
     icon: FileText,
     color: "#10B981",
-    href: "/edited/view-draft",
+    href: "/editor/view-draft",
   },
   {
     name: "My Document",
     icon: FileText,
     color: "#6366f1",
-    href: "/edited/my-document",
+    href: "/editor/my-document",
   },
   {
     name: "Settings",
     icon: Settings,
     color: "#6EE7B7",
-    href: "/edited/settings",
+    href: "/editor/settings",
   },
 ];
 
