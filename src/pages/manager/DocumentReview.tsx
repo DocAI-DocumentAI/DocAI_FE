@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { Layout, Typography, Card, Button, Input, Space, Tag, Alert, Row, Col } from "antd"
+import { useState, useEffect } from "react"
+import { useParams, useNavigate } from "react-router-dom"
+import { Layout, Typography, Card, Button, Input, Space, Tag, Alert, Row, Col, Spin } from "antd"
 import {
     ArrowLeftOutlined,
     FileTextOutlined,
@@ -10,44 +11,70 @@ import {
     CheckOutlined,
     CloseOutlined,
 } from "@ant-design/icons"
+import { api } from "../../lib/api/api";
+import toast from 'react-hot-toast';
 
 const { Title, Text, Paragraph } = Typography
 const { Content } = Layout
 const { TextArea } = Input
 
-const document: any =
-{
-    id: "1",
-    title: "Design System Guidelines",
-    department: "Design",
-    editor: "Michael Chen",
-    submitted: "7/8/2025",
-    version: "v1",
-    status: "Pending Approval",
-    content: "Updated design system with new components and patterns",
-    description: "Our design system provides a comprehensive set of guidelines...",
-}
-export default function DocumentReview({  onViewChange, mode }: any) {
-    const [rejectionComments, setRejectionComments] = useState("")
+export default function DocumentReview({ onViewChange, mode }: any) {
+    const { id, versionId } = useParams();
+    const navigate = useNavigate();
+    const [document, setDocument] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [rejectionComments, setRejectionComments] = useState("");
+    const [submitting, setSubmitting] = useState(false);
 
-    if (!document) {
-        return <div>No document selected</div>
-    }
+    useEffect(() => {
+        const fetchDocument = async () => {
+            setLoading(true);
+            try {
+                const res = await api.get(`/document/documents/${id}/versions/${versionId}`);
+                setDocument(res.data.data);
+            } catch (error: any) {
+                toast.error(`Không thể tải chi tiết tài liệu: ${error?.response?.data?.message || error.message}`);
+                setDocument(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+        if (id && versionId) fetchDocument();
+    }, [id, versionId]);
 
-    const handleApprove = () => {
-        // Handle approval logic
-        onViewChange("queue")
-    }
-
-    const handleReject = () => {
-        if (mode === "approve") {
-            // Switch to reject mode
-            onViewChange("reject-review")
-        } else {
-            // Confirm rejection
-            onViewChange("queue")
+    const handleReview = async (isApproved: boolean) => {
+        if (!document?.id) {
+            toast.error("Không tìm thấy versionId!");
+            return;
         }
-    }
+        const userStr = localStorage.getItem("user");
+        if (!userStr) {
+            toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
+            return;
+        }
+        const user = JSON.parse(userStr);
+        setSubmitting(true);
+        try {
+            await api.post(`/document/review/${document.id}?userId=${user.userId}`, {
+                isApproved,
+                comments: rejectionComments
+            });
+            toast.success(isApproved ? "Duyệt tài liệu thành công!" : "Từ chối tài liệu thành công!");
+            onViewChange ? onViewChange("queue") : navigate(-1);
+        } catch (error: any) {
+            toast.error(`Gửi kết quả duyệt thất bại: ${error?.response?.data?.message || error.message}`);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    if (loading) return <Spin style={{ margin: 40 }} />;
+    if (!document) return <div>No document selected</div>;
+
+    const formatDate = (dateStr: string) => {
+        if (!dateStr || dateStr.startsWith('0001-01-01')) return '';
+        return new Date(dateStr).toLocaleString();
+    };
 
     return (
         <Layout style={{ minHeight: "100vh", backgroundColor: "#f5f5f5" }}>
@@ -58,7 +85,7 @@ export default function DocumentReview({  onViewChange, mode }: any) {
                         <Button
                             type="text"
                             icon={<ArrowLeftOutlined />}
-                            onClick={() => onViewChange("queue")}
+                            onClick={() => onViewChange ? onViewChange("queue") : navigate(-1)}
                             style={{ marginBottom: 16 }}
                         >
                             Back to Approval Queue
@@ -94,7 +121,7 @@ export default function DocumentReview({  onViewChange, mode }: any) {
                                             <Text strong>Editor</Text>
                                             <div style={{ display: "flex", alignItems: "center", marginTop: 4 }}>
                                                 <UserOutlined style={{ marginRight: 4, color: "#666" }} />
-                                                <Text>{document.editor}</Text>
+                                                <Text>{document.editor || document.signedBy || document.ownerId}</Text>
                                             </div>
                                         </div>
                                     </Col>
@@ -102,7 +129,7 @@ export default function DocumentReview({  onViewChange, mode }: any) {
                                         <div>
                                             <Text strong>Department</Text>
                                             <div style={{ marginTop: 4 }}>
-                                                <Tag color="blue">{document.department}</Tag>
+                                                <Tag color="blue">{document.departmentName || document.departmentId}</Tag>
                                             </div>
                                         </div>
                                     </Col>
@@ -114,7 +141,7 @@ export default function DocumentReview({  onViewChange, mode }: any) {
                                             <Text strong>Submitted</Text>
                                             <div style={{ display: "flex", alignItems: "center", marginTop: 4 }}>
                                                 <CalendarOutlined style={{ marginRight: 4, color: "#666" }} />
-                                                <Text>{document.submitted}, 12:54:26 PM</Text>
+                                                <Text>{formatDate(document.lastSubmitted)}</Text>
                                             </div>
                                         </div>
                                     </Col>
@@ -122,7 +149,7 @@ export default function DocumentReview({  onViewChange, mode }: any) {
                                         <div>
                                             <Text strong>Version</Text>
                                             <div style={{ marginTop: 4 }}>
-                                                <Text>{document.version}</Text>
+                                                <Text>{document.versionName}</Text>
                                             </div>
                                         </div>
                                     </Col>
@@ -152,10 +179,10 @@ export default function DocumentReview({  onViewChange, mode }: any) {
 
                                 {mode === "approve" ? (
                                     <Space direction="vertical" style={{ width: "100%" }}>
-                                        <Button type="primary" icon={<CheckOutlined />} block size="large" onClick={handleApprove}>
+                                        <Button type="primary" icon={<CheckOutlined />} block size="large" loading={submitting} onClick={() => handleReview(true)}>
                                             Approve Document
                                         </Button>
-                                        <Button danger icon={<CloseOutlined />} block size="large" onClick={handleReject}>
+                                        <Button danger icon={<CloseOutlined />} block size="large" loading={submitting} onClick={() => handleReview(false)}>
                                             Reject Document
                                         </Button>
                                     </Space>
@@ -173,7 +200,7 @@ export default function DocumentReview({  onViewChange, mode }: any) {
                                                 style={{ marginTop: 8 }}
                                             />
                                             <Text type="secondary" style={{ fontSize: "12px" }}>
-                                                0/10 characters minimum
+                                                {rejectionComments.length}/10 characters minimum
                                             </Text>
                                         </div>
                                         <Button
@@ -181,19 +208,19 @@ export default function DocumentReview({  onViewChange, mode }: any) {
                                             icon={<CheckOutlined />}
                                             block
                                             size="large"
-                                            onClick={handleReject}
+                                            loading={submitting}
+                                            onClick={() => handleReview(false)}
                                             disabled={rejectionComments.length < 10}
                                         >
                                             Confirm Rejection
                                         </Button>
-                                        <Button block onClick={() => onViewChange("review")}>
+                                        <Button block onClick={() => onViewChange ? onViewChange("review") : navigate(-1)}>
                                             Cancel
                                         </Button>
                                     </Space>
                                 )}
                             </Card>
 
-                            {/* Review Guidelines */}
                             <Card style={{ marginTop: 16 }}>
                                 <Title level={5} style={{ marginBottom: 12 }}>
                                     Review Guidelines

@@ -100,7 +100,7 @@ const PublicRoutes: RouteObject[] = [
         element: <ApprovalQueue />,
       },
       {
-        path: "document-review",
+        path: "document-review/:id/:versionId",
         element: <DocumentReview />,
       },
 

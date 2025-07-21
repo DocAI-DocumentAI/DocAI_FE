@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Layout, Typography, Card, Button, Table, Tag, Badge, Row, Col, Tabs } from "antd"
 import {
   ClockCircleOutlined,
@@ -9,49 +10,51 @@ import {
   UserOutlined,
   CalendarOutlined,
 } from "@ant-design/icons" 
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { getApprovalQueue } from "../../lib/api/document"
+import toast from 'react-hot-toast'
 
 const { Title, Text } = Typography
 const { Content } = Layout
 
  
-const mockDocuments: any = [
-  {
-    id: "1",
-    title: "Design System Guidelines",
-    department: "Design",
-    editor: "Michael Chen",
-    submitted: "7/8/2025",
-    version: "v1",
-    status: "Pending Approval",
-    content: "Updated design system with new components and patterns",
-    description: "Our design system provides a comprehensive set of guidelines...",
-  },
-  {
-    id: "2",
-    title: "API Documentation v2.1",
-    department: "Engineering",
-    editor: "John Smith",
-    submitted: "7/9/2025",
-    version: "v1",
-    status: "Pending Approval",
-    content: "Updated REST API documentation with new endpoints",
-    description: "This document outlines the REST API endpoints for our application...",
-  },
-  {
-    id: "3",
-    title: "Product Requirements Document",
-    department: "Product",
-    editor: "Emily Davis",
-    submitted: "7/10/2025",
-    version: "v2",
-    status: "Pending Approval",
-    content: "Requirements for the new user dashboard feature",
-    description: "Requirements for the new user dashboard feature",
-  },
-]
-
 export default function ApprovalQueue({ onViewChange }: any) {
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const userStr = localStorage.getItem("user");
+        if (!userStr) {
+          toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
+          return;
+        }
+        const user = JSON.parse(userStr);
+        const departmentId = user?.department?.id;
+        if (!departmentId) {
+          toast.error("Không tìm thấy departmentId!");
+          return;
+        }
+        const res = await getApprovalQueue(departmentId, page, pageSize);
+        setDocuments(res.items || []);
+        setTotal(res.total || 0);
+      } catch (error: any) {
+        toast.error(`Lỗi khi tải dữ liệu: ${error?.response?.data?.message || error.message}`);
+        setDocuments([]);
+        setTotal(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [page, pageSize]);
+
   const columns = [
     {
       title: "Document",
@@ -70,8 +73,8 @@ export default function ApprovalQueue({ onViewChange }: any) {
     },
     {
       title: "Department",
-      dataIndex: "department",
-      key: "department",
+      dataIndex: "departmentName",
+      key: "departmentName",
       render: (dept: string) => <Tag color="blue">{dept}</Tag>,
     },
     {
@@ -95,16 +98,13 @@ export default function ApprovalQueue({ onViewChange }: any) {
             <CalendarOutlined style={{ marginRight: 4, color: "#666" }} />
             <Text>{date}</Text>
           </div>
-          <Text type="secondary" style={{ fontSize: "12px" }}>
-            3 days ago
-          </Text>
         </div>
       ),
     },
     {
       title: "Version",
-      dataIndex: "version",
-      key: "version",
+      dataIndex: "versionName",
+      key: "versionName",
     },
     {
       title: "Status",
@@ -115,15 +115,18 @@ export default function ApprovalQueue({ onViewChange }: any) {
     {
       title: "Actions",
       key: "actions",
-      render: (record: Document) => (
-        <Link to="/manager/document-review">
-            <Button type="primary" size="small" onClick={() => onViewChange("review", record)}>
-              Review
-            </Button>
-        </Link>
+      render: (record: any) => (
+        <Button type="primary" size="small" onClick={() => navigate(`/manager/document-review/${record.id}/${record.versionId}`)}>
+          Review
+        </Button>
       ),
     },
   ]
+
+  // Đếm số lượng trạng thái
+  const pendingCount = documents.filter(doc => doc.status === 'Pending Approval' || doc.status === 'Pending').length;
+  const approvedCount = documents.filter(doc => doc.status === 'Approved').length;
+  const rejectedCount = documents.filter(doc => doc.status === 'Rejected').length;
 
   return (
     <Layout style={{ minHeight: "100vh", backgroundColor: "#f5f5f5" }}>
@@ -136,7 +139,7 @@ export default function ApprovalQueue({ onViewChange }: any) {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <div>
                     <Text type="secondary">Pending Approval</Text>
-                    <div style={{ fontSize: "24px", fontWeight: "bold", margin: "8px 0" }}>3</div>
+                    <div style={{ fontSize: "24px", fontWeight: "bold", margin: "8px 0" }}>{pendingCount}</div>
                     <Text type="secondary" style={{ fontSize: "12px" }}>
                       Awaiting your review
                     </Text>
@@ -150,7 +153,7 @@ export default function ApprovalQueue({ onViewChange }: any) {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <div>
                     <Text type="secondary">Approved</Text>
-                    <div style={{ fontSize: "24px", fontWeight: "bold", margin: "8px 0" }}>1</div>
+                    <div style={{ fontSize: "24px", fontWeight: "bold", margin: "8px 0" }}>{approvedCount}</div>
                     <Text type="secondary" style={{ fontSize: "12px" }}>
                       Documents approved
                     </Text>
@@ -164,7 +167,7 @@ export default function ApprovalQueue({ onViewChange }: any) {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <div>
                     <Text type="secondary">Rejected</Text>
-                    <div style={{ fontSize: "24px", fontWeight: "bold", margin: "8px 0" }}>1</div>
+                    <div style={{ fontSize: "24px", fontWeight: "bold", margin: "8px 0" }}>{rejectedCount}</div>
                     <Text type="secondary" style={{ fontSize: "12px" }}>
                       Sent back for revision
                     </Text>
@@ -178,7 +181,7 @@ export default function ApprovalQueue({ onViewChange }: any) {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <div>
                     <Text type="secondary">Total Documents</Text>
-                    <div style={{ fontSize: "24px", fontWeight: "bold", margin: "8px 0" }}>5</div>
+                    <div style={{ fontSize: "24px", fontWeight: "bold", margin: "8px 0" }}>{total}</div>
                     <Text type="secondary" style={{ fontSize: "12px" }}>
                       In the system
                     </Text>
@@ -197,18 +200,30 @@ export default function ApprovalQueue({ onViewChange }: any) {
                 key: "1",
                 label: (
                   <span>
-                    Approval Queue <Badge count={3} size="small" />
+                    Approval Queue <Badge count={pendingCount} size="small" />
                   </span>
                 ),
                 children: (
                   <Card>
                     <div style={{ marginBottom: 16 }}>
                       <Title level={4} style={{ margin: 0, marginBottom: 8 }}>
-                        Approval Queue <Badge count={3} />
+                        Approval Queue <Badge count={pendingCount} />
                       </Title>
                       <Text type="secondary">Documents awaiting your approval (sorted by oldest first)</Text>
                     </div>
-                    <Table columns={columns} dataSource={mockDocuments} pagination={false} />
+                    <Table 
+                      columns={columns} 
+                      dataSource={documents} 
+                      loading={loading} 
+                      pagination={{
+                        total,
+                        pageSize,
+                        current: page,
+                        showSizeChanger: true,
+                        onChange: (p, ps) => { setPage(p); setPageSize(ps); },
+                        showTotal: (t, range) => `${range[0]}-${range[1]} of ${t} documents`,
+                      }}
+                    />
                   </Card>
                 ),
               },

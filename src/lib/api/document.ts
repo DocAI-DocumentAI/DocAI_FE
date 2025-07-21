@@ -42,3 +42,8 @@ export const getMyDocuments = async (userId: string, pageNumber = 1, pageSize = 
   return response.data.data;
 };
 
+export const getApprovalQueue = async (departmentId: string, pageNumber = 1, pageSize = 10) => {
+  const response = await api.get(`/document/approval-queue/${departmentId}?pageNumber=${pageNumber}&pageSize=${pageSize}`);
+  return response.data.data;
+};
+
