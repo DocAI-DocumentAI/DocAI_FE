@@ -2,17 +2,13 @@
 
 import { Layout, Typography, Card, Button, Input, Select, DatePicker, Upload, Form, Row, Col, Space, Spin } from "antd"
 import { ArrowLeftOutlined, UploadOutlined, InboxOutlined } from "@ant-design/icons"
-import { uploadDraftDocument, analyzeDocument } from "../lib/api/document";
-import { useSelector } from "react-redux";
-import { RootState } from "../store";
-import { useState } from "react";
-import React from "react";
+import { uploadDraftDocument, analyzeDocument } from "../lib/api/document"; 
+import { useState } from "react"; 
 import WysiwygEditor from 'react-simple-wysiwyg';
 import toast from 'react-hot-toast';
 
 const { Title, Text } = Typography
-const { Content } = Layout
-const { TextArea } = Input
+const { Content } = Layout 
 const { Dragger } = Upload
 
 // Custom CSS for Wysiwyg editor

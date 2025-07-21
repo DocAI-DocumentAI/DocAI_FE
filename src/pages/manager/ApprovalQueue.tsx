@@ -10,7 +10,7 @@ import {
   UserOutlined,
   CalendarOutlined,
 } from "@ant-design/icons" 
-import { Link, useNavigate } from "react-router-dom"
+import {  useNavigate } from "react-router-dom"
 import { getApprovalQueue } from "../../lib/api/document"
 import toast from 'react-hot-toast'
 
@@ -18,7 +18,7 @@ const { Title, Text } = Typography
 const { Content } = Layout
 
  
-export default function ApprovalQueue({ onViewChange }: any) {
+export default function ApprovalQueue() {
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);

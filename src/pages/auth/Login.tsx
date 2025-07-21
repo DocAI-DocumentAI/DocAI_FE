@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContainer } from "../../components/auth-container";
 import LayoutAuth from "../../components/layout/LayoutAuth";
-import { useForm, FieldError } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { authApi } from "../../lib/api/auth";
 
 export default function Login() {

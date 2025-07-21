@@ -1,5 +1,4 @@
-import { Outlet } from "react-router-dom";
-import SidebarEdited from "../common/SidebarEdited";
+import { Outlet } from "react-router-dom"; 
 import SidebarManager from "../common/SidebarManager";
 
 function ManagerLayoutLayout() {

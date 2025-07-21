@@ -114,7 +114,7 @@ export default function DocumentManagement() {
     {
       title: "Actions",
       key: "actions",
-      render: (record: Document) => (
+      render: () => (
         <Space>
           <Tooltip title="Edit">
             <Button type="text" icon={<EditOutlined />} size="small" />

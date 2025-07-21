@@ -2,28 +2,24 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { Layout, Typography, Card, Button, Input, Space, Tag, Alert, Row, Col, Spin } from "antd"
+import { Layout, Typography, Card, Button, Tag,  Row, Col, Spin } from "antd"
 import {
     ArrowLeftOutlined,
     FileTextOutlined,
     UserOutlined,
-    CalendarOutlined,
-    CheckOutlined,
-    CloseOutlined,
+    CalendarOutlined, 
 } from "@ant-design/icons"
 import { api } from "../../lib/api/api";
 import toast from 'react-hot-toast';
 
 const { Title, Text, Paragraph } = Typography
-const { Content } = Layout
-const { TextArea } = Input
+const { Content } = Layout 
 
-export default function DocumentDetail({ onViewChange, mode }: any) {
+export default function DocumentDetail({ onViewChange,  }: any) {
     const { id, versionId } = useParams();
     const navigate = useNavigate();
     const [document, setDocument] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-    const [rejectionComments, setRejectionComments] = useState("");
+    const [loading, setLoading] = useState(true); 
 
     useEffect(() => {
         const fetchDocument = async () => {
@@ -49,21 +45,7 @@ export default function DocumentDetail({ onViewChange, mode }: any) {
         return new Date(dateStr).toLocaleString();
     };
 
-    const handleApprove = () => {
-        // Handle approval logic
-        onViewChange ? onViewChange("queue") : navigate(-1);
-    }
-
-    const handleReject = () => {
-        if (mode === "approve") {
-            // Switch to reject mode
-            onViewChange ? onViewChange("reject-review") : navigate(-1);
-        } else {
-            // Confirm rejection
-            onViewChange ? onViewChange("queue") : navigate(-1);
-        }
-    }
-
+ 
     const handleSubmitForApproval = async () => {
         if (!document?.id) {
             toast.error("Không tìm thấy versionId!");

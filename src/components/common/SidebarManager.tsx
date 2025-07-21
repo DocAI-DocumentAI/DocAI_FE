@@ -1,4 +1,4 @@
-import { BarChart2, Menu, Settings, Bell, Users, FileText, Upload } from "lucide-react";
+import {  Menu, Settings,  FileText, Upload } from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "react-router-dom";

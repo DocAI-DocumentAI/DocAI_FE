@@ -4,10 +4,7 @@ import { useState } from "react"
 import { ArrowLeft, User, Calendar, FileText, Eye, Download, Bookmark } from "lucide-react"
 import { useParams } from "react-router-dom"
 import { Navbar } from "../../components/layout/navbar"
-import { Link } from "react-router-dom"
-import ManagerTable from "../editor/ManagerTable";
-import ApprovalManagerTable from "../editor/ApprovalManagerTable";
-import ViewDraftTable from "../editor/ViewDraftTable";
+import { Link } from "react-router-dom" 
 
 export default function DocumentPage() {
   const { id } = useParams()
