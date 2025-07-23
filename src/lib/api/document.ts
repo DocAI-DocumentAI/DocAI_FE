@@ -47,3 +47,37 @@ export const getApprovalQueue = async (departmentId: string, pageNumber = 1, pag
   return response.data.data;
 };
 
+export interface SemanticSearchParams {
+  Query?: string;
+  Tags?: string[];
+  EffectiveFrom?: string;
+  EffectiveUntil?: string;
+  userId?: string;
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+export const semanticSearchDocuments = async (params: SemanticSearchParams) => {
+  const {
+    Query = '',
+    Tags = [],
+    EffectiveFrom,
+    EffectiveUntil,
+    userId = '',
+    pageNumber = 1,
+    pageSize = 10,
+  } = params;
+
+  const searchParams = new URLSearchParams();
+  if (Query) searchParams.append('Query', Query);
+  if (Tags && Tags.length > 0) Tags.forEach(tag => searchParams.append('Tags', tag));
+  if (EffectiveFrom) searchParams.append('EffectiveFrom', EffectiveFrom);
+  if (EffectiveUntil) searchParams.append('EffectiveUntil', EffectiveUntil);
+  if (userId) searchParams.append('userId', userId);
+  if (pageNumber) searchParams.append('pageNumber', String(pageNumber));
+  if (pageSize) searchParams.append('pageSize', String(pageSize));
+
+  const response = await api.get(`/document/semantic-search?${searchParams.toString()}`);
+  return response.data;
+};
+

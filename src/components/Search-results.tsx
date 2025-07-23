@@ -25,34 +25,21 @@ export function SearchResults({ results }: SearchResultsProps) {
             key={result.id}
             to={`/document/${result.id}`}
             className="block p-6 transition-shadow bg-white border border-gray-200 rounded-lg hover:shadow-md"
+            style={{ textDecoration: 'none', color: 'inherit' }}
           >
-            <h3 className="mb-3 text-xl font-medium">{result.title}</h3>
-            <div className="flex flex-wrap gap-6 mb-3 text-sm text-gray-500">
-              <div className="flex items-center">
-                <User className="w-4 h-4 mr-2" />
-                {result.author}
-              </div>
-              <div className="flex items-center">
-                <Calendar className="w-4 h-4 mr-2" />
-                {result.createdDate}
-              </div>
-              <div className="flex items-center">
-                <Calendar className="w-4 h-4 mr-2" />
-                {result.updatedDate}
-              </div>
-              <div className="flex items-center">
-                <FileText className="w-4 h-4 mr-2" />
-                {result.type}
-              </div>
+            <h3 className="mb-2 text-xl font-medium">{result.title}</h3>
+            <div className="mb-2 text-gray-700">{result.description}</div>
+            <div className="mb-2 text-sm text-gray-500 flex flex-wrap gap-4">
+              <span><b>Document Name:</b> {result.documentName}</span>
+              <span><b>Department:</b> {result.departmentName}</span>
+              <span><b>Status:</b> {result.status}</span>
             </div>
-            <p className="mb-3 text-gray-700">{result.description}</p>
-            <div className="flex gap-2">
-              <span className="px-3 py-1 text-sm bg-gray-100 rounded-full">
-                {result.category}
-              </span>
-              <span className="px-3 py-1 text-sm bg-gray-100 rounded-full">
-                {result.quarter}
-              </span>
+            <div className="mb-2 text-sm text-gray-500 flex flex-wrap gap-4">
+              <span><b>Created By:</b> {result.createdByName}</span>
+              <span><b>Created Time:</b> {result.createdTime && new Date(result.createdTime).toLocaleString()}</span>
+            </div>
+            <div className="mb-2 text-sm text-gray-500 flex flex-wrap gap-4">
+              <span><b>Tags:</b> {Array.isArray(result.tags) ? result.tags.join(', ') : ''}</span>
             </div>
           </Link>
         ))}

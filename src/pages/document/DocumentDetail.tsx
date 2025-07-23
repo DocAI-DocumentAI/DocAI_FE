@@ -1,16 +1,28 @@
 "use client"
 
-import { useState } from "react" 
+import { useState, useEffect } from "react" 
 import { ArrowLeft, User, Calendar, FileText, Eye, Download, Bookmark } from "lucide-react"
 import { useParams } from "react-router-dom"
 import { Navbar } from "../../components/layout/navbar"
 import { Link } from "react-router-dom" 
+import { api } from "../../lib/api/api";
 
 export default function DocumentPage() {
   const { id } = useParams()
   const [activeTab, setActiveTab] = useState<
     "content" | "information" | "summary" | "original" | "version"
   >("content")
+  const [versions, setVersions] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!id) return;
+    api.get(`/document/documents/${id}/versions`).then(res => {
+      setVersions(res.data.data || []);
+    });
+  }, [id]);
+
+  // Use the first version as the main document for all tabs except Version
+  const mainDoc = versions[0] || {};
 
   // Mock document data
   const document = {
@@ -118,32 +130,32 @@ export default function DocumentPage() {
             </div>
           </div>
 
-          <h1 className="mb-4 text-2xl font-bold">{document.title}</h1>
+          <h1 className="mb-4 text-2xl font-bold">{mainDoc.title || 'Chưa có'}</h1>
 
           <div className="mb-4 flex flex-wrap gap-4 text-sm text-gray-500">
             <div className="flex items-center">
               <User className="mr-1 h-4 w-4" />
-              {document.author}
+              {mainDoc.author || mainDoc.createdByName || 'Chưa có'}
             </div>
             <div className="flex items-center">
               <Calendar className="mr-1 h-4 w-4" />
-              {document.createdDate}
+              {mainDoc.createdTime ? new Date(mainDoc.createdTime).toLocaleString() : 'Chưa có'}
             </div>
             <div className="flex items-center">
               <Calendar className="mr-1 h-4 w-4" />
-              {document.updatedDate}
+              {mainDoc.lastUpdatedTime ? new Date(mainDoc.lastUpdatedTime).toLocaleString() : 'Chưa có'}
             </div>
             <div className="flex items-center">
               <FileText className="mr-1 h-4 w-4" />
-              {document.type}
+              {mainDoc.fileType || 'Chưa có'}
             </div>
             <div className="flex items-center">
               <Eye className="mr-1 h-4 w-4" />
-              {document.views}
+              {mainDoc.views || 'Chưa có'}
             </div>
             <div className="flex items-center">
               <Download className="mr-1 h-4 w-4" />
-              {document.downloads}
+              {mainDoc.downloads || 'Chưa có'}
             </div>
           </div>
 
@@ -179,7 +191,7 @@ export default function DocumentPage() {
               </div>
               <div
                 className="prose max-w-none rounded-md border border-gray-200 bg-white p-6"
-                dangerouslySetInnerHTML={{ __html: document.content }}
+                dangerouslySetInnerHTML={{ __html: mainDoc.content || mainDoc.description || 'Chưa có' }}
               />
             </div>
           )}
@@ -189,23 +201,23 @@ export default function DocumentPage() {
               <div className="space-y-2">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="text-sm font-medium">Author:</div>
-                  <div className="text-sm">{document.author}</div>
+                  <div className="text-sm">{mainDoc.author || mainDoc.createdByName || 'Chưa có'}</div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="text-sm font-medium">Size:</div>
-                  <div className="text-sm">{document.size}</div>
+                  <div className="text-sm">{mainDoc.fileSize || 'Chưa có'}</div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="text-sm font-medium">Downloads:</div>
-                  <div className="text-sm">{document.downloads}</div>
+                  <div className="text-sm">{mainDoc.downloads || 'Chưa có'}</div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="text-sm font-medium">Views:</div>
-                  <div className="text-sm">{document.views}</div>
+                  <div className="text-sm">{mainDoc.views || 'Chưa có'}</div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="text-sm font-medium">Type of document:</div>
-                  <div className="text-sm">{document.type}</div>
+                  <div className="text-sm">{mainDoc.fileType || 'Chưa có'}</div>
                 </div>
               </div>
             </div>
@@ -214,83 +226,74 @@ export default function DocumentPage() {
             <div className="rounded-md border border-gray-200 bg-white p-6">
               <h2 className="mb-4 text-lg font-medium">Summary</h2>
               <div className="mb-2 text-sm">
-                Author: Nguyễn Văn B<br />
-                Size: 12MB<br />
-                version: 12123NHV<br />
-                Expiration Date: 12/2/2034<br />
-                Publish Date: 12/2/2025<br />
-                Status: Approved<br />
-                Document Type: Finance law<br />
-                Department: Finance<br />
-                Tag: Q1, Law, AI Chat<br />
-                Signed By: Nguyen van A<br />
+                Author: {mainDoc.author || mainDoc.createdByName || 'Chưa có'}<br />
+                Size: {mainDoc.fileSize || 'Chưa có'}<br />
+                Version: {mainDoc.versionName || mainDoc.versionId || 'Chưa có'}<br />
+                Expiration Date: {mainDoc.effectiveUntil ? new Date(mainDoc.effectiveUntil).toLocaleDateString() : 'Chưa có'}<br />
+                Publish Date: {mainDoc.createdTime ? new Date(mainDoc.createdTime).toLocaleDateString() : 'Chưa có'}<br />
+                Status: {mainDoc.status || 'Chưa có'}<br />
+                Document Type: {mainDoc.fileType || 'Chưa có'}<br />
+                Department: {mainDoc.departmentId || 'Chưa có'}<br />
+                Tag: {Array.isArray(mainDoc.tags) && mainDoc.tags.length > 0 ? mainDoc.tags.join(', ') : 'Chưa có'}<br />
+                Signed By: {mainDoc.signedBy || 'Chưa có'}<br />
               </div>
-              <div className="text-sm">
-                <b>Summary:</b> Báo cáo tổng quan về tình hình tài chính của công ty trong quý 1 năm 2023, bao gồm doanh thu, chi phí và lợi nhuận.
-              </div>
+              <div className="text-sm" dangerouslySetInnerHTML={{ __html: `<b>Summary:</b> ${mainDoc.summary || 'Chưa có'}` }} />
             </div>
           )}
           {activeTab === "original" && (
             <div className="rounded-md border border-gray-200 bg-white p-6">
-              <h2 className="mb-4 text-lg font-medium">Báo cáo tài chính Q4 2023</h2>
+              <h2 className="mb-4 text-lg font-medium">{mainDoc.title || 'Chưa có'}</h2>
               <div className="mb-2 flex flex-wrap gap-2 text-xs text-gray-500">
-                <div className="flex items-center"><User className="mr-1 h-3 w-3" />Nguyễn Văn B</div>
-                <div className="flex items-center"><Calendar className="mr-1 h-3 w-3" />10/11/2023</div>
-                <div className="flex items-center"><Calendar className="mr-1 h-3 w-3" />10/11/2025</div>
-                <div className="flex items-center"><FileText className="mr-1 h-3 w-3" />Reports</div>
+                <div className="flex items-center"><User className="mr-1 h-3 w-3" />{mainDoc.author || mainDoc.createdByName || 'Chưa có'}</div>
+                <div className="flex items-center"><Calendar className="mr-1 h-3 w-3" />{mainDoc.createdTime ? new Date(mainDoc.createdTime).toLocaleDateString() : 'Chưa có'}</div>
+                <div className="flex items-center"><Calendar className="mr-1 h-3 w-3" />{mainDoc.lastUpdatedTime ? new Date(mainDoc.lastUpdatedTime).toLocaleDateString() : 'Chưa có'}</div>
+                <div className="flex items-center"><FileText className="mr-1 h-3 w-3" />{mainDoc.fileType || 'Chưa có'}</div>
               </div>
-              <div className="mb-2 text-sm">Báo cáo tổng quan về tình hình tài chính của công ty trong quý 1 năm 2023, bao gồm doanh thu, chi phí và lợi nhuận.</div>
+              <div className="mb-2 text-sm">{mainDoc.description || 'Chưa có'}</div>
               <div className="flex gap-2">
-                <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs">Tài chính</span>
-                <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs">Q4</span>
+                {Array.isArray(mainDoc.tags) && mainDoc.tags.length > 0 ? mainDoc.tags.map((tag: string) => (
+                  <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs" key={tag}>{tag}</span>
+                )) : <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs">Chưa có</span>}
               </div>
             </div>
           )}
           {activeTab === "version" && (
             <div className="rounded-md border border-gray-200 bg-white p-6">
               <div className="mb-4">
-                <div className="mb-4 border rounded-md p-4">
-                  <h3 className="mb-2 text-sm font-medium">Báo cáo tài chính Q4 2023</h3>
-                  <div className="mb-2 flex flex-wrap gap-2 text-xs text-gray-500">
-                    <div className="flex items-center"><User className="mr-1 h-3 w-3" />Nguyễn Văn B</div>
-                    <div className="flex items-center"><Calendar className="mr-1 h-3 w-3" />10/11/2023</div>
-                    <div className="flex items-center"><Calendar className="mr-1 h-3 w-3" />10/11/2025</div>
-                    <div className="flex items-center"><FileText className="mr-1 h-3 w-3" />Reports</div>
+                {versions.length === 0 && <div>No versions found.</div>}
+                {versions.map((ver) => (
+                  <div className="mb-4 border rounded-md p-4" key={ver.versionId}>
+                    <h3 className="mb-2 text-sm font-medium">{ver.versionName || ver.title || 'Chưa có'}</h3>
+                    <div className="mb-2 grid grid-cols-2 gap-2 text-xs text-gray-700">
+                      <div><b>Title:</b> {ver.title || 'Chưa có'}</div>
+                      <div><b>Description:</b> <span dangerouslySetInnerHTML={{ __html: ver.description || 'Chưa có' }} /></div>
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <b>Summary:</b> <span
+                          className="block overflow-hidden text-ellipsis"
+                          style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', maxHeight: '2.8em' }}
+                          dangerouslySetInnerHTML={{ __html: ver.summary || 'Chưa có' }}
+                        />
+                      </div>
+                      <div><b>File Name:</b> {ver.fileName || 'Chưa có'}</div>
+                      <div><b>File Path:</b> {ver.filePath || 'Chưa có'}</div>
+                      <div><b>File Size:</b> {ver.fileSize || 'Chưa có'}</div>
+                      <div><b>File Type:</b> {ver.fileType || 'Chưa có'}</div>
+                      <div><b>Status:</b> {ver.status || 'Chưa có'}</div>
+                      <div><b>Created Time:</b> {ver.createdTime ? new Date(ver.createdTime).toLocaleString() : 'Chưa có'}</div>
+                      <div><b>Last Submitted:</b> {ver.lastSubmitted ? new Date(ver.lastSubmitted).toLocaleString() : 'Chưa có'}</div>
+                      <div><b>Submitted By:</b> {ver.submittedBy || 'Chưa có'}</div>
+                      <div><b>Is Replaced:</b> {ver.isReplaced !== undefined ? (ver.isReplaced ? 'Có' : 'Không') : 'Chưa có'}</div>
+                    </div>
+                    <div className="mb-2 text-xs text-gray-700">
+                      <b>Tags:</b> {Array.isArray(ver.tags) && ver.tags.length > 0 ? ver.tags.join(', ') : 'Chưa có'}
+                    </div>
+                    {ver.replacementDocument && (
+                      <div className="mb-2 text-xs text-gray-700">
+                        <b>Replacement Document:</b> {ver.replacementDocument.title || 'Chưa có'}
+                      </div>
+                    )}
                   </div>
-                  <div className="mb-2 text-sm">Báo cáo tổng quan về tình hình tài chính của công ty trong quý 1 năm 2023, bao gồm doanh thu, chi phí và lợi nhuận.</div>
-                  <div className="flex gap-2">
-                    <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs">Tài chính</span>
-                    <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs">Q4</span>
-                  </div>
-                </div>
-                <div className="mb-4 border rounded-md p-4">
-                  <h3 className="mb-2 text-sm font-medium">Báo cáo tài chính Q4 2020</h3>
-                  <div className="mb-2 flex flex-wrap gap-2 text-xs text-gray-500">
-                    <div className="flex items-center"><User className="mr-1 h-3 w-3" />Nguyễn Văn B</div>
-                    <div className="flex items-center"><Calendar className="mr-1 h-3 w-3" />10/11/2023</div>
-                    <div className="flex items-center"><Calendar className="mr-1 h-3 w-3" />10/11/2025</div>
-                    <div className="flex items-center"><FileText className="mr-1 h-3 w-3" />Reports</div>
-                  </div>
-                  <div className="mb-2 text-sm">Báo cáo tổng quan về tình hình tài chính của công ty trong quý 1 năm 2023, bao gồm doanh thu, chi phí và lợi nhuận.</div>
-                  <div className="flex gap-2">
-                    <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs">Tài chính</span>
-                    <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs">Q4</span>
-                  </div>
-                </div>
-                <div className="mb-4 border rounded-md p-4">
-                  <h3 className="mb-2 text-sm font-medium">Báo cáo tài chính Q4 2018</h3>
-                  <div className="mb-2 flex flex-wrap gap-2 text-xs text-gray-500">
-                    <div className="flex items-center"><User className="mr-1 h-3 w-3" />Nguyễn Văn B</div>
-                    <div className="flex items-center"><Calendar className="mr-1 h-3 w-3" />10/11/2023</div>
-                    <div className="flex items-center"><Calendar className="mr-1 h-3 w-3" />10/11/2025</div>
-                    <div className="flex items-center"><FileText className="mr-1 h-3 w-3" />Reports</div>
-                  </div>
-                  <div className="mb-2 text-sm">Báo cáo tổng quan về tình hình tài chính của công ty trong quý 1 năm 2023, bao gồm doanh thu, chi phí và lợi nhuận.</div>
-                  <div className="flex gap-2">
-                    <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs">Tài chính</span>
-                    <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs">Q4</span>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           )}

@@ -28,6 +28,7 @@ import ApprovalQueue from "../pages/manager/ApprovalQueue";
 import DocumentReview from "../pages/manager/DocumentReview";
 import DocumentManagement from "../pages/manager/DocumentManagement";
 import DocumentDetail from "../pages/editor/DocumentDetail";
+import RecreateDocument from "../pages/editor/RecreateDocument";
 
 const PublicRoutes: RouteObject[] = [
   // {
@@ -79,7 +80,6 @@ const PublicRoutes: RouteObject[] = [
     path: "/search",
     element: <SearchPage />,
   },
-
   {
     path: "/document/:id",
     element: <DocumentPage />,
@@ -131,6 +131,10 @@ const PublicRoutes: RouteObject[] = [
       {
         path: "doc/:id/:versionId",
         element: <DocumentDetail />,
+      },
+      {
+        path: "document/recreate/:id",
+        element: <RecreateDocument />,
       },
     ],
   },

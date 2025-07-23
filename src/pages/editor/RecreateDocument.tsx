@@ -1,11 +1,13 @@
 
 import { Layout, Typography, Card, Button, Input, Select, DatePicker, Upload, Form, Row, Col, Space, Spin } from "antd"
-import { ArrowLeftOutlined, UploadOutlined, InboxOutlined } from "@ant-design/icons"
-import { uploadDraftDocument, analyzeDocument } from "../lib/api/document"; 
+import {  UploadOutlined, InboxOutlined } from "@ant-design/icons"
+import { uploadDraftDocument, analyzeDocument } from "../../lib/api/document"; 
 import { useState } from "react"; 
 import WysiwygEditor from 'react-simple-wysiwyg';
 import toast from 'react-hot-toast';
 import moment from "moment";
+import { useParams, useNavigate } from "react-router-dom";
+import { api } from "../../lib/api/api";
 
 const { Title, Text } = Typography
 const { Content } = Layout 
@@ -59,14 +61,19 @@ if (typeof document !== 'undefined') {
 }
 
 
-export default function UploadDocument() {
+export default function RecreateDocument() {
   const [form] = Form.useForm() 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [htmlDescription, setHtmlDescription] = useState("");
   const [htmlSummary, setHtmlSummary] = useState("");
+  const { id } = useParams();
+  const navigate = useNavigate();
 
   const handleSubmit = async (values: any) => {
-    // Map các trường form sang đúng tên API
+    if (!id) {
+      toast.error("Không tìm thấy documentId trên URL!");
+      return;
+    }
     const userStr = localStorage.getItem("user");
     if (!userStr) {
       toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
@@ -77,28 +84,23 @@ export default function UploadDocument() {
       versionName: values.versionName || "",
       summary: values.summary || "",
       replacementDocumentId: values.replacementDocumentId || "",
-      departmentId: users?.department?.id, // <-- map for DepartmentId
+      departmentId: users?.department?.id,
       effectiveFrom: values.effectiveFrom && moment.isMoment(values.effectiveFrom) ? values.effectiveFrom.toISOString() : "",
       signedBy: values.signedBy || "",
       effectiveUntil: values.effectiveTo && moment.isMoment(values.effectiveTo) ? values.effectiveTo.toISOString() : "",
       title: values.title || "",
       tags: Array.isArray(values.tags) ? values.tags.filter(Boolean) : [],
       description: values.description || "",
-      file: values.file?.file, // Antd Dragger lưu file ở values.file.file
+      file: values.file?.file,
     };
     try {
-      // if (!userId) throw new Error("Không tìm thấy userId, vui lòng đăng nhập lại!");
-      console.log(formValues);
-      const userStr = localStorage.getItem("user");
-      if (!userStr) {
-        toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
-        return;
-      }
-      const user = JSON.parse(userStr);
-      await uploadDraftDocument(formValues, user.userId);
-      toast.success("Upload document thành công!");
+      await api.post(`/document/documents/${id}/versions`, formValues, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      toast.success("Tạo lại bản nháp thành công!");
+      navigate(-1); // hoặc chuyển hướng sang trang chi tiết mới nếu muốn
     } catch (error: any) {
-      toast.error(`Upload document thất bại. Vui lòng thử lại! ${error?.response?.data?.message}`);
+      toast.error(`Tạo lại bản nháp thất bại. Vui lòng thử lại! ${error?.response?.data?.message}`);
       console.error(error);
     }
   };

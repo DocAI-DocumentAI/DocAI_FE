@@ -88,7 +88,8 @@ export default function DocumentDetail({ onViewChange,  }: any) {
                     <Card style={{ marginBottom: 24 }}>
                         <Row gutter={16}>
                             <Col span={12}>
-                                <Text strong>ID:</Text> <Text copyable>{document.id}</Text>
+                                <Text strong>ID:</Text> <Text copyable>{document.documentId
+                                }</Text>
                             </Col>
                             <Col span={12}>
                                 <Text strong>Status:</Text> <Tag color={document.status === 'Pending' ? 'orange' : 'blue'}>{document.status}</Tag>
@@ -96,7 +97,7 @@ export default function DocumentDetail({ onViewChange,  }: any) {
                         </Row>
                         <Row gutter={16} style={{ marginTop: 16 }}>
                             <Col span={12}>
-                                <Text strong>Version Number:</Text> <Text>{document.versionNumber || '-'}</Text>
+                                <Text strong>Version Number:</Text> <Text>{document.versionId || '-'}</Text>
                             </Col>
                             <Col span={12}>
                                 <Text strong>Document ID:</Text> <Text>{document.documentId || '-'}</Text>
@@ -104,7 +105,7 @@ export default function DocumentDetail({ onViewChange,  }: any) {
                         </Row>
                         <Row gutter={16} style={{ marginTop: 16 }}>
                             <Col span={12}>
-                                <Text strong>Created At:</Text> <Text>{formatDate(document.createdAt)}</Text>
+                                <Text strong>Created At:</Text> <Text>{formatDate(document.createdTime)}</Text>
                             </Col>
                             <Col span={12}>
                                 <Text strong>Last Submitted:</Text> <Text>{formatDate(document.lastSubmitted)}</Text>
@@ -120,9 +121,16 @@ export default function DocumentDetail({ onViewChange,  }: any) {
                         </Row>
                         <Row style={{ marginTop: 24 }}>
                             <Col span={24}>
-                                <Button type="primary" onClick={handleSubmitForApproval} block>
-                                    Xác nhận đẩy lên cho quản lý kiểm duyệt
-                                </Button>
+                                {document.status === 'Draft' && (
+                                    <Button type="primary" onClick={handleSubmitForApproval} block>
+                                        Xác nhận đẩy lên cho quản lý kiểm duyệt
+                                    </Button>
+                                )}
+                                {document.status === 'Rejected' && (
+                                    <Button type="primary" danger block onClick={() => navigate(`/editor/document/recreate/${document.documentId}`)}>
+                                        Tạo lại bản nháp
+                                    </Button>
+                                )}
                             </Col>
                         </Row>
                     </Card>
@@ -137,7 +145,7 @@ export default function DocumentDetail({ onViewChange,  }: any) {
                                         <Title level={4} style={{ margin: 0, marginBottom: 8 }}>
                                             {document.title}
                                         </Title>
-                                        <Text type="secondary">{document.summary}</Text>
+                                        <div className="text-gray-500" style={{ fontSize: 14 }} dangerouslySetInnerHTML={{ __html: document.summary || '' }} />
                                     </div>
                                 </div>
 

@@ -1,13 +1,33 @@
  
 import { useState } from "react"
 import { Filter, FileText, FileBarChart, Scale, FileCheck, FileSpreadsheet } from "lucide-react"
+import { DatePicker } from "antd";
+import moment from "moment";
 
-export function SearchFilter() {
-  const [startDate, setStartDate] = useState("12/03/2019")
-  const [endDate, setEndDate] = useState("12/03/2020")
-  const [selectedQuarter, setSelectedQuarter] = useState("4")
-  const [selectedYear, setSelectedYear] = useState("2023")
-  const [selectedCreator, setSelectedCreator] = useState("Nguyễn Văn B")
+export interface SearchFilterValue {
+  documentTags: string[];
+  startDate: moment.Moment | null;
+  endDate: moment.Moment | null;
+}
+
+export interface TagItem {
+  id: string;
+  name: string;
+}
+
+interface SearchFilterProps {
+  value: SearchFilterValue;
+  onChange: (value: SearchFilterValue) => void;
+  tags: TagItem[];
+}
+
+export function SearchFilter({ value, onChange, tags }: SearchFilterProps) {
+  const handleCheckboxChange = (tagId: string) => {
+    const newTypes = value.documentTags.includes(tagId)
+      ? value.documentTags.filter((t) => t !== tagId)
+      : [...value.documentTags, tagId];
+    onChange({ ...value, documentTags: newTypes });
+  };
 
   return (
     <div className="w-60 rounded-md border border-gray-200 bg-white">
@@ -19,118 +39,44 @@ export function SearchFilter() {
       </div>
 
       <div className="p-4">
-        <h3 className="mb-2 text-xs font-medium uppercase text-gray-500">Document type</h3>
-        <div className="space-y-2">
-          <div className="flex items-center">
-            <input type="checkbox" id="instructions" className="h-4 w-4 rounded border-gray-300" />
-            <label htmlFor="instructions" className="ml-2 flex items-center text-sm">
-              <FileText className="mr-2 h-4 w-4 text-gray-500" /> Instructions
-            </label>
-          </div>
-          <div className="flex items-center">
-            <input type="checkbox" id="reports" className="h-4 w-4 rounded border-gray-300" defaultChecked />
-            <label htmlFor="reports" className="ml-2 flex items-center text-sm">
-              <FileBarChart className="mr-2 h-4 w-4 text-gray-500" /> Reports
-            </label>
-          </div>
-          <div className="flex items-center">
-            <input type="checkbox" id="laws" className="h-4 w-4 rounded border-gray-300" />
-            <label htmlFor="laws" className="ml-2 flex items-center text-sm">
-              <Scale className="mr-2 h-4 w-4 text-gray-500" /> Laws
-            </label>
-          </div>
-          <div className="flex items-center">
-            <input type="checkbox" id="plans" className="h-4 w-4 rounded border-gray-300" />
-            <label htmlFor="plans" className="ml-2 flex items-center text-sm">
-              <FileCheck className="mr-2 h-4 w-4 text-gray-500" /> Plans
-            </label>
-          </div>
-          <div className="flex items-center">
-            <input type="checkbox" id="minutes" className="h-4 w-4 rounded border-gray-300" />
-            <label htmlFor="minutes" className="ml-2 flex items-center text-sm">
-              <FileSpreadsheet className="mr-2 h-4 w-4 text-gray-500" /> Handover minutes
-            </label>
-          </div>
+        <h3 className="mb-2 text-xs font-medium uppercase text-gray-500">Document tag</h3>
+        <div className="space-y-2" style={{ maxHeight: 180, overflowY: 'auto' }}>
+          {tags.map((tag) => (
+            <div className="flex items-center" key={tag.id}>
+              <input type="checkbox" id={tag.id} className="h-4 w-4 rounded border-gray-300" checked={value.documentTags.includes(tag.id)} onChange={() => handleCheckboxChange(tag.id)} />
+              <label htmlFor={tag.id} className="ml-2 flex items-center text-sm">
+                {tag.name}
+              </label>
+            </div>
+          ))}
         </div>
       </div>
 
       <div className="border-t border-gray-200 p-4">
         <h3 className="mb-2 text-xs font-medium uppercase text-gray-500">Date</h3>
-
-        <div className="mb-4">
-          <div className="mb-1 text-sm">Quarter</div>
-          <div className="flex gap-2">
-            <button
-              className={`flex h-8 w-8 items-center justify-center rounded-md border ${selectedQuarter === "1" ? "border-blue-500 bg-blue-50" : "border-gray-300"}`}
-              onClick={() => setSelectedQuarter("1")}
-            >
-              1
-            </button>
-            <button
-              className={`flex h-8 w-8 items-center justify-center rounded-md border ${selectedQuarter === "2" ? "border-blue-500 bg-blue-50" : "border-gray-300"}`}
-              onClick={() => setSelectedQuarter("2")}
-            >
-              2
-            </button>
-            <button
-              className={`flex h-8 w-8 items-center justify-center rounded-md border ${selectedQuarter === "3" ? "border-blue-500 bg-blue-50" : "border-gray-300"}`}
-              onClick={() => setSelectedQuarter("3")}
-            >
-              3
-            </button>
-            <button
-              className={`flex h-8 w-8 items-center justify-center rounded-md border ${selectedQuarter === "4" ? "border-blue-500 bg-blue-50" : "border-gray-300"}`}
-              onClick={() => setSelectedQuarter("4")}
-            >
-              4
-            </button>
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <div className="mb-1 text-sm">Year</div>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-1 text-sm"
-            />
-          </div>
-        </div>
+ 
 
         <div className="mb-4">
           <div className="mb-1 text-sm">Date range</div>
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-1 text-sm"
+          <div className=" items-center gap-2">
+            <DatePicker
+              style={{ width: '100%' }}
+              placeholder="Start date"
+              value={value.startDate ? value.startDate : null}
+              onChange={date => onChange({ ...value, startDate: date ? date : null })}
+              format="YYYY-MM-DD"
             />
             <span className="text-sm">to</span>
-            <input
-              type="text"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-1 text-sm"
+            <DatePicker
+              style={{ width: '100%' }}
+              placeholder="End date"
+              value={value.endDate ? value.endDate : null}
+              onChange={date => onChange({ ...value, endDate: date ? date : null })}
+              format="YYYY-MM-DD"
             />
           </div>
         </div>
       </div>
-
-      <div className="border-t border-gray-200 p-4">
-        <h3 className="mb-2 text-xs font-medium uppercase text-gray-500">Creator</h3>
-        <select
-          value={selectedCreator}
-          onChange={(e) => setSelectedCreator(e.target.value)}
-          className="w-full rounded-md border border-gray-300 px-3 py-1 text-sm"
-        >
-          <option value="Nguyễn Văn B">Nguyễn Văn B</option>
-          <option value="Trần Văn A">Trần Văn A</option>
-          <option value="Lê Thị C">Lê Thị C</option>
-        </select>
-      </div>
     </div>
-  )
+  );
 }

@@ -22,17 +22,17 @@ const SIDEBAR_ITEMS: {
     href: "/editor/approval-manager",
   }, 
   {
-    name: "View Draft",
+    name: "My Document",
     icon: FileText,
     color: "#10B981",
     href: "/editor/view-draft",
   },
-  {
-    name: "My Document",
-    icon: FileText,
-    color: "#6366f1",
-    href: "/editor/my-document",
-  },
+  // {
+  //   name: "My Document",
+  //   icon: FileText,
+  //   color: "#6366f1",
+  //   href: "/editor/my-document",
+  // },
   {
     name: "Settings",
     icon: Settings,
@@ -41,7 +41,7 @@ const SIDEBAR_ITEMS: {
   },
 ];
 
-const Sidebar: React.FC = () => {
+const SidebarEdited: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
 
   return (
@@ -90,4 +90,4 @@ const Sidebar: React.FC = () => {
     </motion.div>
   );
 };
-export default Sidebar;
+export default SidebarEdited;
