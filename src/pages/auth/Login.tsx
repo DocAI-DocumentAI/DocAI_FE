@@ -22,7 +22,18 @@ export default function Login() {
       });
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data));
-      navigate("/");
+      switch (data.role?.roleName) {
+        case "Editor":
+          navigate("/editor/view-draft");
+          break;
+        case "Manager":
+          navigate("/manager/approvalQueue");
+          break;
+        default:
+          navigate("/");
+          break;
+      }
+
     } catch (err: any) {
       setError(err?.response?.data?.message || "Login failed");
     } finally {

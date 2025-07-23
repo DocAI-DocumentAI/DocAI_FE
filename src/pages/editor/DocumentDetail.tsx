@@ -1,4 +1,3 @@
-"use client"
 
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
@@ -47,7 +46,9 @@ export default function DocumentDetail({ onViewChange,  }: any) {
 
  
     const handleSubmitForApproval = async () => {
-        if (!document?.id) {
+        console.log(document);
+        
+        if (!document?.versionId) {
             toast.error("Không tìm thấy versionId!");
             return;
         }
@@ -58,7 +59,7 @@ export default function DocumentDetail({ onViewChange,  }: any) {
         }
         const user = JSON.parse(userStr);
         try {
-            await api.post(`/document/submit/${document.id}?userId=${user.userId}`);
+            await api.post(`/document/submit/${document.versionId}?userId=${user.userId}`);
             toast.success("Đã gửi tài liệu lên quản lý kiểm duyệt!");
         } catch (error: any) {
             toast.error(`Gửi tài liệu thất bại: ${error?.response?.data?.message || error.message}`);

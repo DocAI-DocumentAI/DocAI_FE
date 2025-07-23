@@ -129,7 +129,7 @@ const PublicRoutes: RouteObject[] = [
         element: <ViewDraftTable />,
       },
       {
-        path: "view-draft/:id/:versionId",
+        path: "doc/:id/:versionId",
         element: <DocumentDetail />,
       },
     ],

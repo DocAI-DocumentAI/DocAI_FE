@@ -18,7 +18,7 @@ const { Title, Text, Paragraph } = Typography
 const { Content } = Layout
 const { TextArea } = Input
 
-export default function DocumentReview({ onViewChange, mode }: any) {
+export default function DocumentReview() {
     const { id, versionId } = useParams();
     const navigate = useNavigate();
     const [document, setDocument] = useState<any>(null);
@@ -43,7 +43,7 @@ export default function DocumentReview({ onViewChange, mode }: any) {
     }, [id, versionId]);
 
     const handleReview = async (isApproved: boolean) => {
-        if (!document?.id) {
+        if (!document?.versionId) {
             toast.error("Không tìm thấy versionId!");
             return;
         }
@@ -52,15 +52,19 @@ export default function DocumentReview({ onViewChange, mode }: any) {
             toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
             return;
         }
+        if (rejectionComments.length < 10) {
+            toast.error("Vui lòng nhập nhận xét tối thiểu 10 ký tự!");
+            return;
+        }
         const user = JSON.parse(userStr);
         setSubmitting(true);
         try {
-            await api.post(`/document/review/${document.id}?userId=${user.userId}`, {
+            await api.post(`/document/review/${document.versionId}?userId=${user.userId}`, {
                 isApproved,
                 comments: rejectionComments
             });
             toast.success(isApproved ? "Duyệt tài liệu thành công!" : "Từ chối tài liệu thành công!");
-            onViewChange ? onViewChange("queue") : navigate(-1);
+            navigate(-1);
         } catch (error: any) {
             toast.error(`Gửi kết quả duyệt thất bại: ${error?.response?.data?.message || error.message}`);
         } finally {
@@ -85,7 +89,7 @@ export default function DocumentReview({ onViewChange, mode }: any) {
                         <Button
                             type="text"
                             icon={<ArrowLeftOutlined />}
-                            onClick={() => onViewChange ? onViewChange("queue") : navigate(-1)}
+                            onClick={() => navigate(-1)}
                             style={{ marginBottom: 16 }}
                         >
                             Back to Approval Queue
@@ -174,51 +178,29 @@ export default function DocumentReview({ onViewChange, mode }: any) {
                                     Review Actions
                                 </Title>
                                 <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
-                                    Choose to approve or reject this document
+                                    Please provide your review comments (required for both approve and reject)
                                 </Text>
-
-                                {mode === "approve" ? (
-                                    <Space direction="vertical" style={{ width: "100%" }}>
-                                        <Button type="primary" icon={<CheckOutlined />} block size="large" loading={submitting} onClick={() => handleReview(true)}>
-                                            Approve Document
-                                        </Button>
-                                        <Button danger icon={<CloseOutlined />} block size="large" loading={submitting} onClick={() => handleReview(false)}>
-                                            Reject Document
-                                        </Button>
-                                    </Space>
-                                ) : (
-                                    <Space direction="vertical" style={{ width: "100%" }}>
-                                        <div>
-                                            <Text strong style={{ color: "#ff4d4f" }}>
-                                                Rejection Comments *
-                                            </Text>
-                                            <TextArea
-                                                rows={4}
-                                                placeholder="Please provide detailed feedback on why this document is being rejected (minimum 10 characters)"
-                                                value={rejectionComments}
-                                                onChange={(e) => setRejectionComments(e.target.value)}
-                                                style={{ marginTop: 8 }}
-                                            />
-                                            <Text type="secondary" style={{ fontSize: "12px" }}>
-                                                {rejectionComments.length}/10 characters minimum
-                                            </Text>
-                                        </div>
-                                        <Button
-                                            danger
-                                            icon={<CheckOutlined />}
-                                            block
-                                            size="large"
-                                            loading={submitting}
-                                            onClick={() => handleReview(false)}
-                                            disabled={rejectionComments.length < 10}
-                                        >
-                                            Confirm Rejection
-                                        </Button>
-                                        <Button block onClick={() => onViewChange ? onViewChange("review") : navigate(-1)}>
-                                            Cancel
-                                        </Button>
-                                    </Space>
-                                )}
+                                <div style={{ marginBottom: 16 }}>
+                                    <Text strong>Comments *</Text>
+                                    <TextArea
+                                        rows={4}
+                                        placeholder="Please provide detailed feedback (minimum 10 characters)"
+                                        value={rejectionComments}
+                                        onChange={(e) => setRejectionComments(e.target.value)}
+                                        style={{ marginTop: 8 }}
+                                    />
+                                    <Text type="secondary" style={{ fontSize: "12px" }}>
+                                        {rejectionComments.length}/10 characters minimum
+                                    </Text>
+                                </div>
+                                <Space direction="vertical" style={{ width: "100%" }}>
+                                    <Button type="primary" icon={<CheckOutlined />} block size="large" loading={submitting} onClick={() => handleReview(true)} disabled={rejectionComments.length < 10}>
+                                        Approve Document
+                                    </Button>
+                                    <Button danger icon={<CloseOutlined />} block size="large" loading={submitting} onClick={() => handleReview(false)} disabled={rejectionComments.length < 10}>
+                                        Reject Document
+                                    </Button>
+                                </Space>
                             </Card>
 
                             <Card style={{ marginTop: 16 }}>

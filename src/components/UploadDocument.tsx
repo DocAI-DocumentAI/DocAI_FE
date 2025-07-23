@@ -1,4 +1,3 @@
-"use client"
 
 import { Layout, Typography, Card, Button, Input, Select, DatePicker, Upload, Form, Row, Col, Space, Spin } from "antd"
 import { ArrowLeftOutlined, UploadOutlined, InboxOutlined } from "@ant-design/icons"

@@ -1,6 +1,7 @@
 import { Table, Tag, Button, Input, Select, Space } from "antd";
 import { useEffect, useState } from "react";
 import { getDocuments } from "../../lib/api/document";
+import { useNavigate } from "react-router-dom";
 
 const statusOptions = [
   { value: "All", label: "Tất cả" },
@@ -14,21 +15,17 @@ const ApprovalManagerTable = () => {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("All");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         const docs = await getDocuments(1, 10);
+        console.log(docs);
+
         setDataSource(
-          docs.map((doc: any) => ({
-            key: doc.documentId,
-            name: doc.title,
-            sender: doc.submittedBy || doc.ownerId || "N/A",
-            date: doc.createdTime ? new Date(doc.createdTime).toLocaleDateString() : "",
-            status: doc.status,
-          }))
-        );
+          docs)
       } catch (e) {
         setDataSource([]);
       } finally {
@@ -37,29 +34,39 @@ const ApprovalManagerTable = () => {
     };
     fetchData();
   }, []);
-
-  const filteredData = dataSource.filter(
-    (item) =>
-      (item.name?.toLowerCase().includes(search.toLowerCase()) ||
-        item.sender?.toLowerCase().includes(search.toLowerCase())) &&
-      (status === "All" || item.status === status)
-  );
+ 
 
   const columns = [
     {
       title: "Tên tài liệu",
-      dataIndex: "name",
-      key: "name",
+      dataIndex: "title",
+      key: "title",
     },
     {
       title: "Người gửi",
-      dataIndex: "sender",
-      key: "sender",
+      dataIndex: "ownerName",
+      key: "ownerName",
+    },
+    {
+      title: "Người chấp nhận ",
+      dataIndex: "submittedByName",
+      key: "submittedByName",
+    },
+    {
+      title: "Ban/phòng",
+      dataIndex: "departmentName",
+      key: "departmentName",
+    },
+    {
+      title: "Version",
+      dataIndex: "versionName",
+      key: "versionName",
     },
     {
       title: "Ngày gửi",
-      dataIndex: "date",
-      key: "date",
+      dataIndex: "createdTime",
+      key: "createdTime",
+      render:(_: any, record: any)=><p> {record.createdTime ? new Date(record.createdTime).toLocaleDateString() : ""}</p>       
     },
     {
       title: "Trạng thái",
@@ -72,7 +79,7 @@ const ApprovalManagerTable = () => {
     {
       title: "Hành động",
       key: "action",
-      render: () => <Button type="link">Xem</Button>,
+      render: (_: any, record: any) => <Button onClick={() => navigate(`/editor/doc/${record.documentId}/${record.versionId}`)} type="link">Xem </Button>,
     },
   ];
 
@@ -92,7 +99,7 @@ const ApprovalManagerTable = () => {
           style={{ width: 140 }}
         />
       </Space>
-      <Table dataSource={filteredData} columns={columns} loading={loading} />
+      <Table dataSource={dataSource} columns={columns} loading={loading} />
     </>
   );
 };
