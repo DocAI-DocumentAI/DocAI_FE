@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Trash2, Eye, Calendar, User, FileText, Bookmark } from "lucide-react"
 import { Link } from "react-router-dom"
-import { Navbar } from "../../components/layout/navbar"
+import { Navbar } from "../../components/layout/Navbar"
 import { api } from "../../lib/api/api"
 import toast from "react-hot-toast"
 

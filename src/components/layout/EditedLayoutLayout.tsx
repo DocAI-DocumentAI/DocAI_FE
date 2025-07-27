@@ -1,7 +1,13 @@
-import { Outlet } from "react-router-dom"; 
+import { Navigate, Outlet } from "react-router-dom"; 
 import SidebarEdited from "../common/SidebarEdited";
+import toast from "react-hot-toast";
 
 function EditedLayout() {
+    const userStr = localStorage.getItem("user");
+  if (!userStr) {
+    toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
+    return <Navigate to="/login" replace />;
+  }
   return (
     <div className="flex overflow-hidden h-screen text-gray-100 bg-gray-900">
       {/* BG */}

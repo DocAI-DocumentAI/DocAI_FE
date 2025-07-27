@@ -5,9 +5,9 @@ import {
   UserCircle,
   Lock,
   BarChart3,
-} from "lucide-react";
-import { Navbar } from "../components/layout/navbar";
-import { FeatureCard } from "../components/FeatureCard";
+} from "lucide-react"; 
+import { FeatureCard } from "../components/FeatureCard"; 
+import { Navbar } from "../components/layout/Navbar";
 
 export default function HomePage() {
   return (

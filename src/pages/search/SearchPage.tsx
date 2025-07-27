@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Navbar } from "../../components/layout/navbar";
+import { Navbar } from "../../components/layout/Navbar";
 import { SearchBox } from "../../components/Search-box";
 import { SearchResults } from "../../components/Search-results";
 import { SearchFilter } from "../../components/Search-filter";

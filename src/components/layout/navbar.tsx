@@ -1,19 +1,19 @@
 import { useState } from "react";
 // import { useAuth } from "@/context/auth-context"
 import { Search, Plus } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 export function Navbar() {
   //   const { user, logout } = useAuth()
   const [showDropdown, setShowDropdown] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-  const navigate=useNavigate()
-  
-    const userStr = localStorage.getItem("user");
+  const navigate = useNavigate()
+
+  const userStr = localStorage.getItem("user");
   if (!userStr) {
     toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
-    return;
+    return <Navigate to="/login" replace />;
   }
   const user = JSON.parse(userStr);
   const logout = () => {
@@ -44,7 +44,7 @@ export function Navbar() {
             className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-blue-800 sm:hidden"
             onClick={() => setShowSearch(!showSearch)}
             aria-label="Open search"
-            type="button" 
+            type="button"
           >
             <Search className="h-5 w-5" />
           </button>
@@ -98,7 +98,7 @@ export function Navbar() {
                 </p>
                 <p className="text-xs text-gray-500">{user?.email}</p>
               </div>
-                  <button
+              <button
                 onClick={() => {
                   navigate("/bookmarks");
                   setShowDropdown(false);

@@ -1,5 +1,5 @@
 import type React from "react";
-import { Navbar } from "./navbar";
+import { Navbar } from "./Navbar";
 import { SettingsSidebar } from "../Settings-sidebar";
 
 export default function SettingsLayout({
