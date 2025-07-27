@@ -1,12 +1,13 @@
 import { useState } from "react";
 // import { useAuth } from "@/context/auth-context"
 import { Search, Plus } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export function Navbar() {
   //   const { user, logout } = useAuth()
   const [showDropdown, setShowDropdown] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const navigate=useNavigate()
   const user = {
     name: "John Doe",
     email: "123",
@@ -15,6 +16,9 @@ export function Navbar() {
   };
   const logout = () => {
     console.log("Logout");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
   };
   const toggleDropdown = () => {
     setShowDropdown(!showDropdown);

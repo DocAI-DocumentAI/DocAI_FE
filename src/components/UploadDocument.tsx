@@ -1,6 +1,6 @@
 
 import { Layout, Typography, Card, Button, Input, Select, DatePicker, Upload, Form, Row, Col, Space, Spin } from "antd"
-import { ArrowLeftOutlined, UploadOutlined, InboxOutlined } from "@ant-design/icons"
+import {  UploadOutlined, InboxOutlined } from "@ant-design/icons"
 import { uploadDraftDocument, analyzeDocument } from "../lib/api/document"; 
 import { useState } from "react"; 
 import WysiwygEditor from 'react-simple-wysiwyg';
@@ -253,12 +253,12 @@ export default function UploadDocument() {
               <Row gutter={16}>
                 <Col xs={24} sm={12}>
                   <Form.Item name="effectiveFrom" label="Effective From">
-                    <DatePicker style={{ width: "100%" }} placeholder="mm/dd/yyyy" format="YYYY-MM-DD" />
+                    <DatePicker style={{ width: "100%" }} placeholder="mm/dd/yyyy"  />
                   </Form.Item>
                 </Col>
                 <Col xs={24} sm={12}>
                   <Form.Item name="effectiveTo" label="Effective To">
-                    <DatePicker style={{ width: "100%" }} placeholder="mm/dd/yyyy" format="YYYY-MM-DD" />
+                    <DatePicker style={{ width: "100%" }} placeholder="mm/dd/yyyy"  />
                   </Form.Item>
                 </Col>
               </Row>

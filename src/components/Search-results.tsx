@@ -1,4 +1,4 @@
-import { User, Calendar, FileText } from "lucide-react";
+ 
 import { Link } from "react-router-dom";
 
 interface SearchResultsProps {

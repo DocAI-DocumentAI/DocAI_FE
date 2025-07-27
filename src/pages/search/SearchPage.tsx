@@ -5,8 +5,7 @@ import { SearchResults } from "../../components/Search-results";
 import { SearchFilter } from "../../components/Search-filter";
 import { semanticSearchDocuments } from "../../lib/api/document";
 import { getTags } from "../../lib/api/tag";
-import type { SearchFilterValue } from "../../components/Search-filter";
-import moment from "moment";
+import type { SearchFilterValue } from "../../components/Search-filter"; 
 
 export default function SearchPage() {
   const [searchResults, setSearchResults] = useState<any[]>([]);

@@ -1,13 +1,12 @@
 
 import { Layout, Typography, Card, Button, Input, Select, DatePicker, Upload, Form, Row, Col, Space, Spin } from "antd"
 import {  UploadOutlined, InboxOutlined } from "@ant-design/icons"
-import { uploadDraftDocument, analyzeDocument } from "../../lib/api/document"; 
+import {  analyzeDocument, recreateDocument } from "../../lib/api/document"; 
 import { useState } from "react"; 
 import WysiwygEditor from 'react-simple-wysiwyg';
 import toast from 'react-hot-toast';
 import moment from "moment";
-import { useParams, useNavigate } from "react-router-dom";
-import { api } from "../../lib/api/api";
+import { useParams, useNavigate } from "react-router-dom"; 
 
 const { Title, Text } = Typography
 const { Content } = Layout 
@@ -94,9 +93,7 @@ export default function RecreateDocument() {
       file: values.file?.file,
     };
     try {
-      await api.post(`/document/documents/${id}/versions`, formValues, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await recreateDocument(id, formValues);
       toast.success("Tạo lại bản nháp thành công!");
       navigate(-1); // hoặc chuyển hướng sang trang chi tiết mới nếu muốn
     } catch (error: any) {

@@ -31,7 +31,12 @@ export const analyzeDocument = async (file: File) => {
   });
   return response.data;
 };
-
+export const recreateDocument = async (id: string,  data: any) => {
+  const response = await api.post(`/document/documents/${id}/versions`, data, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+};
 export const getDocuments = async (pageNumber = 1, pageSize = 10) => {
   const response = await api.get(`/document/documents?pageNumber=${pageNumber}&pageSize=${pageSize}`);
   return response.data.data.items;

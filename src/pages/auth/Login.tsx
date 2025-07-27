@@ -20,7 +20,7 @@ export default function Login() {
         email: values.email,
         password: values.password,
       });
-      localStorage.setItem("token", data.token);
+      localStorage.setItem("token", data.docaiToken);
       localStorage.setItem("user", JSON.stringify(data));
       switch (data.role?.roleName) {
         case "Editor":
