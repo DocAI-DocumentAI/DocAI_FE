@@ -29,6 +29,7 @@ import DocumentReview from "../pages/manager/DocumentReview";
 import DocumentManagement from "../pages/manager/DocumentManagement";
 import DocumentDetail from "../pages/editor/DocumentDetail";
 import RecreateDocument from "../pages/editor/RecreateDocument";
+import BookmarksPage from "../pages/bookmarks/BookmarksPage";
 
 const PublicRoutes: RouteObject[] = [
   // {
@@ -47,6 +48,7 @@ const PublicRoutes: RouteObject[] = [
     path: "/admin",
     element: <AdminPage />,
   },
+  
   {
     path: "/verify-email",
     element: <VerifyEmail />,
@@ -83,6 +85,10 @@ const PublicRoutes: RouteObject[] = [
   {
     path: "/document/:id",
     element: <DocumentPage />,
+  },
+  {
+    path: "/bookmarks",
+    element: <BookmarksPage />,
   },
   {
     path: "/manager",

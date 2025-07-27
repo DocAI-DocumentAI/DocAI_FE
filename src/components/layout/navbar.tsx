@@ -2,18 +2,20 @@ import { useState } from "react";
 // import { useAuth } from "@/context/auth-context"
 import { Search, Plus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 export function Navbar() {
   //   const { user, logout } = useAuth()
   const [showDropdown, setShowDropdown] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const navigate=useNavigate()
-  const user = {
-    name: "John Doe",
-    email: "123",
-    avatar:
-      "https://yeudialy.edu.vn/upload/2025/02/anime-nu-cute-chibi-03.webp",
-  };
+  
+    const userStr = localStorage.getItem("user");
+  if (!userStr) {
+    toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
+    return;
+  }
+  const user = JSON.parse(userStr);
   const logout = () => {
     console.log("Logout");
     localStorage.removeItem("token");
@@ -77,13 +79,13 @@ export function Navbar() {
           >
             {user?.avatar ? (
               <img
-                src={user.avatar || "/placeholder.svg"}
-                alt={user.name}
+                src={user.avatar || "https://hoanghamobile.com/tin-tuc/wp-content/uploads/2023/07/hinh-dep-19.jpg"}
+                alt={user.fullName}
                 className="h-full w-full object-cover"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center rounded-full bg-gray-200 text-blue-800">
-                {user?.name?.charAt(0).toUpperCase() || "U"}
+                {user?.fullName?.charAt(0).toUpperCase() || "U"}
               </div>
             )}
           </button>
@@ -92,10 +94,19 @@ export function Navbar() {
             <div className="absolute right-0 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5">
               <div className="border-b border-gray-100 px-4 py-2">
                 <p className="text-sm font-medium text-gray-900">
-                  {user?.name}
+                  {user?.fullName}
                 </p>
                 <p className="text-xs text-gray-500">{user?.email}</p>
               </div>
+                  <button
+                onClick={() => {
+                  navigate("/bookmarks");
+                  setShowDropdown(false);
+                }}
+                className="block w-full px-4 py-2 text-left text-sm text-black-600 hover:bg-gray-100"
+              >
+                Book mark
+              </button>
               <button
                 onClick={() => {
                   logout();
