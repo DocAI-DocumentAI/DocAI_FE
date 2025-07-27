@@ -7,7 +7,7 @@ function EditedLayout() {
       {/* BG */}
  
       <SidebarEdited />
-      <div className="overflow-y-auto flex-1 p-6">
+      <div className="overflow-y-auto flex-1 p-6 bg-zinc-50">
         <Outlet />
       </div>
     </div>

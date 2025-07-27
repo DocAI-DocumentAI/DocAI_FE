@@ -37,18 +37,30 @@ export const recreateDocument = async (id: string,  data: any) => {
   });
   return response.data;
 };
-export const getDocuments = async (pageNumber = 1, pageSize = 10) => {
-  const response = await api.get(`/document/documents?pageNumber=${pageNumber}&pageSize=${pageSize}`);
-  return response.data.data.items;
-};
-
-export const getMyDocuments = async (userId: string, pageNumber = 1, pageSize = 10) => {
-  const response = await api.get(`/document/my-documents?userId=${userId}&pageNumber=${pageNumber}&pageSize=${pageSize}`);
+export const getDocuments = async (pageNumber = 1, pageSize = 10, title?: string) => {
+  let url = `/document/documents?pageNumber=${pageNumber}&pageSize=${pageSize}`;
+  if (title) {
+    url += `&Title=${encodeURIComponent(title)}`;
+  }
+  const response = await api.get(url);
   return response.data.data;
 };
 
-export const getApprovalQueue = async (departmentId: string, pageNumber = 1, pageSize = 10) => {
-  const response = await api.get(`/document/approval-queue/${departmentId}?pageNumber=${pageNumber}&pageSize=${pageSize}`);
+export const getMyDocuments = async (userId: string, pageNumber = 1, pageSize = 10, title?: string) => {
+  let url = `/document/my-documents?userId=${userId}&pageNumber=${pageNumber}&pageSize=${pageSize}`;
+  if (title) {
+    url += `&Title=${encodeURIComponent(title)}`;
+  }
+  const response = await api.get(url);
+  return response.data.data;
+};
+
+export const getApprovalQueue = async (departmentId: string, pageNumber = 1, pageSize = 10, title?: string) => {
+  let url = `/document/approval-queue/${departmentId}?pageNumber=${pageNumber}&pageSize=${pageSize}`;
+  if (title) {
+    url += `&Title=${encodeURIComponent(title)}`;
+  }
+  const response = await api.get(url);
   return response.data.data;
 };
 

@@ -15,26 +15,49 @@ const ApprovalManagerTable = () => {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("All");
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const docs = await getDocuments(1, 10);
-        console.log(docs);
+  const fetchData = async (page = 1, pageSize = 10, searchTitle = "") => {
+    setLoading(true);
+    try {
+      const response = await getDocuments(page, pageSize, searchTitle || undefined);
+      console.log(response);
 
-        setDataSource(
-          docs)
-      } catch (e) {
-        setDataSource([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+      setDataSource(response.items || response);
+      setPagination({
+        current: page,
+        pageSize: pageSize,
+        total: response.total || 0,
+      });
+    } catch (e) {
+      setDataSource([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData(1, 10, search);
   }, []);
- 
+
+  const handleTableChange = (paginationConfig: any) => {
+    const { current, pageSize } = paginationConfig;
+    fetchData(current, pageSize, search);
+  };
+
+  const handleSearch = (value: string) => {
+    setSearch(value);
+    fetchData(1, pagination.pageSize, value);
+  };
+
+  const filteredData = dataSource.filter(
+    (item) => status === "All" || item.status === status
+  );
 
   const columns = [
     {
@@ -87,10 +110,10 @@ const ApprovalManagerTable = () => {
     <>
       <Space style={{ marginBottom: 16 }}>
         <Input.Search
-          placeholder="Tìm kiếm tài liệu hoặc người gửi"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
+          placeholder="Tìm kiếm theo tên tài liệu"
+          onSearch={handleSearch}
           style={{ width: 240 }}
+          allowClear
         />
         <Select
           value={status}
@@ -99,9 +122,24 @@ const ApprovalManagerTable = () => {
           style={{ width: 140 }}
         />
       </Space>
-      <Table dataSource={dataSource} columns={columns} loading={loading} />
+      <Table 
+        dataSource={filteredData} 
+        columns={columns} 
+        loading={loading}
+        pagination={{
+          current: pagination.current,
+          pageSize: pagination.pageSize,
+          total: pagination.total,
+          showSizeChanger: true,
+          showQuickJumper: true,
+          showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} tài liệu`,
+          pageSizeOptions: ['10', '20', '50', '100'],
+        
+        }}
+        onChange={handleTableChange}
+      />
     </>
   );
 };
 
-export default ApprovalManagerTable; 
+export default ApprovalManagerTable;
