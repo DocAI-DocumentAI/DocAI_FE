@@ -31,25 +31,12 @@ const ViewDraftTable = () => {
         return;
       }
       const user = JSON.parse(userStr);
-      
+
       const response = await getMyDocuments(user.userId, page, pageSize = 10, searchTitle || undefined);
-      const transformedData = response.items.map((doc: any) => ({
-        key: doc.documentId,
-        name: doc.title,
-        date: doc.createdTime ? new Date(doc.createdTime).toLocaleDateString() : "",
-        status: doc.status,
-        description: doc.description,
-        summary: doc.summary,
-        fileName: doc.fileName,
-        fileSize: doc.fileSize,
-        tags: doc.tags,
-        documentId: doc.documentId,
-        versionId: doc.versionId,
-      }));
-      
-      setDataSource(transformedData);
+
+      setDataSource(response.items);
       console.log(response);
-      
+
       setPagination({
         current: page,
         pageSize: pageSize,
@@ -77,20 +64,27 @@ const ViewDraftTable = () => {
     fetchData(1, pagination.pageSize, value);
   };
 
-  const filteredData = dataSource.filter(
-    (item) => status === "All" || item.status === status
-  );
 
   const columns = [
     {
       title: "Tên tài liệu",
-      dataIndex: "name",
-      key: "name",
+      dataIndex: "title",
+      key: "title",
     },
     {
       title: "Ngày tạo",
-      dataIndex: "date",
-      key: "date",
+      dataIndex: "createdTime",
+      key: "createdTime",
+    },
+    {
+      title: "Người chấp nhận ",
+      dataIndex: "submittedByName",
+      key: "submittedByName",
+    },
+    {
+      title: "versionName ",
+      dataIndex: "versionName",
+      key: "versionName",
     },
     {
       title: "Trạng thái",
@@ -104,7 +98,7 @@ const ViewDraftTable = () => {
       title: "Hành động",
       key: "action",
       render: (_: any, record: any) => (
-        <Space> 
+        <Space>
           <Button type="link" onClick={() => navigate(`/editor/doc/${record.documentId}/${record.versionId}`)}>Xem</Button>
         </Space>
       ),
@@ -127,9 +121,9 @@ const ViewDraftTable = () => {
           style={{ width: 140 }}
         />
       </Space>
-      <Table 
-        dataSource={filteredData} 
-        columns={columns} 
+      <Table
+        dataSource={dataSource}
+        columns={columns}
         loading={loading}
         pagination={{
           current: pagination.current,

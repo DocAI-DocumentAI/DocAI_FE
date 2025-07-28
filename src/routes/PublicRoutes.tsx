@@ -30,6 +30,7 @@ import DocumentManagement from "../pages/manager/DocumentManagement";
 import DocumentDetail from "../pages/editor/DocumentDetail";
 import RecreateDocument from "../pages/editor/RecreateDocument";
 import BookmarksPage from "../pages/bookmarks/BookmarksPage";
+import NewVersionDocument from "../pages/editor/NewVersionDocument";
 
 const PublicRoutes: RouteObject[] = [
   // {
@@ -117,6 +118,10 @@ const PublicRoutes: RouteObject[] = [
       {
         path: "upload-document",
         element: <UploadDocument />,
+      },
+         {
+        path: "document/new-version/:id",
+        element: <NewVersionDocument />,
       },
       {
         path: "edit-document",

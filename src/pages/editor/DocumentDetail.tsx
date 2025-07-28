@@ -1,24 +1,24 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { Layout, Typography, Card, Button, Tag,  Row, Col, Spin } from "antd"
+import { Layout, Typography, Card, Button, Tag, Row, Col, Spin } from "antd"
 import {
     ArrowLeftOutlined,
     FileTextOutlined,
     UserOutlined,
-    CalendarOutlined, 
+    CalendarOutlined,
 } from "@ant-design/icons"
 import { api } from "../../lib/api/api";
 import toast from 'react-hot-toast';
 
 const { Title, Text, Paragraph } = Typography
-const { Content } = Layout 
+const { Content } = Layout
 
-export default function DocumentDetail({ onViewChange,  }: any) {
+export default function DocumentDetail({ onViewChange, }: any) {
     const { id, versionId } = useParams();
     const navigate = useNavigate();
     const [document, setDocument] = useState<any>(null);
-    const [loading, setLoading] = useState(true); 
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchDocument = async () => {
@@ -44,10 +44,10 @@ export default function DocumentDetail({ onViewChange,  }: any) {
         return new Date(dateStr).toLocaleString();
     };
 
- 
+
     const handleSubmitForApproval = async () => {
         console.log(document);
-        
+
         if (!document?.versionId) {
             toast.error("Không tìm thấy versionId!");
             return;
@@ -69,7 +69,7 @@ export default function DocumentDetail({ onViewChange,  }: any) {
     return (
         <Layout style={{ minHeight: "100vh", backgroundColor: "#f5f5f5" }}>
             <Content style={{ padding: "24px" }}>
-                <div style={{   margin: "0 auto" }}>
+                <div style={{ margin: "0 auto" }}>
                     {/* Header */}
                     <div style={{ marginBottom: 24 }}>
                         <Button
@@ -129,6 +129,11 @@ export default function DocumentDetail({ onViewChange,  }: any) {
                                 {document.status === 'Rejected' && (
                                     <Button type="primary" danger block onClick={() => navigate(`/editor/document/recreate/${document.documentId}`)}>
                                         Tạo lại bản nháp
+                                    </Button>
+                                )}
+                                {document.status === 'Approved' && (
+                                    <Button type="default" block onClick={() => navigate(`/editor/document/new-version/${document.documentId}`)}>
+                                        Tạo Version mới
                                     </Button>
                                 )}
                             </Col>
@@ -253,7 +258,7 @@ export default function DocumentDetail({ onViewChange,  }: any) {
                                     </Space>
                                 )}
                             </Card> */}
- 
+
                             {/* <Card style={{ marginTop: 16 }}>
                                 <Title level={5} style={{ marginBottom: 12 }}>
                                     Review Guidelines

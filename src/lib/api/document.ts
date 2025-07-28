@@ -31,8 +31,8 @@ export const analyzeDocument = async (file: File) => {
   });
   return response.data;
 };
-export const recreateDocument = async (id: string,  data: any) => {
-  const response = await api.post(`/document/documents/${id}/versions`, data, {
+export const recreateDocument = async (id: string,  data: any, userId: string) => {
+  const response = await api.post(`/document/documents/${id}/versions?userId=${userId}`, data, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return response.data;

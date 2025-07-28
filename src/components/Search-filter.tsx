@@ -42,7 +42,7 @@ export function SearchFilter({ value, onChange, tags }: SearchFilterProps) {
         <div className="space-y-2" style={{ maxHeight: 180, overflowY: 'auto' }}>
           {tags.map((tag) => (
             <div className="flex items-center" key={tag.id}>
-              <input type="checkbox" id={tag.id} className="h-4 w-4 rounded border-gray-300" checked={value.documentTags.includes(tag.id)} onChange={() => handleCheckboxChange(tag.id)} />
+              <input type="checkbox" id={tag.id} className="h-4 w-4 rounded border-gray-300" checked={value.documentTags.includes(tag.name)} onChange={() => handleCheckboxChange(tag.name)} />
               <label htmlFor={tag.id} className="ml-2 flex items-center text-sm">
                 {tag.name}
               </label>
