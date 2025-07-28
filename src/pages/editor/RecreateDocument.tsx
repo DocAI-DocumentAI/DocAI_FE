@@ -93,7 +93,7 @@ export default function RecreateDocument() {
       file: values.file?.file,
     };
     try {
-      await recreateDocument(id, formValues);
+      await recreateDocument(id, formValues,users.userId);
       toast.success("Tạo lại bản nháp thành công!");
       navigate(-1); // hoặc chuyển hướng sang trang chi tiết mới nếu muốn
     } catch (error: any) {
