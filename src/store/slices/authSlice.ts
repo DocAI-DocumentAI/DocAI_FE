@@ -1,6 +1,45 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { User } from "../../types/User";
 import { AuthState } from "../../types/AuthState";
+
+interface User {
+  userId: string;
+  email: string;
+  fullName: string;
+  phone: string;
+  role: {
+    id: string;
+    roleName: string;
+    description: string;
+    createAt: string;
+    updateAt: string;
+  };
+  department: {
+    id: string;
+    name: string;
+    description: string;
+    createAt: string;
+    updateAt: string;
+  };
+  userSetting: {
+    id: string;
+    twoFactorEnabled: boolean;
+    twoFactorMethod: string;
+    notificationsEnabled: boolean;
+    updateAt: string;
+  };
+  permissions: Array<{
+    id: string;
+    name: string;
+    description: string;
+    createAt: string;
+    updateAt: string;
+  }>;
+  docaiToken: string;
+  docaiRefreshToken: string;
+  googleAccessToken: string | null;
+  googleRefreshToken: string | null;
+  requirePasswordChange: boolean;
+}
 
 const initialState: AuthState = {
   user: null,

@@ -3,14 +3,16 @@ import { User } from "../types/User";
 import { Login } from "../types/Login";
 
 const loginApi = async (credentials: Login): Promise<User> => {
-  // const response = await fetch("https://production.doca.love/api/v1/login", {
-  const response = await fetch("https://auth.doca.love/api/auth/login", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(credentials),
-  });
+  const response = await fetch(
+    import.meta.env.VITE_API_BASE_URL + "/auth/login",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(credentials),
+    }
+  );
 
   if (!response.ok) {
     throw new Error("Invalid username or password");
@@ -18,12 +20,19 @@ const loginApi = async (credentials: Login): Promise<User> => {
 
   const data = await response.json();
   return {
-    id: data.id,
-    username: data.username,
-    phoneNumber: data.phoneNumber,
+    userId: data.userId,
+    email: data.email,
     fullName: data.fullName,
-    token: data.token,
-    refreshToken: data.refreshToken,
+    phone: data.phone,
+    role: data.role,
+    department: data.department,
+    userSetting: data.userSetting,
+    permissions: data.permissions,
+    docaiToken: data.docaiToken,
+    docaiRefreshToken: data.docaiRefreshToken,
+    googleAccessToken: data.googleAccessToken,
+    googleRefreshToken: data.googleRefreshToken,
+    requirePasswordChange: data.requirePasswordChange,
   };
 };
 

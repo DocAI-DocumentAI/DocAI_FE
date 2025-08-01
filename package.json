@@ -15,6 +15,7 @@
     "@reduxjs/toolkit": "^2.6.1",
     "@tanstack/react-query": "^5.74.3",
     "@types/react-router-dom": "^5.3.3",
+    "@types/react-select": "^5.0.0",
     "@vitejs/plugin-basic-ssl": "^2.1.0",
     "antd": "^5.26.4",
     "axios": "^1.8.4",
@@ -29,6 +30,7 @@
     "react-icons": "^5.5.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.5.0",
+    "react-select": "^5.10.2",
     "react-simple-wysiwyg": "^3.4.0",
     "react-toastify": "^11.0.5",
     "recharts": "^2.15.3"

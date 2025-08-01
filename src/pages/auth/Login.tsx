@@ -7,7 +7,11 @@ import { authApi } from "../../lib/api/auth";
 
 export default function Login() {
   type FormValues = { email: string; password: string };
-  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormValues>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -34,6 +38,12 @@ export default function Login() {
           break;
       }
 
+      // Check role and redirect accordingly
+      if (data.role?.roleName === "Admin") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err: any) {
       setError(err?.response?.data?.message || "Login failed");
     } finally {
@@ -57,14 +67,14 @@ export default function Login() {
                 required: "Email is required",
                 pattern: {
                   value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                  message: "Email không hợp lệ"
-                }
+                  message: "Email không hợp lệ",
+                },
               })}
               className="w-full px-4 py-3 bg-gray-100 rounded-md"
               disabled={loading}
             />
             {errors.email && typeof errors.email.message === "string" && (
-              <div className="text-red-600 text-sm">{errors.email.message}</div>
+              <div className="text-sm text-red-600">{errors.email.message}</div>
             )}
           </div>
           <div className="flex items-center justify-between">
@@ -86,7 +96,9 @@ export default function Login() {
             disabled={loading}
           />
           {errors.password && typeof errors.password.message === "string" && (
-            <div className="text-red-600 text-sm">{errors.password.message}</div>
+            <div className="text-sm text-red-600">
+              {errors.password.message}
+            </div>
           )}
           <div className="flex items-center">
             <input
@@ -100,7 +112,7 @@ export default function Login() {
               Keep me sign in
             </label>
           </div>
-          {error && <div className="text-red-600 text-sm">{error}</div>}
+          {error && <div className="text-sm text-red-600">{error}</div>}
           <button
             type="submit"
             className="w-full py-3 font-medium text-white bg-blue-800 rounded-md hover:bg-blue-900"

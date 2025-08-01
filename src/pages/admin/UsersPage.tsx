@@ -1,5 +1,8 @@
 import { UserCheck, UserPlus, UsersIcon, UserX } from "lucide-react";
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { getUsersApi } from "../../services/userService";
+import toast from "react-hot-toast";
 
 import Header from "../../components/common/Header";
 import StatCard from "../../components/common/StatCard";
@@ -8,14 +11,58 @@ import UserGrowthChart from "../../components/userAdmin/UserGrowthChart";
 import UserActivityHeatmap from "../../components/userAdmin/UserActivityHeatmap";
 import UserDemographicsChart from "../../components/userAdmin/UserDemographicsChart";
 
-const userStats = {
-  totalUsers: 152845,
-  newUsersToday: 243,
-  activeUsers: 98520,
-  churnRate: "2.4%",
-};
-
 const UsersPage: React.FC = () => {
+  const [userStats, setUserStats] = useState({
+    totalUsers: 0,
+    newUsersToday: 0,
+    activeUsers: 0,
+    churnRate: "0%",
+  });
+  const [loading, setLoading] = useState(false);
+
+  const calculateStats = async () => {
+    setLoading(true);
+    try {
+      const today = new Date().toISOString().split("T")[0];
+
+      // Get all users
+      const allUsersResponse = await getUsersApi({ size: 1000 });
+
+      // Get today's users
+      const todayUsersResponse = await getUsersApi({
+        createdFrom: today,
+        createdTo: today,
+        size: 1000,
+      });
+
+      const activeUsers = allUsersResponse.items.filter(
+        (user) => user.active
+      ).length;
+      const inactiveUsers = allUsersResponse.items.filter(
+        (user) => !user.active
+      ).length;
+      const churnRate =
+        activeUsers > 0
+          ? ((inactiveUsers / (activeUsers + inactiveUsers)) * 100).toFixed(1)
+          : "0";
+
+      setUserStats({
+        totalUsers: allUsersResponse.total,
+        newUsersToday: todayUsersResponse.total,
+        activeUsers,
+        churnRate: `${churnRate}%`,
+      });
+    } catch (error: any) {
+      toast.error(`Error loading user stats: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    calculateStats();
+  }, []);
+
   return (
     <div className="relative z-10 flex-1 overflow-auto">
       <Header title="Users" />
@@ -31,25 +78,25 @@ const UsersPage: React.FC = () => {
           <StatCard
             name="Total Users"
             icon={UsersIcon}
-            value={userStats.totalUsers.toLocaleString()}
+            value={loading ? "..." : userStats.totalUsers.toLocaleString()}
             color="#6366F1"
           />
           <StatCard
             name="New Users Today"
             icon={UserPlus}
-            value={userStats.newUsersToday.toString()}
+            value={loading ? "..." : userStats.newUsersToday.toString()}
             color="#10B981"
           />
           <StatCard
             name="Active Users"
             icon={UserCheck}
-            value={userStats.activeUsers.toLocaleString()}
+            value={loading ? "..." : userStats.activeUsers.toLocaleString()}
             color="#F59E0B"
           />
           <StatCard
             name="Churn Rate"
             icon={UserX}
-            value={userStats.churnRate}
+            value={loading ? "..." : userStats.churnRate}
             color="#EF4444"
           />
         </motion.div>

@@ -34,19 +34,33 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
     dispatch(loginStart());
     loginMutation.mutate(data, {
       onSuccess: (response) => {
-        // response chính là LoginResponse từ API
         const userData = {
-          id: response.id,
-          username: response.username,
-          phoneNumber: response.phoneNumber,
+          userId: response.userId,
+          email: response.email,
           fullName: response.fullName,
-          token: response.token,
-          refreshToken: response.refreshToken,
+          phone: response.phone,
+          role: response.role,
+          department: response.department,
+          userSetting: response.userSetting,
+          permissions: response.permissions,
+          docaiToken: response.docaiToken,
+          docaiRefreshToken: response.docaiRefreshToken,
+          googleAccessToken: response.googleAccessToken,
+          googleRefreshToken: response.googleRefreshToken,
+          requirePasswordChange: response.requirePasswordChange,
         };
+
         dispatch(loginSuccess(userData));
         console.log("User data vừa lưu vào redux:", userData);
         toast.success("Đăng nhập thành công!");
         onClose();
+
+        // Check role and redirect accordingly
+        if (response.role?.roleName === "Admin") {
+          window.location.href = "/admin/dashboard";
+        } else {
+          window.location.href = "/dashboard";
+        }
       },
       onError: (error: any) => {
         dispatch(loginFailure(error.message || "Login failed"));

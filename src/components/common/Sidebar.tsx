@@ -1,4 +1,12 @@
-import { BarChart2, Menu, Settings, Bell, Users, FileText } from "lucide-react";
+import {
+  BarChart2,
+  Menu,
+  Bell,
+  Users,
+  Shield,
+  Key,
+  Building2,
+} from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -12,27 +20,38 @@ const SIDEBAR_ITEMS: {
   {
     name: "Overview",
     icon: BarChart2,
-    color: "#6366f1",
+    color: "#F59E0B", // amber-500
     href: "/admin/dashboard",
   },
   {
-    name: "Documents",
-    icon: FileText,
-    color: "#8B5CF6",
-    href: "/admin/documents",
+    name: "Users",
+    icon: Users,
+    color: "#34D399", // emerald-400
+    href: "/admin/users",
   },
-  { name: "Users", icon: Users, color: "#EC4899", href: "/admin/users" }, // Changed href to /admin/users
+  {
+    name: "Departments",
+    icon: Building2,
+    color: "#F87171", // red-400
+    href: "/admin/departments",
+  },
+  {
+    name: "Roles",
+    icon: Shield,
+    color: "#A78BFA", // violet-400
+    href: "/admin/roles",
+  },
+  {
+    name: "Permissions",
+    icon: Key,
+    color: "#F472B6", // pink-400
+    href: "/admin/permissions",
+  },
   {
     name: "Notifications",
     icon: Bell,
-    color: "#10B981",
+    color: "#FBBF24", // yellow-400
     href: "/admin/notifications",
-  },
-  {
-    name: "Settings",
-    icon: Settings,
-    color: "#6EE7B7",
-    href: "/admin/settings",
   },
 ];
 

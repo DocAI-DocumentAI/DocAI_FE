@@ -1,0 +1,246 @@
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Filter, Plus } from "lucide-react";
+import {
+  getPermissionsApi,
+  Permission,
+} from "../../services/permissionService";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+
+interface Filters {
+  name: string;
+  description: string;
+}
+
+const PermissionTable: React.FC = () => {
+  const navigate = useNavigate();
+  const [permissions, setPermissions] = useState<Permission[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [showFilters, setShowFilters] = useState(false);
+
+  const [filters, setFilters] = useState<Filters>({
+    name: "",
+    description: "",
+  });
+
+  const fetchPermissions = async (page = 1) => {
+    setLoading(true);
+    try {
+      const activeFilters = Object.fromEntries(
+        Object.entries(filters).filter(([_, value]) => value !== "")
+      );
+
+      const response = await getPermissionsApi({
+        ...activeFilters,
+        page,
+        size: 10,
+      });
+
+      setPermissions(response.items);
+      setCurrentPage(response.page);
+      setTotalPages(response.totalPages);
+      setTotal(response.total);
+    } catch (error: any) {
+      toast.error(`Error loading permissions: ${error.message}`);
+      setPermissions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPermissions(1);
+  }, [filters]);
+
+  const handleFilterChange = (key: keyof Filters, value: string) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+    setCurrentPage(1);
+  };
+
+  const clearFilters = () => {
+    setFilters({ name: "", description: "" });
+  };
+
+  return (
+    <motion.div
+      className="p-6 bg-gray-800 bg-opacity-50 border border-gray-700 shadow-lg backdrop-blur-md rounded-xl"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+    >
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-semibold text-gray-100">
+          Permissions ({total})
+        </h2>
+        <div className="flex gap-2">
+          <button
+            onClick={() => navigate("/admin/permissions/create")}
+            className="flex items-center gap-2 px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700"
+          >
+            <Plus size={18} />
+            Create Permission
+          </button>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          >
+            <Filter size={18} />
+            Filters
+          </button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      {showFilters && (
+        <div className="p-4 mb-6 bg-gray-700 rounded-lg">
+          <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+            <input
+              type="text"
+              placeholder="Filter by permission name..."
+              className="px-3 py-2 text-white bg-gray-600 rounded-lg"
+              value={filters.name}
+              onChange={(e) => handleFilterChange("name", e.target.value)}
+            />
+            <input
+              type="text"
+              placeholder="Filter by description..."
+              className="px-3 py-2 text-white bg-gray-600 rounded-lg"
+              value={filters.description}
+              onChange={(e) =>
+                handleFilterChange("description", e.target.value)
+              }
+            />
+          </div>
+          <button
+            onClick={clearFilters}
+            className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700"
+          >
+            Clear Filters
+          </button>
+        </div>
+      )}
+
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-700">
+          <thead>
+            <tr>
+              <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-400 uppercase">
+                Name
+              </th>
+              <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-400 uppercase">
+                Description
+              </th>
+              <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-400 uppercase">
+                Created At
+              </th>
+              <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-400 uppercase">
+                Updated At
+              </th>
+            </tr>
+          </thead>
+
+          <tbody className="divide-y divide-gray-700">
+            {loading ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-4 text-center">
+                  <div className="flex justify-center">
+                    <div className="w-16 h-16 text-orange-600">
+                      <svg
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path d="M12,23a9.63,9.63,0,0,1-8-9.5,9.51,9.51,0,0,1,6.79-9.1A1.66,1.66,0,0,0,12,2.81h0a1.67,1.67,0,0,0-1.94-1.64A11,11,0,0,0,12,23Z">
+                          <animateTransform
+                            attributeName="transform"
+                            type="rotate"
+                            dur="0.75s"
+                            values="0 12 12;360 12 12"
+                            repeatCount="indefinite"
+                          ></animateTransform>
+                        </path>
+                      </svg>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            ) : permissions.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-6 py-4 text-center text-gray-400">
+                  No permissions found
+                </td>
+              </tr>
+            ) : (
+              permissions.map((permission) => (
+                <motion.tr
+                  key={permission.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <button
+                      onClick={() =>
+                        navigate(`/admin/permissions/update/${permission.id}`)
+                      }
+                      className="text-left text-blue-400 transition-colors duration-200 hover:text-blue-300 hover:underline"
+                    >
+                      {permission.name}
+                    </button>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-300">
+                      {permission.description}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-300">
+                      {new Date(permission.createAt).toLocaleDateString()}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-300">
+                      {new Date(permission.updateAt).toLocaleDateString()}
+                    </div>
+                  </td>
+                </motion.tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 0 && (
+        <div className="flex items-center justify-between mt-6">
+          <div className="text-sm text-gray-400">
+            Page {currentPage} of {totalPages} ({total} total permissions)
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => fetchPermissions(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 text-white bg-gray-600 rounded disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => fetchPermissions(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 text-white bg-gray-600 rounded disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+    </motion.div>
+  );
+};
+
+export default PermissionTable;

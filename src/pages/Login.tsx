@@ -22,20 +22,26 @@ const Login: React.FC = () => {
     });
   }, [isAuthenticated, user, loading, error]);
 
-  if (isAuthenticated) {
-    console.log("Redirecting to /dashboard");
-    return <Navigate to="/dashboard" replace />;
+  // Handle redirects based on authentication state
+  if (isAuthenticated && user) {
+    if (user.role?.roleName === "Admin") {
+      console.log("Redirecting admin to /admin/dashboard");
+      return <Navigate to="/admin/dashboard" replace />;
+    } else {
+      console.log("Redirecting user to /dashboard");
+      return <Navigate to="/" replace />;
+    }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="text-center">
-        <h1 className="text-3xl font-bold mb-4">
+        <h1 className="mb-4 text-3xl font-bold">
           Welcome to Document Search Tool
         </h1>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-blue-500 text-white px-6 py-3 rounded"
+          className="px-6 py-3 text-white bg-blue-500 rounded"
         >
           Login
         </button>

@@ -1,20 +1,20 @@
-import axios from "axios"
+import axios from "axios";
 
 export const api = axios.create({
-  baseURL:  "https://production.docai.asia/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
-})
+});
 
 // Add request interceptor to include auth token
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token")
+  const token = localStorage.getItem("token");
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+    config.headers.Authorization = `Bearer ${token}`;
   }
-  return config
-})
+  return config;
+});
 
 // Add response interceptor to handle errors
 api.interceptors.response.use(
@@ -22,9 +22,9 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Handle unauthorized access
-      localStorage.removeItem("token")
-      window.location.href = "/login"
+      localStorage.removeItem("token");
+      window.location.href = "/login";
     }
-    return Promise.reject(error)
+    return Promise.reject(error);
   }
-) 
+);

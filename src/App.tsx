@@ -3,42 +3,45 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import PublicRoutes from "./routes/PublicRoutes";
 // import PrivateRoute from "./routes/PrivateRoute";
 import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css"; // Đã sửa lỗi chính tả
+import "react-toastify/dist/ReactToastify.css";
 
 // Import admin pages
 import AdminPage from "./pages/admin/adminPage";
-import OverviewPage from "./pages/admin/Dashboard"; // Giả định Dashboard là OverviewPage
+import OverviewPage from "./pages/admin/Dashboard";
 import UsersPage from "./pages/admin/UsersPage";
-import DocumentPage from "./pages/admin/DocumentPage";
-import SettingsPage from "./pages/admin/SettingsPage";
 import NotifyPage from "./pages/admin/NotifyPage";
+import DepartmentPage from "./pages/admin/DepartmentPage";
+import RolePage from "./pages/admin/RolePage";
+import PermissionPage from "./pages/admin/PermissionPage";
+import CreateUserPage from "./pages/admin/CreateUserPage";
+import CreateDepartmentPage from "./pages/admin/CreateDepartmentPage";
+import CreateRolePage from "./pages/admin/CreateRolePage";
+import CreatePermissionPage from "./pages/admin/CreatePermissionPage";
+import UpdateUserPage from "./pages/admin/UpdateUserPage";
+import UpdateDepartmentPage from "./pages/admin/UpdateDepartmentPage";
+import UpdateRolePage from "./pages/admin/UpdateRolePage";
+import UpdatePermissionPage from "./pages/admin/UpdatePermissionPage";
 
 const App: React.FC = () => {
-  // privateRoutes không còn được sử dụng trực tiếp, các route của nó được lồng dưới /admin
   return (
     <BrowserRouter>
       <ToastContainer />
       <Routes>
         {/* Public Routes */}
         {PublicRoutes.map((route) => (
-            <Route
-              key={route.path}
-              path={route.path}
-              element={route.element}
-            >
-              {route.children &&
-                route.children.map((child: any) => (
-                  <Route
-                    key={child.path}
-                    path={child.path}
-                    element={child.element}
-                  />
-                ))}
-            </Route>
-          ))}
+          <Route key={route.path} path={route.path} element={route.element}>
+            {route.children &&
+              route.children.map((child: any) => (
+                <Route
+                  key={child.path}
+                  path={child.path}
+                  element={child.element}
+                />
+              ))}
+          </Route>
+        ))}
 
         {/* Private Routes với Admin Layout */}
-        {/* Đảm bảo bỏ bình luận dòng dưới nếu muốn route /admin được bảo vệ */}
         <Route
           path="/admin"
           element={
@@ -49,9 +52,36 @@ const App: React.FC = () => {
         >
           <Route path="dashboard" element={<OverviewPage />} />
           <Route path="users" element={<UsersPage />} />
-          <Route path="documents" element={<DocumentPage />} />
-          <Route path="settings" element={<SettingsPage />} />
+          <Route path="departments" element={<DepartmentPage />} />
+          <Route path="roles" element={<RolePage />} />
+          <Route path="permissions" element={<PermissionPage />} />
           <Route path="notifications" element={<NotifyPage />} />
+          <Route path="/admin/users/create" element={<CreateUserPage />} />
+          <Route
+            path="/admin/departments/create"
+            element={<CreateDepartmentPage />}
+          />
+          <Route path="/admin/roles/create" element={<CreateRolePage />} />
+          <Route
+            path="/admin/permissions/create"
+            element={<CreatePermissionPage />}
+          />
+          <Route
+            path="/admin/users/update/:userId"
+            element={<UpdateUserPage />}
+          />
+          <Route
+            path="/admin/departments/update/:departmentId"
+            element={<UpdateDepartmentPage />}
+          />
+          <Route
+            path="/admin/roles/update/:roleId"
+            element={<UpdateRolePage />}
+          />
+          <Route
+            path="/admin/permissions/update/:permissionId"
+            element={<UpdatePermissionPage />}
+          />
           <Route index element={<Navigate to="dashboard" replace />} />
         </Route>
 
