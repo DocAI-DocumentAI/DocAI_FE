@@ -91,13 +91,23 @@ export function Navbar() {
           </button>
 
           {showDropdown && (
-            <div className="absolute right-0 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5">
+            <div className="absolute z-10 right-0 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5">
               <div className="border-b border-gray-100 px-4 py-2">
                 <p className="text-sm font-medium text-gray-900">
                   {user?.fullName}
                 </p>
                 <p className="text-xs text-gray-500">{user?.email}</p>
               </div>
+              {user?.role?.roleName !== "Employee" && (
+                <button
+                  onClick={() => {
+                    navigate(`/${user?.role?.roleName}`);
+                    setShowDropdown(false);
+                  }}
+                  className="block w-full px-4 py-2 text-left text-sm text-black-600 hover:bg-gray-100"
+                >
+                  Dashboard
+                </button>)}
               <button
                 onClick={() => {
                   navigate("/bookmarks");

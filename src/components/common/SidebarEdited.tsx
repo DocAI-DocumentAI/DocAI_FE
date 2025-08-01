@@ -1,4 +1,4 @@
-import {  Menu, Settings,FileText, Upload } from "lucide-react";
+import {  Menu, Settings,FileText, Upload, Home } from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -27,12 +27,12 @@ const SIDEBAR_ITEMS: {
     color: "#10B981",
     href: "/editor/view-draft",
   },
-  // {
-  //   name: "My Document",
-  //   icon: FileText,
-  //   color: "#6366f1",
-  //   href: "/editor/my-document",
-  // },
+  {
+    name: "Home",
+    icon: Home,
+    color: "#6366f1",
+    href: "/",
+  },
   {
     name: "Settings",
     icon: Settings,

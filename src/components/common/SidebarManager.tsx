@@ -1,4 +1,4 @@
-import {  Menu, Settings,  FileText, Upload } from "lucide-react";
+import { Menu, Settings, FileText, Upload, Home } from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -9,46 +9,51 @@ const SIDEBAR_ITEMS: {
   color: string;
   href: string;
 }[] = [
-  {
-    name: "Document",
-    icon: Upload,
-    color: "#6366f1",
-    href: "/manager/document-management",
-  },
-  {
-    name: "Approval Manager",
-    icon: FileText,
-    color: "#8B5CF6",
-    href: "/manager/approvalQueue",
-  }, 
-  {
-    name: "View Draft",
-    icon: FileText,
-    color: "#10B981",
-    href: "/manager/view-draft",
-  },
-  {
-    name: "My Document",
-    icon: FileText,
-    color: "#6366f1",
-    href: "/manager/my-document",
-  },
-  {
-    name: "Settings",
-    icon: Settings,
-    color: "#6EE7B7",
-    href: "/manager/settings",
-  },
-];
+    {
+      name: "Document",
+      icon: Upload,
+      color: "#6366f1",
+      href: "/manager/document-management",
+    },
+    {
+      name: "Approval Manager",
+      icon: FileText,
+      color: "#8B5CF6",
+      href: "/manager/approvalQueue",
+    },
+    {
+      name: "View Draft",
+      icon: FileText,
+      color: "#10B981",
+      href: "/manager/view-draft",
+    },
+    {
+      name: "My Document",
+      icon: FileText,
+      color: "#6366f1",
+      href: "/manager/my-document",
+    },
+    {
+      name: "Home",
+      icon: Home,
+      color: "#6366f1",
+      href: "/",
+    },
+    {
+      name: "Settings",
+      icon: Settings,
+      color: "#6EE7B7",
+      href: "/manager/settings",
+    },
+  ];
 
 const SidebarManager: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
 
   return (
     <motion.div
-      className={`relative z-10 transition-all duration-300 ease-in-out flex-shrink-0 ${
-        isSidebarOpen ? "w-64" : "w-20"
-      }`}
+      className={`relative z-10 transition-all duration-300 ease-in-out flex-shrink-0 ${isSidebarOpen ? "w-64" : "w-20"
+        }`}
       animate={{ width: isSidebarOpen ? 256 : 80 }}
     >
       <div className="flex flex-col h-full p-4 bg-gray-800 bg-opacity-50 border-r border-gray-700 backdrop-blur-md">
