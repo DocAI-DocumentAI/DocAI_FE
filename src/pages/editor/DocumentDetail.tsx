@@ -118,6 +118,15 @@ export default function DocumentDetail({ onViewChange, }: any) {
                             <Col span={12}>
                                 <Text strong>Tags:</Text> {Array.isArray(document.tags) && document.tags.length > 0 ? document.tags.map((tag: string) => <Tag key={tag}>{tag}</Tag>) : <Text>-</Text>}
                             </Col>
+                            <Col span={12}>
+                                <Text strong>file name:</Text> {document.fileName || '-' }
+                            </Col>
+                             <Col span={12}>
+                                <Text strong>documentTypeName:</Text> {document.documentTypeName || '-' }
+                            </Col>
+                            <Col span={12}>
+                                <Text strong>Public:</Text> {document.isPublic ? 'Yes' : 'No'}
+                            </Col>
                         </Row>
                         <Row style={{ marginTop: 24 }}>
                             <Col span={24}>
