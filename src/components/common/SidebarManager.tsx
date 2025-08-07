@@ -28,6 +28,12 @@ const SIDEBAR_ITEMS: {
     href: "/manager/view-draft",
   },
   {
+    name: "Tags",
+    icon: FileText,
+    color: "#6366f1",
+    href: "/manager/tags",
+  },
+    {
     name: "My Document",
     icon: FileText,
     color: "#6366f1",

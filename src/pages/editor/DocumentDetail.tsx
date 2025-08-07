@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { Layout, Typography, Card, Button, Tag, Row, Col, Spin } from "antd"
@@ -19,20 +18,22 @@ export default function DocumentDetail({ onViewChange, }: any) {
     const navigate = useNavigate();
     const [document, setDocument] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false); // Thêm state cho submit loading
+
+    const fetchDocument = async () => {
+        setLoading(true);
+        try {
+            const res = await api.get(`/document/documents/${id}/versions/${versionId}`);
+            setDocument(res.data.data);
+        } catch (error: any) {
+            toast.error(`Không thể tải chi tiết tài liệu: ${error?.response?.data?.message || error.message}`);
+            setDocument(null);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchDocument = async () => {
-            setLoading(true);
-            try {
-                const res = await api.get(`/document/documents/${id}/versions/${versionId}`);
-                setDocument(res.data.data);
-            } catch (error: any) {
-                toast.error(`Không thể tải chi tiết tài liệu: ${error?.response?.data?.message || error.message}`);
-                setDocument(null);
-            } finally {
-                setLoading(false);
-            }
-        };
         if (id && versionId) fetchDocument();
     }, [id, versionId]);
 
@@ -43,7 +44,6 @@ export default function DocumentDetail({ onViewChange, }: any) {
         if (!dateStr || dateStr.startsWith('0001-01-01')) return '';
         return new Date(dateStr).toLocaleString();
     };
-
 
     const handleSubmitForApproval = async () => {
         console.log(document);
@@ -58,11 +58,17 @@ export default function DocumentDetail({ onViewChange, }: any) {
             return;
         }
         const user = JSON.parse(userStr);
+
+        setSubmitting(true); // Bắt đầu loading
         try {
             await api.post(`/document/submit/${document.versionId}?userId=${user.userId}`);
             toast.success("Đã gửi tài liệu lên quản lý kiểm duyệt!");
+            // Reload document để cập nhật status
+            await fetchDocument();
         } catch (error: any) {
             toast.error(`Gửi tài liệu thất bại: ${error?.response?.data?.message || error.message}`);
+        } finally {
+            setSubmitting(false); // Kết thúc loading
         }
     };
 
@@ -77,6 +83,7 @@ export default function DocumentDetail({ onViewChange, }: any) {
                             icon={<ArrowLeftOutlined />}
                             onClick={() => onViewChange ? onViewChange("queue") : navigate(-1)}
                             style={{ marginBottom: 16 }}
+                            disabled={submitting} // Disable khi đang submit
                         >
                             Back
                         </Button>
@@ -88,8 +95,7 @@ export default function DocumentDetail({ onViewChange, }: any) {
                     <Card style={{ marginBottom: 24 }}>
                         <Row gutter={16}>
                             <Col span={12}>
-                                <Text strong>ID:</Text> <Text copyable>{document.documentId
-                                }</Text>
+                                <Text strong>ID:</Text> <Text copyable>{document.documentId}</Text>
                             </Col>
                             <Col span={12}>
                                 <Text strong>Status:</Text> <Tag color={document.status === 'Pending' ? 'orange' : 'blue'}>{document.status}</Tag>
@@ -119,10 +125,10 @@ export default function DocumentDetail({ onViewChange, }: any) {
                                 <Text strong>Tags:</Text> {Array.isArray(document.tags) && document.tags.length > 0 ? document.tags.map((tag: string) => <Tag key={tag}>{tag}</Tag>) : <Text>-</Text>}
                             </Col>
                             <Col span={12}>
-                                <Text strong>file name:</Text> {document.fileName || '-' }
+                                <Text strong>file name:</Text> {document.fileName || '-'}
                             </Col>
-                             <Col span={12}>
-                                <Text strong>documentTypeName:</Text> {document.documentTypeName || '-' }
+                            <Col span={12}>
+                                <Text strong>documentTypeName:</Text> {document.documentTypeName || '-'}
                             </Col>
                             <Col span={12}>
                                 <Text strong>Public:</Text> {document.isPublic ? 'Yes' : 'No'}
@@ -131,19 +137,43 @@ export default function DocumentDetail({ onViewChange, }: any) {
                         <Row style={{ marginTop: 24 }}>
                             <Col span={24}>
                                 {document.status === 'Draft' && (
-                                    <Button type="primary" onClick={handleSubmitForApproval} block>
-                                        Xác nhận đẩy lên cho quản lý kiểm duyệt
+                                    <Button 
+                                        type="primary" 
+                                        onClick={handleSubmitForApproval} 
+                                        block
+                                        loading={submitting}
+                                        disabled={submitting}
+                                    >
+                                        {submitting ? "Đang gửi..." : "Xác nhận đẩy lên cho quản lý kiểm duyệt"}
                                     </Button>
                                 )}
                                 {document.status === 'Rejected' && (
-                                    <Button type="primary" danger block onClick={() => navigate(`/editor/document/recreate/${document.documentId}`)}>
+                                    <Button 
+                                        type="primary" 
+                                        danger 
+                                        block 
+                                        onClick={() => navigate(`/editor/document/recreate/${document.documentId}`)}
+                                        disabled={submitting}
+                                    >
                                         Tạo lại bản nháp
                                     </Button>
                                 )}
                                 {document.status === 'Approved' && (
-                                    <Button type="default" block onClick={() => navigate(`/editor/document/new-version/${document.documentId}`)}>
+                                    <Button 
+                                        type="default" 
+                                        block 
+                                        onClick={() => navigate(`/editor/document/new-version/${document.documentId}`)}
+                                        disabled={submitting}
+                                    >
                                         Tạo Version mới
                                     </Button>
+                                )}
+                                {document.status === 'Pending' && (
+                                    <div style={{ textAlign: 'center', padding: 16 }}>
+                                        <Text type="secondary">
+                                            Tài liệu đang chờ phê duyệt
+                                        </Text>
+                                    </div>
                                 )}
                             </Col>
                         </Row>
@@ -217,89 +247,7 @@ export default function DocumentDetail({ onViewChange, }: any) {
 
                         {/* Right Column - Review Actions */}
                         <Col xs={24} lg={8}>
-                            {/* <Card>
-                                <Title level={4} style={{ marginBottom: 16 }}>
-                                    Review Actions
-                                </Title>
-                                <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
-                                    Choose to approve or reject this document
-                                </Text>
-
-                                {mode === "approve" ? (
-                                    <Space direction="vertical" style={{ width: "100%" }}>
-                                        <Button type="primary" icon={<CheckOutlined />} block size="large" onClick={handleApprove}>
-                                            Approve Document
-                                        </Button>
-                                        <Button danger icon={<CloseOutlined />} block size="large" onClick={handleReject}>
-                                            Reject Document
-                                        </Button>
-                                    </Space>
-                                ) : (
-                                    <Space direction="vertical" style={{ width: "100%" }}>
-                                        <div>
-                                            <Text strong style={{ color: "#ff4d4f" }}>
-                                                Rejection Comments *
-                                            </Text>
-                                            <TextArea
-                                                rows={4}
-                                                placeholder="Please provide detailed feedback on why this document is being rejected (minimum 10 characters)"
-                                                value={rejectionComments}
-                                                onChange={(e) => setRejectionComments(e.target.value)}
-                                                style={{ marginTop: 8 }}
-                                            />
-                                            <Text type="secondary" style={{ fontSize: "12px" }}>
-                                                0/10 characters minimum
-                                            </Text>
-                                        </div>
-                                        <Button
-                                            danger
-                                            icon={<CheckOutlined />}
-                                            block
-                                            size="large"
-                                            onClick={handleReject}
-                                            disabled={rejectionComments.length < 10}
-                                        >
-                                            Confirm Rejection
-                                        </Button>
-                                        <Button block onClick={() => onViewChange ? onViewChange("review") : navigate(-1)}>
-                                            Cancel
-                                        </Button>
-                                    </Space>
-                                )}
-                            </Card> */}
-
-                            {/* <Card style={{ marginTop: 16 }}>
-                                <Title level={5} style={{ marginBottom: 12 }}>
-                                    Review Guidelines
-                                </Title>
-                                <ul style={{ paddingLeft: 16, margin: 0 }}>
-                                    <li style={{ marginBottom: 8 }}>
-                                        <Text type="secondary" style={{ fontSize: "12px" }}>
-                                            Once approved, this document becomes searchable to all department members
-                                        </Text>
-                                    </li>
-                                    <li style={{ marginBottom: 8 }}>
-                                        <Text type="secondary" style={{ fontSize: "12px" }}>
-                                            Approval will archive any previous approved version
-                                        </Text>
-                                    </li>
-                                    <li style={{ marginBottom: 8 }}>
-                                        <Text type="secondary" style={{ fontSize: "12px" }}>
-                                            Rejection requires detailed comments (minimum 10 characters)
-                                        </Text>
-                                    </li>
-                                    <li style={{ marginBottom: 8 }}>
-                                        <Text type="secondary" style={{ fontSize: "12px" }}>
-                                            Rejected documents will be auto-deleted after 7 days if not resubmitted
-                                        </Text>
-                                    </li>
-                                    <li>
-                                        <Text type="secondary" style={{ fontSize: "12px" }}>
-                                            This document is temporarily locked while you review it
-                                        </Text>
-                                    </li>
-                                </ul>
-                            </Card> */}
+                            {/* Comment out existing code for now */}
                         </Col>
                     </Row>
                 </div>

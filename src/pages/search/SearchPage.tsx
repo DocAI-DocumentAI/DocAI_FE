@@ -21,8 +21,8 @@ export default function SearchPage() {
   // Fetch tags on mount
   useEffect(() => {
     (async () => {
-      const tagList = await getTags(1, 50);
-      setTags(tagList);
+      const tagList = await getTags(1, 100);
+      setTags(tagList.items);
     })();
   }, []);
 

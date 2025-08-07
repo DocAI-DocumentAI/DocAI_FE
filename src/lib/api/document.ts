@@ -1,6 +1,6 @@
 import { api } from "./api";
 
-export const uploadDraftDocument = async (data: any, userId: string) => {
+export const uploadDraftDocument = async (data: any) => {
   const formData = new FormData();
   formData.append("VersionName", data.versionName || "");
   formData.append("Summary", data.summary || "");
@@ -12,11 +12,12 @@ export const uploadDraftDocument = async (data: any, userId: string) => {
   formData.append("Title", data.title || "");
   formData.append("Tags", Array.isArray(data.tags) ? data.tags.join(",") : (data.tags || ""));
   formData.append("Description", data.description || "");
+  formData.append("documentTypeId", data.documentTypeId || "");
   if (data.file) {
     formData.append("File", data.file);
   }
 
-  const response = await api.post(`/document/drafts?userId=${userId}`, formData, {
+  const response = await api.post(`/document/drafts`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return response.data;
@@ -55,8 +56,8 @@ export const getMyDocuments = async (userId: string, pageNumber = 1, pageSize = 
   return response.data.data;
 };
 
-export const getApprovalQueue = async (departmentId: string, pageNumber = 1, pageSize = 10, title?: string) => {
-  let url = `/document/approval-queue/${departmentId}?pageNumber=${pageNumber}&pageSize=${pageSize}`;
+export const getApprovalQueue = async (pageNumber = 1, pageSize = 10, title?: string) => {
+  let url = `/document/approval-queue?pageNumber=${pageNumber}&pageSize=${pageSize}`;
   if (title) {
     url += `&Title=${encodeURIComponent(title)}`;
   }
@@ -95,6 +96,32 @@ export const semanticSearchDocuments = async (params: SemanticSearchParams) => {
   if (pageSize) searchParams.append('pageSize', String(pageSize));
 
   const response = await api.get(`/document/semantic-search?${searchParams.toString()}`);
+  return response.data;
+};
+
+export interface DocumentType {
+  id: string;
+  name: string;
+  description: string;
+  createdBy: string;
+  lastUpdatedBy: string | null;
+  createdTime: string;
+  lastUpdatedTime: string | null;
+  documentCount: number;
+}
+
+export const getDocumentTypes = async () => {
+  const response = await api.get("/document/document-types?pageNumber=1&pageSize=100");
+  return response.data.data.items as DocumentType[];
+};
+
+export const regenerateSummary = async (file: File) => {
+  const formData = new FormData();
+  formData.append("File", file);
+
+  const response = await api.post("/document/regenerate-summary", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return response.data;
 };
 

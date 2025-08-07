@@ -35,13 +35,8 @@ export default function ApprovalQueue() {
           toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
           return;
         }
-        const user = JSON.parse(userStr);
-        const departmentId = user?.department?.id;
-        if (!departmentId) {
-          toast.error("Không tìm thấy departmentId!");
-          return;
-        }
-        const res = await getApprovalQueue(departmentId, page, pageSize);
+  
+        const res = await getApprovalQueue( page, pageSize);
         setDocuments(res.items || []);
         setTotal(res.total || 0);
       } catch (error: any) {

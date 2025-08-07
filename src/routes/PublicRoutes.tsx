@@ -32,6 +32,7 @@ import RecreateDocument from "../pages/editor/RecreateDocument";
 import BookmarksPage from "../pages/bookmarks/BookmarksPage";
 import NewVersionDocument from "../pages/editor/NewVersionDocument";
 import ChatIndexPage from "../pages/chat/ChatIndex";
+import Tags from "../pages/manager/Tags";
 
 const PublicRoutes: RouteObject[] = [
   // {
@@ -99,11 +100,14 @@ const PublicRoutes: RouteObject[] = [
       {
         path: "document-management",
         element: <DocumentManagement />,
-
       },
       {
         path: "approvalQueue",
         element: <ApprovalQueue />,
+      },
+            {
+        path: "tags",
+        element: <Tags />,
       },
       {
         path: "document-review/:id/:versionId",

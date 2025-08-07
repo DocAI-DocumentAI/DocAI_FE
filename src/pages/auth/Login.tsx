@@ -33,17 +33,13 @@ export default function Login() {
         case "Manager":
           navigate("/manager/approvalQueue");
           break;
+        case "Admin":
+          navigate("/admin/dashboard");
+          break;
         default:
           navigate("/");
           break;
-      }
-
-      // Check role and redirect accordingly
-      if (data.role?.roleName === "Admin") {
-        navigate("/admin/dashboard");
-      } else {
-        navigate("/dashboard");
-      }
+      } 
     } catch (err: any) {
       setError(err?.response?.data?.message || "Login failed");
     } finally {
