@@ -71,6 +71,14 @@ function ChatSidebar() {
     return classes.filter(Boolean).join(" ");
   };
 
+  // Helper để lấy chat ID từ URL
+  const getCurrentChatId = () => {
+    const match = location.pathname.match(/\/chat\/(.+)/);
+    return match ? match[1] : null;
+  };
+
+  const currentChatId = getCurrentChatId();
+
   return (
     <>
       {/* Mobile overlay */}
@@ -149,7 +157,7 @@ function ChatSidebar() {
                       to={`/chat/${chat.id}`}
                       className={classNames(
                         "block truncate rounded-md px-2 py-2 text-sm hover:bg-blue-800",
-                        location.pathname === `/chat/${chat.id}` && "bg-blue-800"
+                        currentChatId === chat.id && "bg-blue-800"
                       )}
                       title={chat.title}
                     >

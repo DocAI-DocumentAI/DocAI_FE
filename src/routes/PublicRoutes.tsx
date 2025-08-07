@@ -31,6 +31,7 @@ import DocumentDetail from "../pages/editor/DocumentDetail";
 import RecreateDocument from "../pages/editor/RecreateDocument";
 import BookmarksPage from "../pages/bookmarks/BookmarksPage";
 import NewVersionDocument from "../pages/editor/NewVersionDocument";
+import ChatIndexPage from "../pages/chat/ChatIndex";
 
 const PublicRoutes: RouteObject[] = [
   // {
@@ -68,7 +69,7 @@ const PublicRoutes: RouteObject[] = [
   },
   {
     path: "/chat",
-    element: <NewChatPage />,
+    element: <ChatIndexPage />,
   },
   {
     path: "/chat/:id",

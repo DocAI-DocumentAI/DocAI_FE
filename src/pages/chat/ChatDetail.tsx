@@ -18,11 +18,14 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [currentChat?.messages])
 
-  // Load chat detail when ID changes
+  // Load chat detail when component mounts or ID changes
   useEffect(() => {
-    if (id && id !== chatIdRef.current) {
-      chatIdRef.current = id as string
-      loadChatDetail(id)
+    if (id) {
+      // Luôn load chat detail khi có ID, bất kể currentChat có tồn tại hay không
+      if (!currentChat || currentChat.id !== id || chatIdRef.current !== id) {
+        chatIdRef.current = id as string
+        loadChatDetail(id)
+      }
     }
   }, [id, loadChatDetail])
 
@@ -37,7 +40,7 @@ export default function ChatPage() {
     )
   }
 
-  if (!currentChat) {
+  if (!currentChat || currentChat.id !== id) {
     return (
       <div className="flex h-screen">
         <ChatSidebar />
