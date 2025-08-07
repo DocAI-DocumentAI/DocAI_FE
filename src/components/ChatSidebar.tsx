@@ -1,18 +1,46 @@
 "use client";
 
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { useChat } from "../context/chat-context";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, Search, FileText, Plus, Home } from "lucide-react";
+import { getChatSessions, ChatSession } from "../lib/api/chat";
+import NewChatModal from "./NewChatModal";
 
 function ChatSidebar() {
   const [isOpen, setIsOpen] = useState(true);
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
   const location = useLocation();
-  const { chatHistory } = useChat();
+  const navigate = useNavigate();
 
-  // Group chat history by date
-  const groupedHistory = chatHistory.reduce(
-    (groups: Record<string, typeof chatHistory>, chat) => {
+  // Fetch chat sessions on component mount
+  useEffect(() => {
+    fetchChatSessions();
+  }, []);
+
+  const fetchChatSessions = async () => {
+    try {
+      setLoading(true);
+      const sessions = await getChatSessions();
+      setChatSessions(sessions);
+    } catch (error) {
+      console.error("Failed to fetch chat sessions:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChatCreated = (chatId: string) => {
+    // Refresh chat sessions list
+    fetchChatSessions();
+    // Navigate to new chat
+    navigate(`/chat/${chatId}`);
+  };
+
+  // Group chat sessions by date
+  const groupedHistory = chatSessions.reduce(
+    (groups: Record<string, ChatSession[]>, chat) => {
       const date = new Date(chat.createdAt);
       const today = new Date();
       const yesterday = new Date(today);
@@ -93,38 +121,45 @@ function ChatSidebar() {
 
         {/* New chat button */}
         <div className="p-4">
-          <Link
-            to="/chat/new"
-            className="flex items-center justify-center gap-2 rounded-md bg-blue-950 px-4 py-2 text-sm font-medium hover:bg-blue-900"
+          <button
+            onClick={() => setShowNewChatModal(true)}
+            className="flex w-full items-center justify-center gap-2 rounded-md bg-blue-950 px-4 py-2 text-sm font-medium hover:bg-blue-900"
           >
             <Plus size={16} />
             New chat
-          </Link>
+          </button>
         </div>
 
         {/* Chat history */}
         <div className="flex-1 overflow-auto">
-          {Object.entries(groupedHistory).map(([date, chats]) => (
-            <div key={date} className="px-2">
-              <h3 className="mb-1 mt-3 px-2 text-xs font-medium text-blue-300">
-                {date}
-              </h3>
-              <div className="space-y-1">
-                {chats.map((chat) => (
-                  <Link
-                    key={chat.id}
-                    to={`/chat/${chat.id}`}
-                    className={classNames(
-                      "block truncate rounded-md px-2 py-2 text-sm hover:bg-blue-800",
-                      location.pathname === `/chat/${chat.id}` && "bg-blue-800"
-                    )}
-                  >
-                    {chat.title}
-                  </Link>
-                ))}
-              </div>
+          {loading ? (
+            <div className="flex items-center justify-center p-4">
+              <div className="text-blue-300">Loading...</div>
             </div>
-          ))}
+          ) : (
+            Object.entries(groupedHistory).map(([date, chats]) => (
+              <div key={date} className="px-2">
+                <h3 className="mb-1 mt-3 px-2 text-xs font-medium text-blue-300">
+                  {date}
+                </h3>
+                <div className="space-y-1">
+                  {chats.map((chat) => (
+                    <Link
+                      key={chat.id}
+                      to={`/chat/${chat.id}`}
+                      className={classNames(
+                        "block truncate rounded-md px-2 py-2 text-sm hover:bg-blue-800",
+                        location.pathname === `/chat/${chat.id}` && "bg-blue-800"
+                      )}
+                      title={chat.title}
+                    >
+                      {chat.title}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* User profile */}
@@ -178,6 +213,13 @@ function ChatSidebar() {
           </Link>
         </div>
       </div>
+
+      {/* New Chat Modal */}
+      <NewChatModal
+        isOpen={showNewChatModal}
+        onClose={() => setShowNewChatModal(false)}
+        onChatCreated={handleChatCreated}
+      />
     </>
   );
 }
