@@ -1,302 +1,288 @@
 "use client"
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react"
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { 
   getChatSessionDetail, 
-  sendMessage as apiSendMessage, // Đổi tên để tránh conflict
-  type ChatMessage as APIChatMessage 
-} from '../lib/api/chat'
+  sendMessage as sendMessageAPI, 
+  createChatSession,
+  getChatModels,
+  ChatSessionDetail
+} from '../lib/api/chat';
 
-type Message = {
-  id: string
-  role: "user" | "assistant"
-  content: string
-  timestamp: Date
-  tokenCount?: number
+export interface TempChatMessage {
+  id: string;
+  content: string;
+  role: "user" | "assistant" | number;
+  timestamp: Date | string;
+  isTemp?: boolean;
 }
 
-type Chat = {
-  id: string
-  title: string
-  messages: Message[]
-  createdAt: Date
-  updatedAt: Date
-  modelName?: string
-  isModelActive?: boolean
-  canSendMessages?: boolean
+export interface TempChatSession {
+  id: null;
+  title: string;
+  modelName: string;
+  messages: TempChatMessage[];
+  isTemp: true;
+  canSendMessages: boolean;
+  isModelActive: boolean;
+  createdAt: string;
+  lastActiveAt: string;
+  preferences: any[];
 }
 
-type ChatContextType = {
-  chatHistory: Chat[]
-  currentChat: Chat | null
-  setCurrentChat: (chat: Chat | null) => void
-  sendMessage: (content: string) => Promise<void>
-  startNewChat: () => void
-  loadChatDetail: (sessionId: string) => Promise<void>
-  loading: boolean
-  sending: boolean
+type CurrentChat = ChatSessionDetail | TempChatSession | null;
+
+interface ChatContextType {
+  currentChat: CurrentChat;
+  loading: boolean;
+  sending: boolean;
+  startNewTempChat: () => Promise<void>;
+  sendMessage: (message: string, navigate?: (path: string, options?: any) => void) => Promise<void>;
+  loadChatDetail: (chatId: string) => Promise<void>;
+  changeModel: (modelName: string) => void;
+  clearCurrentChat: () => void;
 }
 
-const ChatContext = createContext<ChatContextType | undefined>(undefined)
+const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
-// Mock data for chat history
-const mockChatHistory: Chat[] = [
-  {
-    id: "chat-1747969878532",
-    title: "Tài liệu liên quan tới việc xin visa",
-    messages: [
-      {
-        id: "m1",
-        role: "user",
-        content: "Tôi cần những tài liệu gì để xin visa du học?",
-        timestamp: new Date(),
-      },
-      {
-        id: "m2",
-        role: "assistant",
-        content:
-          "Để xin visa du học, bạn cần chuẩn bị các tài liệu sau: Hộ chiếu, đơn xin visa, ảnh thẻ, thư mời nhập học, bằng chứng tài chính, và giấy khám sức khỏe.",
-        timestamp: new Date(),
-      },
-    ],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "2",
-    title: "Tài liệu liên quan tới thuế công ty",
-    messages: [
-      {
-        id: "m3",
-        role: "user",
-        content: "Công ty mới thành lập cần nộp những loại thuế nào?",
-        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      },
-      {
-        id: "m4",
-        role: "assistant",
-        content:
-          "Công ty mới thành lập cần nộp các loại thuế: thuế GTGT, thuế thu nhập doanh nghiệp, thuế môn bài, thuế thu nhập cá nhân cho nhân viên, và các khoản bảo hiểm xã hội.",
-        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      },
-    ],
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    updatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-  },
-  {
-    id: "3",
-    title: "Luật về xuất nhập khẩu hàng hóa",
-    messages: [
-      {
-        id: "m5",
-        role: "user",
-        content: "Cho tôi biết về các quy định xuất nhập khẩu hàng hóa mới nhất?",
-        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      },
-      {
-        id: "m6",
-        role: "assistant",
-        content:
-          "Các quy định xuất nhập khẩu hàng hóa mới nhất bao gồm: thủ tục hải quan điện tử, chứng từ xuất xứ hàng hóa, quy định về kiểm dịch, và các chính sách thuế xuất nhập khẩu theo Nghị định số 134/2016/NĐ-CP.",
-        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      },
-    ],
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    updatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-  },
-  {
-    id: "4",
-    title: "Hướng dẫn sử dụng DocsAI",
-    messages: [
-      {
-        id: "m7",
-        role: "user",
-        content: "Làm thế nào để sử dụng DocsAI hiệu quả?",
-        timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-      },
-      {
-        id: "m8",
-        role: "assistant",
-        content:
-          "Để sử dụng DocsAI hiệu quả, bạn nên: 1) Tải lên tài liệu có định dạng rõ ràng, 2) Đặt câu hỏi cụ thể, 3) Sử dụng các lệnh đặc biệt như /search để tìm kiếm trong tài liệu, 4) Lưu các cuộc trò chuyện quan trọng để tham khảo sau.",
-        timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-      },
-    ],
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-  },
-]
+interface ChatProviderProps {
+  children: ReactNode;
+}
 
-export function ChatProvider({ children }: { children: ReactNode }) {
-  const [chatHistory, setChatHistory] = useState<Chat[]>(mockChatHistory)
-  const [currentChat, setCurrentChat] = useState<Chat | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [sending, setSending] = useState(false)
+export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
+  const [currentChat, setCurrentChat] = useState<CurrentChat>(null);
+  const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
 
-  // Convert API message format to internal format
-  const convertAPIMessage = (apiMessage: APIChatMessage): Message => ({
-    id: apiMessage.id,
-    role: apiMessage.role === 1 ? "user" : "assistant",
-    content: apiMessage.content,
-    timestamp: new Date(apiMessage.timestamp),
-    tokenCount: apiMessage.tokenCount
-  })
-
-  // Load chat detail from API
-  const loadChatDetail = useCallback(async (sessionId: string) => {
+  const startNewTempChat = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true)
-      const chatDetail = await getChatSessionDetail(sessionId)
+      // Fetch models from API to get the default one
+      const models = await getChatModels();
+      const defaultModel = models.find(m => m.isDefault) || models[0];
       
-      const chat: Chat = {
-        id: chatDetail.id,
-        title: chatDetail.title,
-        messages: chatDetail.messages.map(convertAPIMessage),
-        createdAt: new Date(chatDetail.createdAt),
-        updatedAt: new Date(chatDetail.lastActiveAt),
-        modelName: chatDetail.modelName,
-        isModelActive: chatDetail.isModelActive,
-        canSendMessages: chatDetail.canSendMessages
+      if (!defaultModel) {
+        throw new Error('No models available');
       }
 
-      setCurrentChat(chat)
+      const tempChat: TempChatSession = {
+        id: null,
+        title: 'New Chat',
+        modelName: defaultModel.modelName,
+        messages: [],
+        isTemp: true,
+        canSendMessages: true,
+        isModelActive: true,
+        createdAt: new Date().toISOString(),
+        lastActiveAt: new Date().toISOString(),
+        preferences: []
+      };
+      setCurrentChat(tempChat);
     } catch (error) {
-      console.error('Failed to load chat detail:', error)
+      console.error('Failed to start new temp chat:', error);
+      // Fallback to a default model if API fails
+      const tempChat: TempChatSession = {
+        id: null,
+        title: 'New Chat',
+        modelName: 'gpt-3.5-turbo',
+        messages: [],
+        isTemp: true,
+        canSendMessages: true,
+        isModelActive: true,
+        createdAt: new Date().toISOString(),
+        lastActiveAt: new Date().toISOString(),
+        preferences: []
+      };
+      setCurrentChat(tempChat);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [])
+  }, []);
 
-  // Update interface để match với API response thực tế
-  interface SendMessageAPIResponse {
-    sessionId: string;
-    message: string;
-    role: number;
-    tokenCount: number;
-    timestamp: string;
-    modelUsed: string;
-  }
+  const sendMessage = useCallback(async (message: string, navigate?: (path: string, options?: any) => void) => {
+    if (!currentChat || sending) return;
 
-  // Use useCallback to prevent unnecessary re-renders
-  const sendMessage = useCallback(
-    async (content: string) => {
-      if (!currentChat || sending) return
-
-      // Tạo user message ngay lập tức (optimistic update)
-      const userMessage: Message = {
-        id: `user-${Date.now()}`,
+    setSending(true);
+    
+    try {
+      // Add user message immediately to UI
+      const userMessage: TempChatMessage = {
+        id: Date.now().toString(),
+        content: message,
         role: "user",
-        content,
         timestamp: new Date(),
+        isTemp: 'isTemp' in currentChat ? currentChat.isTemp : false
+      };
+
+      let updatedChat: CurrentChat;
+      // If temp chat, add as TempChatMessage, else as ChatMessage
+      if ('isTemp' in currentChat && currentChat.isTemp) {
+        updatedChat = {
+          ...currentChat,
+          messages: [...currentChat.messages, userMessage]
+        };
+      } else {
+        // For real chat, convert userMessage to ChatMessage
+        const chatMessage = {
+          id: userMessage.id,
+          content: userMessage.content,
+          role: typeof userMessage.role === "number" ? userMessage.role : (userMessage.role === "user" ? 1 : 2),
+          tokenCount: 0,
+          timestamp: typeof userMessage.timestamp === "string" ? userMessage.timestamp : (userMessage.timestamp as Date).toISOString()
+        };
+        updatedChat = {
+          ...currentChat,
+          messages: [...(currentChat as any).messages, chatMessage]
+        };
+      }
+      setCurrentChat(updatedChat);
+
+      let sessionId = currentChat.id;
+
+      // If this is a temp chat, create a real session first
+      if (('isTemp' in currentChat && currentChat.isTemp) || !sessionId) {
+        const createResponse = await createChatSession({
+          title: ``,
+          modelName: currentChat.modelName
+        });
+        sessionId = createResponse.id;
+        
+        // Update to real chat - remove isTemp property and convert messages to ChatMessage[]
+        const { isTemp, ...chatWithoutTemp } = updatedChat as any;
+        const chatMessages = (chatWithoutTemp.messages as TempChatMessage[]).map((msg: TempChatMessage) => ({
+          id: msg.id,
+          content: msg.content,
+          role: typeof msg.role === "number" ? msg.role : (msg.role === "user" ? 1 : 2),
+          tokenCount: 0, // Set to 0 or fetch actual token count if available
+          timestamp: typeof msg.timestamp === "string" ? msg.timestamp : (msg.timestamp as Date).toISOString()
+        }));
+        updatedChat = {
+          ...chatWithoutTemp,
+          id: sessionId,
+          title: createResponse.title,
+          messages: chatMessages
+        } as ChatSessionDetail;
+        setCurrentChat(updatedChat);
+        
+        // Navigate to the new chat detail page using passed navigate function
+        if (navigate) {
+          navigate(`/chat/${sessionId}`, { replace: true });
+        }
       }
 
-      // Hiển thị user message ngay
-      const chatWithUserMessage = {
-        ...currentChat,
-        messages: [...currentChat.messages, userMessage],
-        updatedAt: new Date(),
-      }
-      setCurrentChat(chatWithUserMessage)
+      // Send message to API
+      const response = await sendMessageAPI({
+        message,
+        sessionId: sessionId!,
+        modelName: currentChat.modelName
+      });
 
-      try {
-        setSending(true)
-        
-        console.log('Sending message:', { content, sessionId: currentChat.id, modelName: currentChat.modelName })
-        
-        // Send message to API
-        const response = await apiSendMessage({
-          message: content,
-          sessionId: currentChat.id,
-          modelName: currentChat.modelName || ""
-        })
+      // Add assistant response
+      const assistantMessage: TempChatMessage = {
+        id: response.timestamp,
+        content: response.message,
+        role: response.role,
+        timestamp: response.timestamp
+      };
 
-        console.log('API Response:', response) // Debug log
-
-        // Xử lý response mới - chỉ có assistant message
-        const assistantMessage: Message = {
-          id: `assistant-${Date.now()}`,
-          role: "assistant",
-          content: response.message, // Lấy từ response.message
-          timestamp: new Date(response.timestamp),
-          tokenCount: response.tokenCount
+      setCurrentChat(prev => {
+        if (!prev) return null;
+        // If temp chat, allow TempChatMessage
+        if ('isTemp' in prev && prev.isTemp) {
+          return {
+            ...prev,
+            messages: [...prev.messages, assistantMessage]
+          };
+        } else {
+          // For real chat, convert assistantMessage to ChatMessage
+          const chatMessage = {
+            id: assistantMessage.id,
+            content: assistantMessage.content,
+            role: typeof assistantMessage.role === "number" ? assistantMessage.role : (assistantMessage.role === "user" ? 1 : 2),
+            tokenCount: 0, // You may want to set this properly if available
+            timestamp: typeof assistantMessage.timestamp === "string" ? assistantMessage.timestamp : (assistantMessage.timestamp as Date).toISOString()
+          };
+          return {
+            ...prev,
+            messages: [...(prev as any).messages, chatMessage]
+          };
         }
+      });
 
-        console.log('Assistant message:', assistantMessage) // Debug log
-
-        // Add assistant message vào chat
-        const updatedChat = {
-          ...chatWithUserMessage, // Đã có user message rồi
-          messages: [...chatWithUserMessage.messages, assistantMessage],
-          updatedAt: new Date(),
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      // Remove the user message on error
+      setCurrentChat(prev => {
+        if (!prev) return null;
+        if ('isTemp' in prev && prev.isTemp) {
+          // TempChatSession: messages is TempChatMessage[]
+          return {
+            ...prev,
+            messages: (prev.messages as TempChatMessage[]).slice(0, -1)
+          };
+        } else {
+          // ChatSessionDetail: messages is ChatMessage[]
+          return {
+            ...prev,
+            messages: (prev.messages as any[]).slice(0, -1)
+          };
         }
-
-        setCurrentChat(updatedChat)
-
-        // Update chat history
-        setChatHistory((prev) => prev.map((chat) => (chat.id === currentChat.id ? updatedChat : chat)))
-      } catch (error: any) {
-        console.error('Failed to send message:', error)
-        console.error('Error details:', error.response?.data) // Thêm chi tiết lỗi
-        
-        // Thêm error message
-        const errorMessage: Message = {
-          id: `error-${Date.now()}`,
-          role: "assistant",
-          content: `Error: Could not send message. Please try again.`,
-          timestamp: new Date(),
-        }
-
-        const updatedChat = {
-          ...chatWithUserMessage,
-          messages: [...chatWithUserMessage.messages, errorMessage],
-          updatedAt: new Date(),
-        }
-
-        setCurrentChat(updatedChat)
-        setChatHistory((prev) => prev.map((chat) => (chat.id === currentChat.id ? updatedChat : chat)))
-      } finally {
-        setSending(false)
-      }
-    },
-    [currentChat, sending],
-  )
-
-  // Use useCallback to prevent unnecessary re-renders
-  const startNewChat = useCallback(() => {
-    const newChat: Chat = {
-      id: `chat-${Date.now()}`,
-      title: "New conversation",
-      messages: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      });
+    } finally {
+      setSending(false);
     }
+  }, [currentChat, sending]);
 
-    setChatHistory((prev) => [newChat, ...prev])
-    setCurrentChat(newChat)
-  }, [])
+  const loadChatDetail = useCallback(async (chatId: string) => {
+    if (!chatId || chatId === 'new') return;
+    
+    setLoading(true);
+    try {
+      const chatDetail = await getChatSessionDetail(chatId);
+      setCurrentChat(chatDetail);
+    } catch (error) {
+      console.error('Failed to load chat detail:', error);
+      setCurrentChat(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const changeModel = useCallback((modelName: string) => {
+    if (currentChat) {
+      setCurrentChat({
+        ...currentChat,
+        modelName
+      });
+    }
+  }, [currentChat]);
+
+  const clearCurrentChat = useCallback(() => {
+    setCurrentChat(null);
+  }, []);
+
+  const contextValue: ChatContextType = {
+    currentChat,
+    loading,
+    sending,
+    startNewTempChat,
+    sendMessage,
+    loadChatDetail,
+    changeModel,
+    clearCurrentChat
+  };
 
   return (
-    <ChatContext.Provider
-      value={{
-        chatHistory,
-        currentChat,
-        setCurrentChat,
-        sendMessage,
-        startNewChat,
-        loadChatDetail,
-        loading,
-        sending,
-      }}
-    >
+    <ChatContext.Provider value={contextValue}>
       {children}
     </ChatContext.Provider>
-  )
-}
+  );
+};
 
-export function useChat() {
-  const context = useContext(ChatContext)
-  if (context === undefined) {
-    throw new Error("useChat must be used within a ChatProvider")
+export const useChat = (): ChatContextType => {
+  const context = useContext(ChatContext);
+  if (!context) {
+    throw new Error('useChat must be used within a ChatProvider');
   }
-  return context
-}
+  return context;
+};

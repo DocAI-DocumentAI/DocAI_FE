@@ -1,23 +1,31 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, Search, FileText, Plus, Home } from "lucide-react";
+import { Menu, Plus, MessageSquare, MoreHorizontal, Search, FileText } from "lucide-react";
 import { getChatSessions, ChatSession } from "../lib/api/chat";
-import NewChatModal from "./NewChatModal";
+import { useChat } from "../context/chat-context";
 
 function ChatSidebar() {
   const [isOpen, setIsOpen] = useState(true);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showNewChatModal, setShowNewChatModal] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { clearCurrentChat } = useChat();
 
   // Fetch chat sessions on component mount
   useEffect(() => {
     fetchChatSessions();
   }, []);
+
+  // Refresh chat sessions when location changes from /chat/new to /chat/:id
+  useEffect(() => {
+    if (
+      location.pathname.match(/^\/chat\/[^\/]+$/) &&
+      !location.pathname.includes("/new")
+    ) {
+      fetchChatSessions();
+    }
+  }, [location.pathname]);
 
   const fetchChatSessions = async () => {
     try {
@@ -31,11 +39,9 @@ function ChatSidebar() {
     }
   };
 
-  const handleChatCreated = (chatId: string) => {
-    // Refresh chat sessions list
-    fetchChatSessions();
-    // Navigate to new chat
-    navigate(`/chat/${chatId}`);
+  const handleNewChatClick = () => {
+    clearCurrentChat();
+    navigate('/chat/new');
   };
 
   // Group chat sessions by date
@@ -130,7 +136,7 @@ function ChatSidebar() {
         {/* New chat button */}
         <div className="p-4">
           <button
-            onClick={() => setShowNewChatModal(true)}
+            onClick={handleNewChatClick}
             className="flex w-full items-center justify-center gap-2 rounded-md bg-blue-950 px-4 py-2 text-sm font-medium hover:bg-blue-900"
           >
             <Plus size={16} />
@@ -141,53 +147,55 @@ function ChatSidebar() {
         {/* Chat history */}
         <div className="flex-1 overflow-auto">
           {loading ? (
-            <div className="flex items-center justify-center p-4">
-              <div className="text-blue-300">Loading...</div>
+            <div className="p-4">
+              <div className="animate-pulse space-y-2">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="h-8 bg-blue-800 rounded"></div>
+                ))}
+              </div>
             </div>
           ) : (
-            Object.entries(groupedHistory).map(([date, chats]) => (
-              <div key={date} className="px-2">
-                <h3 className="mb-1 mt-3 px-2 text-xs font-medium text-blue-300">
-                  {date}
-                </h3>
-                <div className="space-y-1">
-                  {chats.map((chat) => (
-                    <Link
-                      key={chat.id}
-                      to={`/chat/${chat.id}`}
-                      className={classNames(
-                        "block truncate rounded-md px-2 py-2 text-sm hover:bg-blue-800",
-                        currentChatId === chat.id && "bg-blue-800"
-                      )}
-                      title={chat.title}
-                    >
-                      {chat.title}
-                    </Link>
-                  ))}
+            <div className="px-4">
+              {Object.entries(groupedHistory).map(([groupKey, chats]) => (
+                <div key={groupKey} className="mb-4">
+                  <h3 className="text-xs font-medium text-blue-300 mb-2 uppercase tracking-wider">
+                    {groupKey}
+                  </h3>
+                  <div className="space-y-1">
+                    {chats.map((chat) => (
+                      <Link
+                        key={chat.id}
+                        to={`/chat/${chat.id}`}
+                        className={classNames(
+                          "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                          currentChatId === chat.id
+                            ? "bg-blue-800 text-white"
+                            : "text-blue-100 hover:bg-blue-800 hover:text-white"
+                        )}
+                      >
+                        <MessageSquare size={16} className="flex-shrink-0" />
+                        <span className="flex-1 truncate">{chat.title}</span>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            // Handle chat options
+                          }}
+                          className="p-1 rounded hover:bg-blue-700"
+                        >
+                          <MoreHorizontal size={14} />
+                        </button>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
 
-        {/* User profile */}
-        <div className="mt-auto border-t border-blue-800 p-4">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 overflow-hidden rounded-full">
-              <img
-                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
-                alt="Profile"
-                className="h-full w-full object-cover"
-              />
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <p className="font-medium">Thomas D</p>
-              <p className="truncate text-xs text-blue-300">
-                thomasd1995@gmail.com
-              </p>
-            </div>
-          </div>
-        </div>
+        {/* Footer */}
+        <div className="mt-auto border-t border-blue-800 p-4"></div>
       </aside>
 
       {/* Mobile header */}
@@ -199,35 +207,8 @@ function ChatSidebar() {
         >
           <Menu size={20} />
         </button>
-        <div className="flex items-center gap-2">
-          <button
-            className="rounded-md p-2 hover:bg-gray-100"
-            aria-label="Search"
-          >
-            <Search size={20} />
-          </button>
-          <button
-            className="rounded-md p-2 hover:bg-gray-100"
-            aria-label="Documents"
-          >
-            <FileText size={20} />
-          </button>
-          <Link
-            to="/"
-            className="rounded-md p-2 hover:bg-gray-100"
-            aria-label="Home"
-          >
-            <Home size={20} />
-          </Link>
-        </div>
+        <div className="flex items-center gap-2"></div>
       </div>
-
-      {/* New Chat Modal */}
-      <NewChatModal
-        isOpen={showNewChatModal}
-        onClose={() => setShowNewChatModal(false)}
-        onChatCreated={handleChatCreated}
-      />
     </>
   );
 }
