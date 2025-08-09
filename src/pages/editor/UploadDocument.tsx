@@ -1,6 +1,6 @@
 import { Layout, Typography, Card, Button, Input, Select, DatePicker, Upload, Form, Row, Col, Space, Spin } from "antd"
 import {  UploadOutlined, InboxOutlined } from "@ant-design/icons"
-import { uploadDraftDocument, analyzeDocument, regenerateSummary, getDocumentTypes, DocumentType } from "../lib/api/document"; 
+import { uploadDraftDocument, analyzeDocument, regenerateSummary, getDocumentTypes, DocumentType } from "../../lib/api/document"; 
 import { useState, useEffect } from "react"; 
 import WysiwygEditor from 'react-simple-wysiwyg';
 import toast from 'react-hot-toast';
@@ -105,9 +105,9 @@ export default function UploadDocument() {
       summary: htmlSummary || "", 
       replacementDocumentId: values.replacementDocumentId || "",
       departmentId: users?.department?.id,
-      effectiveFrom: values.effectiveFrom && moment.isMoment(values.effectiveFrom) ? values.effectiveFrom.toISOString() : "",
+      effectiveFrom: values.effectiveFrom   ? values.effectiveFrom.toISOString() : "",
       signedBy: values.signedBy || "",
-      effectiveUntil: values.effectiveTo && moment.isMoment(values.effectiveTo) ? values.effectiveTo.toISOString() : "",
+      effectiveUntil: values.effectiveTo   ? values.effectiveTo.toISOString() : "",
       title: values.title || "",
       tags: Array.isArray(values.tags) ? values.tags.filter(Boolean) : [],
       description: htmlDescription || "", 

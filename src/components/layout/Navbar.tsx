@@ -1,6 +1,6 @@
 import { useState } from "react";
 // import { useAuth } from "@/context/auth-context"
-import { Search, Plus } from "lucide-react";
+import { Search, BellRing } from "lucide-react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -36,7 +36,7 @@ export function Navbar() {
 
       <div className="flex items-center gap-4">
         <button className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-blue-800">
-          <Plus className="h-5 w-5" />
+          <BellRing className="h-5 w-5" />
         </button>
         <div className="relative max-w-64 ">
           {/* Mobile search button */}

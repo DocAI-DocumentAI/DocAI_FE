@@ -66,36 +66,39 @@ export const getApprovalQueue = async (pageNumber = 1, pageSize = 10, title?: st
 };
 
 export interface SemanticSearchParams {
-  Query?: string;
+  Query: string;
   Tags?: string[];
-  EffectiveFrom?: string;
-  EffectiveUntil?: string;
   userId?: string;
   pageNumber?: number;
   pageSize?: number;
+  EffectiveFrom?: string;
+  EffectiveUntil?: string;
+  MinRelevance?: number;
+  MaxResults?: number;
+  EnableHybridScoring?: boolean;
+  BoostDepartmentResults?: boolean;
+  LatestVersionsOnly?: boolean;
+  Scope?: number;
+  DocumentTypeId?: string;
+  SignedBy?: string;
 }
 
 export const semanticSearchDocuments = async (params: SemanticSearchParams) => {
-  const {
-    Query = '',
-    Tags = [],
-    EffectiveFrom,
-    EffectiveUntil,
-    userId = '',
-    pageNumber = 1,
-    pageSize = 10,
-  } = params;
+  // Build query string with all parameters
+  const queryParams = new URLSearchParams();
+  
+  // Add all parameters to query string
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      if (Array.isArray(value)) {
+        value.forEach(item => queryParams.append(key, item));
+      } else {
+        queryParams.append(key, value.toString());
+      }
+    }
+  });
 
-  const searchParams = new URLSearchParams();
-  if (Query) searchParams.append('Query', Query);
-  if (Tags && Tags.length > 0) Tags.forEach(tag => searchParams.append('Tags', tag));
-  if (EffectiveFrom) searchParams.append('EffectiveFrom', EffectiveFrom);
-  if (EffectiveUntil) searchParams.append('EffectiveUntil', EffectiveUntil);
-  if (userId) searchParams.append('userId', userId);
-  if (pageNumber) searchParams.append('pageNumber', String(pageNumber));
-  if (pageSize) searchParams.append('pageSize', String(pageSize));
-
-  const response = await api.get(`/document/semantic-search?${searchParams.toString()}`);
+  const response = await api.get(`/document/semantic-search?${queryParams.toString()}`);
   return response.data;
 };
 
@@ -123,5 +126,47 @@ export const regenerateSummary = async (file: File) => {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return response.data;
+};
+
+export interface ReplaceableDocument {
+  documentId: string;
+  versionId: string;
+  title: string;
+  description: string;
+  summary: string;
+  filePath: string;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  status: string;
+  versionName: string;
+  departmentId: string;
+  departmentName: string;
+  ownerId: string;
+  ownerName: string;
+  tags: string[];
+  createdTime: string;
+  documentTypeId: string;
+  documentTypeName: string;
+  replacementId: string;
+  replacementDocument: any;
+  replacementDocumentName: string;
+  isReplaced: boolean;
+  lastSubmitted: string;
+  submittedBy: string;
+  submittedByName: string;
+  isPublic: boolean;
+  signedBy: string;
+  effectiveFrom: string;
+  effectiveUntil: string;
+}
+
+export const getReplaceableDocuments = async (pageNumber = 1, pageSize = 10, title?: string) => {
+  let url = `/document/replaceable-documents?pageNumber=${pageNumber}&pageSize=${pageSize}`;
+  if (title) {
+    url += `&Title=${encodeURIComponent(title)}`;
+  }
+  const response = await api.get(url);
+  return response.data.data;
 };
 
