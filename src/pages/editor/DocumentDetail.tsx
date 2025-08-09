@@ -14,14 +14,12 @@ import {
     GlobalOutlined,
     LockOutlined,
     DeleteOutlined,
-    ExclamationCircleOutlined,
 } from "@ant-design/icons"
 import { api } from "../../lib/api/api";
 import toast from 'react-hot-toast';
 
 const { Title, Text, Paragraph } = Typography
 const { Content } = Layout
-const { confirm } = Modal
 
 export default function DocumentDetail({ onViewChange, }: any) {
     const { id, versionId } = useParams();
@@ -132,40 +130,7 @@ export default function DocumentDetail({ onViewChange, }: any) {
         setPreviewUrl("");
     };
 
-    const showDeleteConfirm = () => {
-        if (!document?.documentId || !document?.versionId) {
-            toast.error("Không tìm thấy document ID hoặc version ID!");
-            return;
-        }
-
-        if (document.status?.toLowerCase() !== 'draft') {
-            toast.error("Chỉ có thể xóa document ở trạng thái Draft!");
-            return;
-        }
-
-        confirm({
-            title: 'Xác nhận xóa document',
-            icon: <ExclamationCircleOutlined />,
-            content: (
-                <div>
-                    <p>Bạn có chắc chắn muốn xóa document draft này?</p>
-                    <p><strong>Tài liệu:</strong> {document.title}</p>
-                    <p><strong>File:</strong> {document.fileName}</p>
-                    <p style={{ color: '#ff4d4f', fontWeight: 'bold', marginTop: 16 }}>
-                        ⚠️ Hành động này không thể hoàn tác!
-                    </p>
-                </div>
-            ),
-            okText: 'Xóa',
-            okType: 'danger',
-            cancelText: 'Hủy',
-            width: 500,
-            onOk() {
-                return handleDeleteDraft();
-            },
-        });
-    };
-
+    
     const handleDeleteDraft = async () => {
         setDeleteLoading(true);
         try {
