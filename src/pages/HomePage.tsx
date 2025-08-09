@@ -45,7 +45,7 @@ export default function HomePage() {
               icon={<Library className="w-8 h-8 text-blue-500" />}
               title="Documents library"
               description="See all uploaded documents in the system."
-              href="/documents"
+              href="/document-library"
             />
 
             <FeatureCard
