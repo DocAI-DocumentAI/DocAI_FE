@@ -8,7 +8,7 @@ import ModelSelector from "../../components/ModelSelector"
 
 export default function ChatPage() {
   const { id } = useParams()
-  const { currentChat, sendMessage, loadChatDetail, changeModel, loading, sending } = useChat()
+  const { currentChat, sendMessage, loadChatDetail, changeModel, loading, sending, streaming } = useChat()
   const chatIdRef = useRef(id)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
@@ -133,6 +133,7 @@ export default function ChatPage() {
                     role={message.role}
                     content={message.content}
                     timestamp={message.timestamp}
+                    isStreaming={(message as any).isStreaming}
                   />
                 ))}
               </div>
@@ -147,13 +148,21 @@ export default function ChatPage() {
             <ChatInput
               onSend={handleSendMessage}
               placeholder="Ask anything..."
-              disabled={(!currentChat?.canSendMessages) || sending}
+              disabled={(!currentChat?.canSendMessages) || sending || streaming}
             />
             {sending && (
               <div className="text-center text-xs sm:text-sm text-gray-500 mt-2 sm:mt-3">
                 <div className="flex items-center justify-center gap-2">
                   <div className="animate-spin h-3 w-3 border border-gray-300 border-t-blue-600 rounded-full"></div>
                   Sending message...
+                </div>
+              </div>
+            )}
+            {streaming && (
+              <div className="text-center text-xs sm:text-sm text-gray-500 mt-2 sm:mt-3">
+                <div className="flex items-center justify-center gap-2">
+                  <div className="animate-spin h-3 w-3 border border-gray-300 border-t-blue-600 rounded-full"></div>
+                  AI is responding...
                 </div>
               </div>
             )}

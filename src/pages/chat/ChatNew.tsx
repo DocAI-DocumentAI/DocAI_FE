@@ -7,12 +7,13 @@ import ModelSelector from "../../components/ModelSelector"
 import ChatMessage from "../../components/chat-message"
 
 export default function NewChatPage() {
-  const { 
-    startNewTempChat, 
-    currentChat, 
-    sendMessage, 
-    changeModel, 
-    sending, 
+  const {
+    startNewTempChat,
+    currentChat,
+    sendMessage,
+    changeModel,
+    sending,
+    streaming,
     loading
   } = useChat()
   const hasInitialized = useRef(false)
@@ -92,11 +93,12 @@ export default function NewChatPage() {
           ) : (
             <div className="w-full max-w-2xl mx-auto px-4 py-8">
               {currentChat.messages.map((message, index) => (
-                <ChatMessage 
-                  key={message.id || index} 
-                  role={message.role} 
+                <ChatMessage
+                  key={message.id || index}
+                  role={message.role}
                   content={message.content}
                   timestamp={message.timestamp}
+                  isStreaming={(message as any).isStreaming}
                 />
               ))}
               <div ref={messagesEndRef} />
@@ -104,14 +106,22 @@ export default function NewChatPage() {
           )}
         </div>
         <div className="w-full max-w-2xl px-4 pb-8 pt-4 mx-auto">
-          <ChatInput 
-            onSend={handleSendMessage} 
+          <ChatInput
+            onSend={handleSendMessage}
             placeholder="Ask anything"
-            disabled={sending || !currentChat}
+            disabled={sending || streaming || !currentChat}
           />
           {sending && (
             <div className="text-center text-sm text-gray-500 mt-2">
               Creating chat and sending message...
+            </div>
+          )}
+          {streaming && (
+            <div className="text-center text-sm text-gray-500 mt-2">
+              <div className="flex items-center justify-center gap-2">
+                <div className="animate-spin h-3 w-3 border border-gray-300 border-t-blue-600 rounded-full"></div>
+                AI is responding...
+              </div>
             </div>
           )}
         </div>

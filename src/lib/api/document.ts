@@ -73,6 +73,17 @@ export interface SemanticSearchParams {
   userId?: string;
   pageNumber?: number;
   pageSize?: number;
+  // Enhanced filter parameters
+  minRelevance?: number;
+  maxResults?: number;
+  enableHybridScoring?: boolean;
+  boostDepartmentResults?: boolean;
+  latestVersionsOnly?: boolean;
+  scope?: number; // 0: All documents, 1: Public documents only, 2: Department documents only
+  documentTypeId?: string;
+  signedBy?: string;
+  fromDate?: string;
+  toDate?: string;
 }
 
 export const semanticSearchDocuments = async (params: SemanticSearchParams) => {
@@ -84,6 +95,17 @@ export const semanticSearchDocuments = async (params: SemanticSearchParams) => {
     userId = '',
     pageNumber = 1,
     pageSize = 10,
+    // Enhanced filter parameters
+    minRelevance,
+    maxResults,
+    enableHybridScoring,
+    boostDepartmentResults,
+    latestVersionsOnly,
+    scope,
+    documentTypeId,
+    signedBy,
+    fromDate,
+    toDate,
   } = params;
 
   const searchParams = new URLSearchParams();
@@ -94,6 +116,18 @@ export const semanticSearchDocuments = async (params: SemanticSearchParams) => {
   if (userId) searchParams.append('userId', userId);
   if (pageNumber) searchParams.append('pageNumber', String(pageNumber));
   if (pageSize) searchParams.append('pageSize', String(pageSize));
+
+  // Enhanced filter parameters
+  if (minRelevance !== undefined) searchParams.append('minRelevance', String(minRelevance));
+  if (maxResults !== undefined) searchParams.append('maxResults', String(maxResults));
+  if (enableHybridScoring !== undefined) searchParams.append('enableHybridScoring', String(enableHybridScoring));
+  if (boostDepartmentResults !== undefined) searchParams.append('boostDepartmentResults', String(boostDepartmentResults));
+  if (latestVersionsOnly !== undefined) searchParams.append('latestVersionsOnly', String(latestVersionsOnly));
+  if (scope !== undefined) searchParams.append('scope', String(scope));
+  if (documentTypeId) searchParams.append('documentTypeId', documentTypeId);
+  if (signedBy) searchParams.append('signedBy', signedBy);
+  if (fromDate) searchParams.append('fromDate', fromDate);
+  if (toDate) searchParams.append('toDate', toDate);
 
   const response = await api.get(`/document/semantic-search?${searchParams.toString()}`);
   return response.data;
@@ -113,6 +147,49 @@ export interface DocumentType {
 export const getDocumentTypes = async () => {
   const response = await api.get("/document/document-types?pageNumber=1&pageSize=100");
   return response.data.data.items as DocumentType[];
+};
+
+// Enhanced API functions for search filters
+export interface SearchUser {
+  id: string;
+  fullName: string;
+  email: string;
+}
+
+export const getSearchUsers = async (): Promise<SearchUser[]> => {
+  try {
+    const user = localStorage.getItem("user");
+    if (!user) {
+      throw new Error("No authentication token found");
+    }
+    const userData = JSON.parse(user);
+    const token = userData.docaiToken;
+
+    const response = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL_PRODUCTION}/auth/users?page=1&size=100&isAsc=true`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch users");
+    }
+
+    const data = await response.json();
+    return data.items.map((user: any) => ({
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+    }));
+  } catch (error) {
+    console.error('Error fetching users for search:', error);
+    return [];
+  }
 };
 
 export const regenerateSummary = async (file: File) => {

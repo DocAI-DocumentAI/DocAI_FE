@@ -1,12 +1,13 @@
 "use client"
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { 
-  getChatSessionDetail, 
-  sendMessage as sendMessageAPI, 
+import {
+  getChatSessionDetail,
+  sendMessageStream,
   createChatSession,
   getChatModels,
-  ChatSessionDetail
+  ChatSessionDetail,
+  StreamingMessageChunk
 } from '../lib/api/chat';
 
 export interface TempChatMessage {
@@ -15,6 +16,7 @@ export interface TempChatMessage {
   role: "user" | "assistant" | number;
   timestamp: Date | string;
   isTemp?: boolean;
+  isStreaming?: boolean;
 }
 
 export interface TempChatSession {
@@ -36,6 +38,7 @@ interface ChatContextType {
   currentChat: CurrentChat;
   loading: boolean;
   sending: boolean;
+  streaming: boolean;
   startNewTempChat: () => Promise<void>;
   sendMessage: (message: string, navigate?: (path: string, options?: any) => void) => Promise<void>;
   loadChatDetail: (chatId: string) => Promise<void>;
@@ -53,6 +56,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const [currentChat, setCurrentChat] = useState<CurrentChat>(null);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [streaming, setStreaming] = useState(false);
   // Cache to store loaded chats and prevent reloading
   const [chatCache, setChatCache] = useState<Map<string, ChatSessionDetail>>(new Map());
 
@@ -103,11 +107,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
 
   const sendMessage = useCallback(async (message: string, navigate?: (path: string, options?: any) => void) => {
-    if (!currentChat || sending) return;
-
+    if (!currentChat || sending || streaming) return;
 
     setSending(true);
-    
+
     try {
       // Add user message immediately to UI
       const userMessage: TempChatMessage = {
@@ -150,7 +153,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           modelName: currentChat.modelName
         });
         sessionId = createResponse.id;
-        
+
         // Update to real chat - remove isTemp property and convert messages to ChatMessage[]
         const { isTemp, ...chatWithoutTemp } = updatedChat as any;
         const chatMessages = (chatWithoutTemp.messages as TempChatMessage[]).map((msg: TempChatMessage) => ({
@@ -167,57 +170,188 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           messages: chatMessages
         } as ChatSessionDetail;
         setCurrentChat(updatedChat);
-        
+
         // Navigate to the new chat detail page using passed navigate function
         if (navigate) {
           navigate(`/chat/${sessionId}`, { replace: true });
         }
       }
 
-      // Send message to API
-      const response = await sendMessageAPI({
-        message,
-        sessionId: sessionId!,
-        modelName: currentChat.modelName
-      });
+      setSending(false);
+      setStreaming(true);
 
-      // Add assistant response
-      const assistantMessage: TempChatMessage = {
-        id: response.timestamp,
-        content: response.message,
-        role: response.role,
-        timestamp: response.timestamp
+      // Create placeholder assistant message for streaming
+      const assistantMessageId = Date.now().toString() + '_assistant';
+      const placeholderAssistantMessage: TempChatMessage = {
+        id: assistantMessageId,
+        content: '',
+        role: "assistant",
+        timestamp: new Date(),
+        isStreaming: true
       };
 
+      // Add placeholder assistant message to UI
       setCurrentChat(prev => {
         if (!prev) return null;
         let updatedChat: CurrentChat;
-        // If temp chat, allow TempChatMessage
         if ('isTemp' in prev && prev.isTemp) {
           updatedChat = {
             ...prev,
-            messages: [...prev.messages, assistantMessage]
+            messages: [...prev.messages, placeholderAssistantMessage]
           };
         } else {
-          // For real chat, convert assistantMessage to ChatMessage
           const chatMessage = {
-            id: assistantMessage.id,
-            content: assistantMessage.content,
-            role: typeof assistantMessage.role === "number" ? assistantMessage.role : (assistantMessage.role === "user" ? 1 : 2),
-            tokenCount: 0, // You may want to set this properly if available
-            timestamp: typeof assistantMessage.timestamp === "string" ? assistantMessage.timestamp : (assistantMessage.timestamp as Date).toISOString()
+            id: placeholderAssistantMessage.id,
+            content: placeholderAssistantMessage.content,
+            role: 2, // assistant
+            tokenCount: 0,
+            timestamp: typeof placeholderAssistantMessage.timestamp === "string" ? placeholderAssistantMessage.timestamp : (placeholderAssistantMessage.timestamp as Date).toISOString()
           };
           updatedChat = {
             ...prev,
             messages: [...(prev as any).messages, chatMessage]
           } as ChatSessionDetail;
-          // Update cache for real chats
-          if (prev.id) {
-            setChatCache(cache => new Map(cache).set(prev.id!, updatedChat as ChatSessionDetail));
-          }
         }
         return updatedChat;
       });
+
+      // Start streaming
+      await sendMessageStream(
+        {
+          message,
+          sessionId: sessionId!,
+          modelName: currentChat.modelName
+        },
+        // onChunk callback
+        (chunk: StreamingMessageChunk) => {
+          setCurrentChat(prev => {
+            if (!prev) return null;
+
+            const messages = [...(prev as any).messages];
+            const lastMessageIndex = messages.length - 1;
+
+            if (lastMessageIndex >= 0 && messages[lastMessageIndex].id === assistantMessageId) {
+              // Update the streaming message content
+              if ('isTemp' in prev && prev.isTemp) {
+                messages[lastMessageIndex] = {
+                  ...messages[lastMessageIndex],
+                  content: chunk.content,
+                  isStreaming: !chunk.isComplete
+                };
+                return {
+                  ...prev,
+                  messages
+                };
+              } else {
+                messages[lastMessageIndex] = {
+                  ...messages[lastMessageIndex],
+                  content: chunk.content
+                };
+                const updatedChat = {
+                  ...prev,
+                  messages
+                } as ChatSessionDetail;
+
+                // Update cache for real chats
+                if (prev.id) {
+                  setChatCache(cache => new Map(cache).set(prev.id!, updatedChat));
+                }
+                return updatedChat;
+              }
+            }
+            return prev;
+          });
+        },
+        // onComplete callback
+        (finalMessage) => {
+          setCurrentChat(prev => {
+            if (!prev) return null;
+
+            const messages = [...(prev as any).messages];
+            const lastMessageIndex = messages.length - 1;
+
+            if (lastMessageIndex >= 0 && messages[lastMessageIndex].id === assistantMessageId) {
+              // Finalize the message
+              if ('isTemp' in prev && prev.isTemp) {
+                messages[lastMessageIndex] = {
+                  ...messages[lastMessageIndex],
+                  content: finalMessage.message,
+                  isStreaming: false,
+                  timestamp: finalMessage.timestamp
+                };
+                return {
+                  ...prev,
+                  messages
+                };
+              } else {
+                messages[lastMessageIndex] = {
+                  ...messages[lastMessageIndex],
+                  content: finalMessage.message,
+                  timestamp: finalMessage.timestamp,
+                  tokenCount: finalMessage.tokenCount
+                };
+                const updatedChat = {
+                  ...prev,
+                  messages
+                } as ChatSessionDetail;
+
+                // Update cache for real chats
+                if (prev.id) {
+                  setChatCache(cache => new Map(cache).set(prev.id!, updatedChat));
+                }
+                return updatedChat;
+              }
+            }
+            return prev;
+          });
+          setStreaming(false);
+        },
+        // onError callback
+        (error) => {
+          console.error('Streaming failed:', error);
+
+          // Show error message to user by replacing the placeholder with an error message
+          setCurrentChat(prev => {
+            if (!prev) return null;
+            const messages = [...(prev as any).messages];
+            const lastMessageIndex = messages.length - 1;
+
+            if (lastMessageIndex >= 0 && messages[lastMessageIndex].id === assistantMessageId) {
+              // Replace placeholder with error message
+              const errorMessage = "Sorry, I encountered an error while processing your request. Please try again.";
+
+              if ('isTemp' in prev && prev.isTemp) {
+                messages[lastMessageIndex] = {
+                  ...messages[lastMessageIndex],
+                  content: errorMessage,
+                  isStreaming: false
+                };
+                return {
+                  ...prev,
+                  messages
+                };
+              } else {
+                messages[lastMessageIndex] = {
+                  ...messages[lastMessageIndex],
+                  content: errorMessage
+                };
+                const updatedChat = {
+                  ...prev,
+                  messages
+                } as ChatSessionDetail;
+
+                // Update cache for real chats
+                if (prev.id) {
+                  setChatCache(cache => new Map(cache).set(prev.id!, updatedChat));
+                }
+                return updatedChat;
+              }
+            }
+            return prev;
+          });
+          setStreaming(false);
+        }
+      );
 
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -238,10 +372,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           };
         }
       });
-    } finally {
       setSending(false);
+      setStreaming(false);
     }
-  }, [currentChat, sending, setChatCache]);
+  }, [currentChat, sending, streaming, setChatCache, setStreaming]);
 
   const loadChatDetail = useCallback(async (chatId: string) => {
     if (!chatId || chatId === 'new') return;
@@ -284,6 +418,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     currentChat,
     loading,
     sending,
+    streaming,
     startNewTempChat,
     sendMessage,
     loadChatDetail,

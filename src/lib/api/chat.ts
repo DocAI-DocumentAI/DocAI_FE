@@ -84,3 +84,106 @@ export const sendMessage = async (data: SendMessageRequest): Promise<SendMessage
   const response = await api.post('/chatbox/send', data);
   return response.data;
 };
+
+export interface StreamingMessageChunk {
+  content: string;
+  isComplete: boolean;
+  sessionId?: string;
+  messageId?: string;
+  timestamp?: string;
+  role?: number;
+  tokenCount?: number;
+  modelUsed?: string;
+}
+
+export const sendMessageStream = async (
+  data: SendMessageRequest,
+  onChunk: (chunk: StreamingMessageChunk) => void,
+  onComplete: (finalMessage: SendMessageResponse) => void,
+  onError: (error: Error) => void,
+  timeoutMs: number = 300000 // 5 minutes default timeout
+): Promise<void> => {
+  // Set up timeout
+  const timeoutId = setTimeout(() => {
+    onError(new Error('Request timeout - the response took too long'));
+  }, timeoutMs);
+
+  try {
+    const token = localStorage.getItem("token");
+    const baseURL = import.meta.env.VITE_API_BASE_URL;
+
+    const response = await fetch(`${baseURL}/chatbox/send/stream`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Accept': 'text/event-stream'
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      clearTimeout(timeoutId);
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    if (!response.body) {
+      clearTimeout(timeoutId);
+      throw new Error('Response body is null');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let accumulatedContent = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          // Stream completed - finalize message
+          clearTimeout(timeoutId);
+          const finalMessage: SendMessageResponse = {
+            sessionId: data.sessionId,
+            message: accumulatedContent,
+            role: 2, // assistant
+            tokenCount: 0,
+            timestamp: new Date().toISOString(),
+            modelUsed: data.modelName
+          };
+          onComplete(finalMessage);
+          break;
+        }
+
+        // Decode the chunk directly as text
+        const chunk = decoder.decode(value, { stream: true });
+
+        if (chunk) {
+          accumulatedContent += chunk;
+
+          // Send the accumulated content to update UI
+          const streamChunk: StreamingMessageChunk = {
+            content: accumulatedContent,
+            isComplete: false,
+            sessionId: data.sessionId,
+            messageId: Date.now().toString(),
+            timestamp: new Date().toISOString(),
+            role: 2,
+            tokenCount: 0,
+            modelUsed: data.modelName
+          };
+
+          onChunk(streamChunk);
+        }
+      }
+    } catch (readError) {
+      clearTimeout(timeoutId);
+      onError(new Error(`Stream reading failed: ${readError.message}`));
+    } finally {
+      reader.releaseLock();
+    }
+  } catch (error) {
+    clearTimeout(timeoutId);
+    onError(error instanceof Error ? error : new Error('Unknown streaming error'));
+  }
+};

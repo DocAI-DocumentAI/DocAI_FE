@@ -5,6 +5,7 @@ type ChatMessageProps = {
   role: "user" | "assistant" | number; // Support both string and number
   content: string;
   timestamp?: Date | string;
+  isStreaming?: boolean;
 };
 
 // Simple content formatter for basic markdown-like formatting
@@ -37,19 +38,31 @@ const formatContent = (content: string): string => {
 
 
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, timestamp }) => {
+// Streaming indicator component
+const StreamingIndicator: React.FC = () => (
+  <div className="flex items-center space-x-1 mt-2">
+    <div className="flex space-x-1">
+      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+    </div>
+    <span className="text-xs text-gray-500 ml-2">AI is typing...</span>
+  </div>
+);
+
+const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, timestamp, isStreaming = false }) => {
   // Convert role to string if it's a number (from API)
-  const messageRole = typeof role === 'number' 
+  const messageRole = typeof role === 'number'
     ? (role === 1 ? 'user' : 'assistant')
     : role;
 
   // Format timestamp
   const formatTime = (date: Date | string) => {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
-    return dateObj.toLocaleTimeString('vi-VN', { 
-      hour: '2-digit', 
+    return dateObj.toLocaleTimeString('vi-VN', {
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: false 
+      hour12: false
     });
   };
 
@@ -77,10 +90,13 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, timestamp }) =
             {messageRole === "user" ? (
               <div className="whitespace-pre-wrap break-words">{content}</div>
             ) : (
-              <div
-                className="prose prose-base max-w-none prose-headings:text-gray-900 prose-p:text-gray-800 prose-strong:text-gray-900 prose-blockquote:border-l-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:text-gray-700 prose-code:text-pink-600 prose-code:bg-gray-100 prose-pre:bg-gray-100"
-                dangerouslySetInnerHTML={{ __html: formatContent(content) }}
-              />
+              <>
+                <div
+                  className="prose prose-base max-w-none prose-headings:text-gray-900 prose-p:text-gray-800 prose-strong:text-gray-900 prose-blockquote:border-l-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:text-gray-700 prose-code:text-pink-600 prose-code:bg-gray-100 prose-pre:bg-gray-100"
+                  dangerouslySetInnerHTML={{ __html: formatContent(content) }}
+                />
+                {isStreaming && <StreamingIndicator />}
+              </>
             )}
           </div>
           
