@@ -11,20 +11,24 @@ import toast from "react-hot-toast"
 export default function DocumentPage() {
   const { id } = useParams()
   const [activeTab, setActiveTab] = useState<
-    "content" | "information" | "summary" | "original" | "version"
-  >("content")
+    "preview" | "information" | "summary" | "original" | "version" | "content"
+  >("preview")
   const [versions, setVersions] = useState<any[]>([]);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [bookmarkId, setBookmarkId] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [canPreview, setCanPreview] = useState(false);
 
   // Get current user ID (you might need to get this from auth context or localStorage)
-  
+
   const userStr = localStorage.getItem("user");
   if (!userStr) {
     toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
     return;
   }
   const user = JSON.parse(userStr);
+
   const checkBookmarkStatus = async () => {
     try {
       const response = await api.get(`/document/bookmarks?userId=${user.userId}&pageNumber=1&pageSize=100`);
@@ -49,16 +53,42 @@ export default function DocumentPage() {
         await api.delete(`/document/bookmarks/${id}?userId=${user.userId}`);
         setIsBookmarked(false);
         setBookmarkId(null);
+        toast.success("Đã xóa bookmark");
       } else {
         // Add bookmark
         await api.post(`/document/bookmarks/${id}?userId=${user.userId}`);
         setIsBookmarked(true);
+        toast.success("Đã thêm bookmark");
         // Refresh bookmark status to get the new bookmark ID
         await checkBookmarkStatus();
       }
     } catch (error) {
       console.error('Failed to toggle bookmark:', error);
-      alert('Lỗi khi thay đổi bookmark');
+      toast.error('Lỗi khi thay đổi bookmark');
+    }
+  };
+
+  const loadPreview = async (versionId: string) => {
+    if (!versionId) return;
+
+    setPreviewLoading(true);
+    try {
+      const response = await api.get(`/document/files/${versionId}/iframe-url`);
+      const data = response.data.data;
+
+      if (data.canViewInline && data.iframeUrl) {
+        setPreviewUrl(data.iframeUrl);
+        setCanPreview(true);
+      } else {
+        setCanPreview(false);
+        toast.error("This file type cannot be previewed inline");
+      }
+    } catch (error: any) {
+      console.error('Preview failed:', error);
+      setCanPreview(false);
+      toast.error(`Preview failed: ${error?.response?.data?.message || error.message}`);
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
@@ -113,9 +143,10 @@ export default function DocumentPage() {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+      toast.success("File downloaded successfully");
     } catch (error) {
       console.error('Download failed:', error);
-      alert('Tải file thất bại');
+      toast.error('Tải file thất bại');
     }
   };
 
@@ -130,6 +161,19 @@ export default function DocumentPage() {
   // Use the first version as the main document for all tabs except Version
   const mainDoc = versions[0] || {};
 
+  // Load preview when mainDoc changes and preview tab is active
+  useEffect(() => {
+    if (activeTab === "preview" && mainDoc.versionId && !previewUrl) {
+      loadPreview(mainDoc.versionId);
+    }
+  }, [activeTab, mainDoc.versionId]);
+
+  const handlePreviewClick = () => {
+    setActiveTab("preview");
+    if (mainDoc.versionId && !previewUrl) {
+      loadPreview(mainDoc.versionId);
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
@@ -145,13 +189,24 @@ export default function DocumentPage() {
               <button
                 className={`rounded-md border p-2 ${isBookmarked ? 'border-blue-800 bg-blue-50' : 'border-gray-300'}`}
                 onClick={toggleBookmark}
+                title={isBookmarked ? "Remove bookmark" : "Add bookmark"}
               >
                 <Bookmark className={`h-5 w-5 ${isBookmarked ? 'text-blue-800 fill-blue-800' : 'text-gray-700'}`} />
+              </button>
+              <button
+                className="flex items-center rounded-md bg-green-600 px-4 py-2 text-sm text-white hover:bg-green-700"
+                onClick={handlePreviewClick}
+                disabled={!mainDoc.versionId}
+                title="Preview document"
+              >
+                <Eye className="mr-1 h-4 w-4" />
+                Preview
               </button>
               <button
                 className="flex items-center rounded-md bg-blue-800 px-4 py-2 text-sm text-white hover:bg-blue-900"
                 onClick={() => mainDoc.versionId && downloadFile(mainDoc.versionId)}
                 disabled={!mainDoc.versionId}
+                title="Download document"
               >
                 <Download className="mr-1 h-4 w-4" />
                 Download
@@ -189,25 +244,33 @@ export default function DocumentPage() {
           </div>
 
           <div className="mb-6 border-b border-gray-200">
-            <div className="flex">
+            <div className="flex overflow-x-auto">
               <button
-                className={`px-4 py-2 text-sm font-medium ${activeTab === "content" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
+                className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "preview" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
+                onClick={handlePreviewClick}
+              >
+                <Eye className="mr-1 h-4 w-4 inline" />
+                Preview
+              </button>
+              <button
+                className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "content" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
                 onClick={() => setActiveTab("content")}
               >Content</button>
               <button
-                className={`px-4 py-2 text-sm font-medium ${activeTab === "information" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
+                className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "information" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
                 onClick={() => setActiveTab("information")}
               >Information</button>
               <button
-                className={`px-4 py-2 text-sm font-medium ${activeTab === "summary" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
+                className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "summary" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
                 onClick={() => setActiveTab("summary")}
               >Summary</button>
+
               <button
-                className={`px-4 py-2 text-sm font-medium ${activeTab === "original" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
+                className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "original" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
                 onClick={() => setActiveTab("original")}
               >Original Document</button>
               <button
-                className={`px-4 py-2 text-sm font-medium ${activeTab === "version" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
+                className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "version" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
                 onClick={() => setActiveTab("version")}
               >Version</button>
             </div>
@@ -215,15 +278,13 @@ export default function DocumentPage() {
 
           {activeTab === "content" && (
             <div>
-              {/* <div className="mb-4 rounded-md border border-red-800 bg-red-50 p-2 text-center text-sm font-medium text-red-800">
-                PDF Viewer
-              </div> */}
               <div
                 className="prose max-w-none rounded-md border border-gray-200 bg-white p-6"
                 dangerouslySetInnerHTML={{ __html: mainDoc.content || mainDoc.description || 'Chưa có' }}
               />
             </div>
           )}
+
           {activeTab === "information" && (
             <div className="rounded-md border border-gray-200 bg-white p-6">
               <h2 className="mb-4 text-lg font-medium">Document information</h2>
@@ -251,6 +312,7 @@ export default function DocumentPage() {
               </div>
             </div>
           )}
+
           {activeTab === "summary" && (
             <div className="rounded-md border border-gray-200 bg-white p-6">
               <h2 className="mb-4 text-lg font-medium">Summary</h2>
@@ -269,6 +331,76 @@ export default function DocumentPage() {
               <div className="text-sm" dangerouslySetInnerHTML={{ __html: `<b>Summary:</b> ${mainDoc.summary || 'Chưa có'}` }} />
             </div>
           )}
+
+          {activeTab === "preview" && (
+            <div className="rounded-md border border-gray-200 bg-white">
+              {previewLoading ? (
+                <div className="flex items-center justify-center p-12">
+                  <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+                    <div className="text-sm text-gray-600">Loading preview...</div>
+                  </div>
+                </div>
+              ) : !canPreview ? (
+                <div className="flex items-center justify-center p-12">
+                  <div className="text-center">
+                    <Eye className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <div className="text-lg font-medium text-gray-600 mb-2">Preview not available</div>
+                    <div className="text-sm text-gray-500 mb-4">
+                      This file type cannot be previewed inline or an error occurred while loading.
+                    </div>
+                    <button
+                      className="flex items-center justify-center mx-auto rounded-md bg-blue-800 px-4 py-2 text-sm text-white hover:bg-blue-900"
+                      onClick={() => mainDoc.versionId && downloadFile(mainDoc.versionId)}
+                      disabled={!mainDoc.versionId}
+                    >
+                      <Download className="mr-1 h-4 w-4" />
+                      Download to view
+                    </button>
+                  </div>
+                </div>
+              ) : previewUrl ? (
+                <div className="relative">
+                  <div className="p-4 border-b bg-gray-50 flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Eye className="h-5 w-5 text-gray-600 mr-2" />
+                      <span className="text-sm font-medium text-gray-700">
+                        {mainDoc.fileName || 'Document Preview'}
+                      </span>
+                    </div>
+                    <button
+                      className="text-sm text-blue-600 hover:text-blue-800"
+                      onClick={() => loadPreview(mainDoc.versionId)}
+                      disabled={previewLoading}
+                    >
+                      Refresh
+                    </button>
+                  </div>
+                  <div style={{ height: '80vh', minHeight: '600px' }}>
+                    <iframe
+                      src={previewUrl}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        border: 'none'
+                      }}
+                      title="Document Preview"
+                      sandbox="allow-scripts allow-same-origin"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center p-12">
+                  <div className="text-center">
+                    <Eye className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <div className="text-lg font-medium text-gray-600 mb-2">No preview available</div>
+                    <div className="text-sm text-gray-500">Unable to load document preview</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === "original" && (
             <div className="rounded-md border border-gray-200 bg-white p-6">
               <h2 className="mb-4 text-lg font-medium">{mainDoc.title || 'Chưa có'}</h2>
@@ -286,13 +418,33 @@ export default function DocumentPage() {
               </div>
             </div>
           )}
+
           {activeTab === "version" && (
             <div className="rounded-md border border-gray-200 bg-white p-6">
               <div className="mb-4">
                 {versions.length === 0 && <div>No versions found.</div>}
                 {versions.map((ver) => (
                   <div className="mb-4 border rounded-md p-4" key={ver.versionId}>
-                    <h3 className="mb-2 text-sm font-medium">{ver.versionName || ver.title || 'Chưa có'}</h3>
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-sm font-medium">{ver.versionName || ver.title || 'Chưa có'}</h3>
+                      <div className="flex gap-2">
+                        <button
+                          className="text-xs text-blue-600 hover:text-blue-800 flex items-center"
+                          onClick={() => loadPreview(ver.versionId)}
+                          disabled={previewLoading}
+                        >
+                          <Eye className="mr-1 h-3 w-3" />
+                          Preview
+                        </button>
+                        <button
+                          className="text-xs text-green-600 hover:text-green-800 flex items-center"
+                          onClick={() => downloadFile(ver.versionId)}
+                        >
+                          <Download className="mr-1 h-3 w-3" />
+                          Download
+                        </button>
+                      </div>
+                    </div>
                     <div className="mb-2 grid grid-cols-2 gap-2 text-xs text-gray-700">
                       <div><b>Title:</b> {ver.title || 'Chưa có'}</div>
                       <div><b>Description:</b> <span dangerouslySetInnerHTML={{ __html: ver.description || 'Chưa có' }} /></div>
@@ -326,11 +478,8 @@ export default function DocumentPage() {
               </div>
             </div>
           )}
-
-       
         </div>
       </main>
-
     </div>
   )
 }

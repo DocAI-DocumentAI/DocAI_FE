@@ -1,24 +1,39 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { Layout, Typography, Card, Button, Tag, Row, Col, Spin } from "antd"
+import { Layout, Typography, Card, Button, Tag, Row, Col, Spin, Divider, Badge, Alert, Modal } from "antd"
 import {
     ArrowLeftOutlined,
     FileTextOutlined,
     UserOutlined,
     CalendarOutlined,
+    FileOutlined,
+    TeamOutlined,
+    SwapOutlined,
+    EyeOutlined,
+    EditOutlined,
+    GlobalOutlined,
+    LockOutlined,
+    DeleteOutlined,
+    ExclamationCircleOutlined,
 } from "@ant-design/icons"
 import { api } from "../../lib/api/api";
 import toast from 'react-hot-toast';
 
 const { Title, Text, Paragraph } = Typography
 const { Content } = Layout
+const { confirm } = Modal
 
 export default function DocumentDetail({ onViewChange, }: any) {
     const { id, versionId } = useParams();
     const navigate = useNavigate();
     const [document, setDocument] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [submitting, setSubmitting] = useState(false); // Thêm state cho submit loading
+    const [submitting, setSubmitting] = useState(false);
+    const [previewVisible, setPreviewVisible] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState<string>("");
+    const [previewLoading, setPreviewLoading] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
+    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
     const fetchDocument = async () => {
         setLoading(true);
@@ -41,13 +56,29 @@ export default function DocumentDetail({ onViewChange, }: any) {
     if (!document) return <div>No document selected</div>;
 
     const formatDate = (dateStr: string) => {
-        if (!dateStr || dateStr.startsWith('0001-01-01')) return '';
+        if (!dateStr || dateStr.startsWith('0001-01-01')) return 'N/A';
         return new Date(dateStr).toLocaleString();
     };
 
-    const handleSubmitForApproval = async () => {
-        console.log(document);
+    const formatFileSize = (bytes: number) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
 
+    const getStatusColor = (status: string) => {
+        switch (status?.toLowerCase()) {
+            case 'approved': return 'green';
+            case 'pending': return 'orange';
+            case 'rejected': return 'red';
+            case 'draft': return 'blue';
+            default: return 'default';
+        }
+    };
+
+    const handleSubmitForApproval = async () => {
         if (!document?.versionId) {
             toast.error("Không tìm thấy versionId!");
             return;
@@ -59,17 +90,127 @@ export default function DocumentDetail({ onViewChange, }: any) {
         }
         const user = JSON.parse(userStr);
 
-        setSubmitting(true); // Bắt đầu loading
+        setSubmitting(true);
         try {
             await api.post(`/document/submit/${document.versionId}?userId=${user.userId}`);
             toast.success("Đã gửi tài liệu lên quản lý kiểm duyệt!");
-            // Reload document để cập nhật status
             await fetchDocument();
         } catch (error: any) {
             toast.error(`Gửi tài liệu thất bại: ${error?.response?.data?.message || error.message}`);
         } finally {
-            setSubmitting(false); // Kết thúc loading
+            setSubmitting(false);
         }
+    };
+
+    const handlePreview = async () => {
+        if (!document?.versionId) {
+            toast.error("Không tìm thấy versionId!");
+            return;
+        }
+
+        setPreviewLoading(true);
+        try {
+            const response = await api.get(`/document/files/${document.versionId}/iframe-url`);
+            const data = response.data.data;
+            
+            if (data.canViewInline && data.iframeUrl) {
+                setPreviewUrl(data.iframeUrl);
+                setPreviewVisible(true);
+            } else {
+                toast.error("This file type cannot be previewed inline");
+            }
+        } catch (error: any) {
+            toast.error(`Preview failed: ${error?.response?.data?.message || error.message}`);
+            console.error("Preview error:", error);
+        } finally {
+            setPreviewLoading(false);
+        }
+    };
+
+    const handleClosePreview = () => {
+        setPreviewVisible(false);
+        setPreviewUrl("");
+    };
+
+    const showDeleteConfirm = () => {
+        if (!document?.documentId || !document?.versionId) {
+            toast.error("Không tìm thấy document ID hoặc version ID!");
+            return;
+        }
+
+        if (document.status?.toLowerCase() !== 'draft') {
+            toast.error("Chỉ có thể xóa document ở trạng thái Draft!");
+            return;
+        }
+
+        confirm({
+            title: 'Xác nhận xóa document',
+            icon: <ExclamationCircleOutlined />,
+            content: (
+                <div>
+                    <p>Bạn có chắc chắn muốn xóa document draft này?</p>
+                    <p><strong>Tài liệu:</strong> {document.title}</p>
+                    <p><strong>File:</strong> {document.fileName}</p>
+                    <p style={{ color: '#ff4d4f', fontWeight: 'bold', marginTop: 16 }}>
+                        ⚠️ Hành động này không thể hoàn tác!
+                    </p>
+                </div>
+            ),
+            okText: 'Xóa',
+            okType: 'danger',
+            cancelText: 'Hủy',
+            width: 500,
+            onOk() {
+                return handleDeleteDraft();
+            },
+        });
+    };
+
+    const handleDeleteDraft = async () => {
+        setDeleteLoading(true);
+        try {
+            console.log(`Deleting document: ${document.documentId}, version: ${document.versionId}`);
+            
+            const response = await api.delete(`/document/drafts/${document.documentId}?versionId=${document.versionId}`);
+            console.log('Delete response:', response);
+            
+            toast.success("Đã xóa document draft thành công!");
+            
+            // Navigate back to queue or previous page
+            setTimeout(() => {
+                if (onViewChange) {
+                    onViewChange("queue");
+                } else {
+                    navigate(-1);
+                }
+            }, 1500);
+        } catch (error: any) {
+            console.error('Delete failed:', error);
+            const errorMessage = error?.response?.data?.message || error.message;
+            toast.error(`Xóa document thất bại: ${errorMessage}`);
+        } finally {
+            setDeleteLoading(false);
+        }
+    };
+
+    // Alternative method using custom modal
+    const handleDeleteDraftAlternative = () => {
+        if (!document?.documentId || !document?.versionId) {
+            toast.error("Không tìm thấy document ID hoặc version ID!");
+            return;
+        }
+
+        if (document.status?.toLowerCase() !== 'draft') {
+            toast.error("Chỉ có thể xóa document ở trạng thái Draft!");
+            return;
+        }
+
+        setDeleteModalVisible(true);
+    };
+
+    const confirmDelete = async () => {
+        setDeleteModalVisible(false);
+        await handleDeleteDraft();
     };
 
     return (
@@ -83,175 +224,417 @@ export default function DocumentDetail({ onViewChange, }: any) {
                             icon={<ArrowLeftOutlined />}
                             onClick={() => onViewChange ? onViewChange("queue") : navigate(-1)}
                             style={{ marginBottom: 16 }}
-                            disabled={submitting} // Disable khi đang submit
+                            disabled={submitting || deleteLoading}
                         >
                             Back
                         </Button>
-                        <Title level={2} style={{ margin: 0 }}>
-                            Document Detail
-                        </Title>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Title level={2} style={{ margin: 0 }}>
+                                Document Detail
+                            </Title>
+                            <div>
+                                {document.isPublic ? (
+                                    <Tag icon={<GlobalOutlined />} color="green">Public</Tag>
+                                ) : (
+                                    <Tag icon={<LockOutlined />} color="orange">Private</Tag>
+                                )}
+                                <Tag color={getStatusColor(document.status)}>{document.status}</Tag>
+                            </div>
+                        </div>
                     </div>
 
-                    <Card style={{ marginBottom: 24 }}>
-                        <Row gutter={16}>
-                            <Col span={12}>
-                                <Text strong>ID:</Text> <Text copyable>{document.documentId}</Text>
-                            </Col>
-                            <Col span={12}>
-                                <Text strong>Status:</Text> <Tag color={document.status === 'Pending' ? 'orange' : 'blue'}>{document.status}</Tag>
-                            </Col>
-                        </Row>
-                        <Row gutter={16} style={{ marginTop: 16 }}>
-                            <Col span={12}>
-                                <Text strong>Version Number:</Text> <Text>{document.versionId || '-'}</Text>
-                            </Col>
-                            <Col span={12}>
-                                <Text strong>Document ID:</Text> <Text>{document.documentId || '-'}</Text>
-                            </Col>
-                        </Row>
-                        <Row gutter={16} style={{ marginTop: 16 }}>
-                            <Col span={12}>
-                                <Text strong>Created At:</Text> <Text>{formatDate(document.createdTime)}</Text>
-                            </Col>
-                            <Col span={12}>
-                                <Text strong>Last Submitted:</Text> <Text>{formatDate(document.lastSubmitted)}</Text>
-                            </Col>
-                        </Row>
-                        <Row gutter={16} style={{ marginTop: 16 }}>
-                            <Col span={12}>
-                                <Text strong>Submitted By:</Text> <Text>{document.submittedBy || '-'}</Text>
-                            </Col>
-                            <Col span={12}>
-                                <Text strong>Tags:</Text> {Array.isArray(document.tags) && document.tags.length > 0 ? document.tags.map((tag: string) => <Tag key={tag}>{tag}</Tag>) : <Text>-</Text>}
-                            </Col>
-                            <Col span={12}>
-                                <Text strong>file name:</Text> {document.fileName || '-'}
-                            </Col>
-                            <Col span={12}>
-                                <Text strong>documentTypeName:</Text> {document.documentTypeName || '-'}
-                            </Col>
-                            <Col span={12}>
-                                <Text strong>Public:</Text> {document.isPublic ? 'Yes' : 'No'}
-                            </Col>
-                        </Row>
-                        <Row style={{ marginTop: 24 }}>
-                            <Col span={24}>
-                                {document.status === 'Draft' && (
-                                    <Button 
-                                        type="primary" 
-                                        onClick={handleSubmitForApproval} 
-                                        block
-                                        loading={submitting}
-                                        disabled={submitting}
-                                    >
-                                        {submitting ? "Đang gửi..." : "Xác nhận đẩy lên cho quản lý kiểm duyệt"}
+                    {/* Replacement Document Alert */}
+                    {document.isReplaced && document.replacementDocument && (
+                        <Alert
+                            message="Document Replacement"
+                            description={
+                                <div>
+                                    This document has been replaced by: <strong>{document.replacementDocumentName}</strong>
+                                    <br />
+                                    <Button type="link" icon={<SwapOutlined />} style={{ padding: 0, marginTop: 4 }}>
+                                        View Replacement Document
                                     </Button>
-                                )}
-                                {document.status === 'Rejected' && (
-                                    <Button 
-                                        type="primary" 
-                                        danger 
-                                        block 
-                                        onClick={() => navigate(`/editor/document/recreate/${document.documentId}`)}
-                                        disabled={submitting}
-                                    >
-                                        Tạo lại bản nháp
-                                    </Button>
-                                )}
-                                {document.status === 'Approved' && (
-                                    <Button 
-                                        type="default" 
-                                        block 
-                                        onClick={() => navigate(`/editor/document/new-version/${document.documentId}`)}
-                                        disabled={submitting}
-                                    >
-                                        Tạo Version mới
-                                    </Button>
-                                )}
-                                {document.status === 'Pending' && (
-                                    <div style={{ textAlign: 'center', padding: 16 }}>
-                                        <Text type="secondary">
-                                            Tài liệu đang chờ phê duyệt
-                                        </Text>
-                                    </div>
-                                )}
+                                </div>
+                            }
+                            type="warning"
+                            showIcon
+                            style={{ marginBottom: 24 }}
+                        />
+                    )}
+
+                    {/* Basic Information Card */}
+                    <Card title="Basic Information" style={{ marginBottom: 24 }}>
+                        <Row gutter={[16, 16]}>
+                            <Col xs={24} sm={12} md={8}>
+                                <Text strong>Document ID:</Text>
+                                <br />
+                                <Text copyable>{document.documentId}</Text>
+                            </Col>
+                            <Col xs={24} sm={12} md={8}>
+                                <Text strong>Version ID:</Text>
+                                <br />
+                                <Text copyable>{document.versionId}</Text>
+                            </Col>
+                            <Col xs={24} sm={12} md={8}>
+                                <Text strong>Version Name:</Text>
+                                <br />
+                                <Text copyable>{document.versionName}</Text>
+                            </Col>
+                            <Col xs={24} sm={12} md={8}>
+                                <Text strong>Document Type:</Text>
+                                <br />
+                                <Tag color="blue">{document.documentTypeName}</Tag>
+                            </Col>
+                            <Col xs={24} sm={12} md={8}>
+                                <Text strong>Department:</Text>
+                                <br />
+                                <Tag icon={<TeamOutlined />} color="purple">{document.departmentName}</Tag>
+                            </Col>
+                            <Col xs={24} sm={12} md={8}>
+                                <Text strong>Owner:</Text>
+                                <br />
+                                <Text><UserOutlined /> {document.ownerName}</Text>
                             </Col>
                         </Row>
+
+                        <Divider />
+
+                        {/* File Information */}
+                        <Row gutter={[16, 16]}>
+                            <Col xs={24} sm={12} md={8}>
+                                <Text strong>File Name:</Text>
+                                <br />
+                                <Text><FileOutlined /> {document.fileName}</Text>
+                            </Col>
+                            <Col xs={24} sm={12} md={8}>
+                                <Text strong>File Type:</Text>
+                                <br />
+                                <Tag>{document.fileType}</Tag>
+                            </Col>
+                            <Col xs={24} sm={12} md={8}>
+                                <Text strong>File Size:</Text>
+                                <br />
+                                <Text>{formatFileSize(document.fileSize)}</Text>
+                            </Col>
+                            <Col xs={24}>
+                                <Button 
+                                    icon={<EyeOutlined />} 
+                                    onClick={handlePreview}
+                                    disabled={!document.versionId}
+                                    loading={previewLoading}
+                                >
+                                    {previewLoading ? "Loading Preview..." : "Preview File"}
+                                </Button>
+                            </Col>
+                        </Row>
+
+                        <Divider />
+
+                        {/* Date Information */}
+                        <Row gutter={[16, 16]}>
+                            <Col xs={24} sm={12} md={8}>
+                                <Text strong>Created Time:</Text>
+                                <br />
+                                <Text><CalendarOutlined /> {formatDate(document.createdTime)}</Text>
+                            </Col>
+                            <Col xs={24} sm={12} md={8}>
+                                <Text strong>Last Submitted:</Text>
+                                <br />
+                                <Text><CalendarOutlined /> {formatDate(document.lastSubmitted)}</Text>
+                            </Col>
+                            <Col xs={24} sm={12} md={8}>
+                                <Text strong>Submitted By:</Text>
+                                <br />
+                                <Text><UserOutlined /> {document.submittedByName || 'N/A'}</Text>
+                            </Col>
+                        </Row>
+
+                        {/* Effective Date Information */}
+                        {(document.effectiveFrom || document.effectiveUntil) && (
+                            <>
+                                <Divider />
+                                <Row gutter={[16, 16]}>
+                                    <Col xs={24} sm={12} md={8}>
+                                        <Text strong>Effective From:</Text>
+                                        <br />
+                                        <Text>{formatDate(document.effectiveFrom)}</Text>
+                                    </Col>
+                                    <Col xs={24} sm={12} md={8}>
+                                        <Text strong>Effective Until:</Text>
+                                        <br />
+                                        <Text>{formatDate(document.effectiveUntil)}</Text>
+                                    </Col>
+                                    <Col xs={24} sm={12} md={8}>
+                                        <Text strong>Signed By:</Text>
+                                        <br />
+                                        <Text><EditOutlined /> {document.signedBy || 'N/A'}</Text>
+                                    </Col>
+                                </Row>
+                            </>
+                        )}
+
+                        {/* Tags */}
+                        {document.tags && document.tags.length > 0 && (
+                            <>
+                                <Divider />
+                                <Row>
+                                    <Col span={24}>
+                                        <Text strong>Tags:</Text>
+                                        <br />
+                                        <div style={{ marginTop: 8 }}>
+                                            {document.tags.map((tag: string, index: number) => (
+                                                <Tag key={index} color="geekblue">{tag}</Tag>
+                                            ))}
+                                        </div>
+                                    </Col>
+                                </Row>
+                            </>
+                        )}
                     </Card>
 
-                    <Row gutter={25}>
-                        {/* Left Column - Document Details */}
-                        <Col xs={24} lg={24}>
+                    <Row gutter={24}>
+                        {/* Left Column - Document Content */}
+                        <Col xs={24} lg={16}>
+                            {/* Document Title and Summary */}
                             <Card style={{ marginBottom: 24 }}>
                                 <div style={{ display: "flex", alignItems: "flex-start", marginBottom: 16 }}>
-                                    <FileTextOutlined style={{ fontSize: 24, marginRight: 12, marginTop: 4 }} />
+                                    <FileTextOutlined style={{ fontSize: 24, marginRight: 12, marginTop: 4, color: "#1890ff" }} />
                                     <div style={{ flex: 1 }}>
-                                        <Title level={4} style={{ margin: 0, marginBottom: 8 }}>
+                                        <Title level={3} style={{ margin: 0, marginBottom: 16 }}>
                                             {document.title}
                                         </Title>
-                                        <div className="text-gray-500" style={{ fontSize: 14 }} dangerouslySetInnerHTML={{ __html: document.summary || '' }} />
+                                        {document.summary && (
+                                            <div style={{ 
+                                                backgroundColor: "#f6f8fa", 
+                                                padding: 16, 
+                                                borderRadius: 6,
+                                                border: "1px solid #e1e4e8"
+                                            }}>
+                                                <Text strong style={{ marginBottom: 8, display: 'block' }}>Summary:</Text>
+                                                <div 
+                                                    className="document-summary"
+                                                    style={{ 
+                                                        fontSize: 14, 
+                                                        lineHeight: '1.6',
+                                                        maxHeight: '400px',
+                                                        overflowY: 'auto'
+                                                    }} 
+                                                    dangerouslySetInnerHTML={{ __html: document.summary }} 
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-
-                                <Row gutter={16} style={{ marginBottom: 16 }}>
-                                    <Col span={12}>
-                                        <div>
-                                            <Text strong>Editor</Text>
-                                            <div style={{ display: "flex", alignItems: "center", marginTop: 4 }}>
-                                                <UserOutlined style={{ marginRight: 4, color: "#666" }} />
-                                                <Text>{document.signedBy || document.ownerId}</Text>
-                                            </div>
-                                        </div>
-                                    </Col>
-                                    <Col span={12}>
-                                        <div>
-                                            <Text strong>Department</Text>
-                                            <div style={{ marginTop: 4 }}>
-                                                <Tag color="blue">{document.departmentId}</Tag>
-                                            </div>
-                                        </div>
-                                    </Col>
-                                </Row>
-
-                                <Row gutter={16}>
-                                    <Col span={12}>
-                                        <div>
-                                            <Text strong>Submitted</Text>
-                                            <div style={{ display: "flex", alignItems: "center", marginTop: 4 }}>
-                                                <CalendarOutlined style={{ marginRight: 4, color: "#666" }} />
-                                                <Text>{document.lastSubmitted ? new Date(document.lastSubmitted).toLocaleString() : ""}</Text>
-                                            </div>
-                                        </div>
-                                    </Col>
-                                    <Col span={12}>
-                                        <div>
-                                            <Text strong>Version</Text>
-                                            <div style={{ marginTop: 4 }}>
-                                                <Text>{document.versionName}</Text>
-                                            </div>
-                                        </div>
-                                    </Col>
-                                </Row>
                             </Card>
 
-                            {/* Document Content */}
+                            {/* Document Description */}
                             <Card>
                                 <Title level={4} style={{ marginBottom: 16 }}>
-                                    Document Content
+                                    <FileTextOutlined /> Document Description
                                 </Title>
-                                <div style={{ backgroundColor: "#f5f5f5", padding: 16, borderRadius: 6 }}>
-                                    <Paragraph>{document.description}</Paragraph>
+                                <div style={{ 
+                                    backgroundColor: "#f5f5f5", 
+                                    padding: 16, 
+                                    borderRadius: 6,
+                                    minHeight: 120
+                                }}>
+                                    <Paragraph style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+                                        {document.description || 'No description available.'}
+                                    </Paragraph>
                                 </div>
                             </Card>
                         </Col>
 
-                        {/* Right Column - Review Actions */}
+                        {/* Right Column - Actions */}
                         <Col xs={24} lg={8}>
-                            {/* Comment out existing code for now */}
+                            <Card title="Actions" style={{ marginBottom: 24 }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                    {document.status === 'Draft' && (
+                                        <>
+                                            <Button 
+                                                type="primary" 
+                                                onClick={handleSubmitForApproval} 
+                                                block
+                                                loading={submitting}
+                                                disabled={submitting || deleteLoading}
+                                                size="large"
+                                            >
+                                                Submit for Approval
+                                            </Button>
+                                            
+                                           
+
+                                            {/* Alternative Delete Button */}
+                                            <Button 
+                                                type="dashed"
+                                                danger
+                                                icon={<DeleteOutlined />}
+                                                onClick={handleDeleteDraftAlternative}
+                                                block
+                                                loading={deleteLoading}
+                                                disabled={submitting || deleteLoading}
+                                                size="large"
+                                            >
+                                                Delete Draft
+                                            </Button>
+                                        </>
+                                    )}
+                                    
+                                    {document.status === 'Rejected' && (
+                                        <Button 
+                                            type="primary" 
+                                            danger 
+                                            block 
+                                            size="large"
+                                            onClick={() => navigate(`/editor/document/recreate/${document.documentId}`)}
+                                            disabled={submitting || deleteLoading}
+                                        >
+                                            Recreate Draft
+                                        </Button>
+                                    )}
+                                    
+                                    {document.status === 'Approved' && (
+                                        <Button 
+                                            type="default" 
+                                            block 
+                                            size="large"
+                                            onClick={() => navigate(`/editor/document/new-version/${document.documentId}`)}
+                                            disabled={submitting || deleteLoading}
+                                        >
+                                            Create New Version
+                                        </Button>
+                                    )}
+                                    
+                                    {document.status === 'Pending' && (
+                                        <div style={{ 
+                                            textAlign: 'center', 
+                                            padding: 16,
+                                            backgroundColor: '#fff7e6',
+                                            borderRadius: 6,
+                                            border: '1px solid #ffd591'
+                                        }}>
+                                            <Badge status="processing" />
+                                            <Text type="secondary" style={{ marginLeft: 8 }}>
+                                                Document is pending approval
+                                            </Text>
+                                        </div>
+                                    )}
+                                    
+                                    <Button 
+                                        icon={<EyeOutlined />} 
+                                        onClick={handlePreview}
+                                        disabled={!document.versionId || deleteLoading}
+                                        loading={previewLoading}
+                                        block
+                                    >
+                                        {previewLoading ? "Loading..." : "Preview Document"}
+                                    </Button>
+                                </div>
+                            </Card>
+
+                            {/* Replacement Information */}
+                            {document.replacementId && (
+                                <Card title="Replacement Information" style={{ marginBottom: 24 }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                        <Text strong>Replacement ID:</Text>
+                                        <Text copyable>{document.replacementId}</Text>
+                                        
+                                        {document.replacementDocumentName && (
+                                            <>
+                                                <Text strong style={{ marginTop: 8 }}>Replacement Document:</Text>
+                                                <Text>{document.replacementDocumentName}</Text>
+                                            </>
+                                        )}
+                                        
+                                        <Text strong style={{ marginTop: 8 }}>Is Replaced:</Text>
+                                        <Badge 
+                                            status={document.isReplaced ? "error" : "success"} 
+                                            text={document.isReplaced ? "Yes" : "No"} 
+                                        />
+                                    </div>
+                                </Card>
+                            )}
+
+                            {/* Document Statistics */}
+                            <Card title="Statistics" size="small">
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Text>File Size:</Text>
+                                        <Text strong>{formatFileSize(document.fileSize)}</Text>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Text>Tags Count:</Text>
+                                        <Text strong>{document.tags?.length || 0}</Text>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Text>Visibility:</Text>
+                                        <Text strong>{document.isPublic ? 'Public' : 'Private'}</Text>
+                                    </div>
+                                </div>
+                            </Card>
                         </Col>
                     </Row>
                 </div>
             </Content>
+
+            {/* Document Preview Modal */}
+            <Modal
+                title={
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <FileTextOutlined style={{ marginRight: 8 }} />
+                        Document Preview - {document?.fileName}
+                    </div>
+                }
+                open={previewVisible}
+                onCancel={handleClosePreview}
+                footer={[
+                    <Button key="close" onClick={handleClosePreview}>
+                        Close
+                    </Button>
+                ]}
+                width="90%"
+                style={{ top: 20 }}
+                bodyStyle={{ padding: 0, height: '80vh' }}
+            >
+                {previewUrl && (
+                    <iframe
+                        src={previewUrl}
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            border: 'none'
+                        }}
+                        title="Document Preview"
+                        sandbox="allow-scripts allow-same-origin"
+                    />
+                )}
+            </Modal>
+
+            {/* Custom Delete Confirmation Modal */}
+            <Modal
+                title="Xác nhận xóa document"
+                open={deleteModalVisible}
+                onOk={confirmDelete}
+                onCancel={() => setDeleteModalVisible(false)}
+                okText="Xóa"
+                cancelText="Hủy"
+                okType="danger"
+                confirmLoading={deleteLoading}
+                width={500}
+            >
+                <div>
+                    <p>Bạn có chắc chắn muốn xóa document draft này?</p>
+                    <p><strong>Tài liệu:</strong> {document?.title}</p>
+                    <p><strong>File:</strong> {document?.fileName}</p>
+                    <Alert
+                        message="Cảnh báo"
+                        description="Hành động này không thể hoàn tác!"
+                        type="warning"
+                        showIcon
+                        style={{ marginTop: 16 }}
+                    />
+                </div>
+            </Modal>
         </Layout>
     )
 }

@@ -15,7 +15,7 @@ import PersonalizationSettings from "../pages/settings/Personalization";
 import NotificationsSettings from "../pages/settings/Notification";
 import NewChatPage from "../pages/chat/ChatNew";
 import ChatDetail from "../pages/chat/ChatDetail";
-import UploadDocument from "../components/UploadDocument";
+import UploadDocument from "../pages/editor/UploadDocument";
 import EditDocument from "../components/EditDocument";
 import AdminPage from "../pages/admin/adminPage";
 import DocumentPage from "../pages/document/DocumentDetail";
@@ -34,6 +34,7 @@ import BookmarksPage from "../pages/bookmarks/BookmarksPage";
 import NewVersionDocument from "../pages/editor/NewVersionDocument";
 import ChatIndexPage from "../pages/chat/ChatIndex";
 import Tags from "../pages/manager/Tags";
+import UploadDocumentReplacement from "../pages/editor/UploadDocumentReplacement";
 
 const PublicRoutes: RouteObject[] = [
   // {
@@ -52,7 +53,6 @@ const PublicRoutes: RouteObject[] = [
     path: "/admin",
     element: <AdminPage />,
   },
-
   {
     path: "/verify-email",
     element: <VerifyEmail />,
@@ -131,6 +131,10 @@ const PublicRoutes: RouteObject[] = [
       {
         path: "upload-document",
         element: <UploadDocument />,
+      },
+      {
+        path: "upload-document-replacement",
+        element: <UploadDocumentReplacement />,
       },
       {
         path: "document/new-version/:id",

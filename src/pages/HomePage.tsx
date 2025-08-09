@@ -18,7 +18,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="mb-8">
             <h1 className="mb-2 text-3xl font-bold">
-              Welcome to DocsAI, How can I help you today????????
+              Welcome to DocsAI, How can I help you today?
             </h1>
             <p className="text-gray-600">
               Train your documents, chat with your documents, and create
