@@ -31,7 +31,7 @@ export default function HomePage() {
               icon={<MessageSquare className="w-8 h-8 text-blue-500" />}
               title="Chat with AI"
               description="Ask any question related to documents."
-              href="/chat"
+              href="/chat/new"
             />
 
             <FeatureCard
