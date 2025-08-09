@@ -12,7 +12,7 @@ import AppearanceSettings from "../pages/settings/Appearance";
 import SecuritySettings from "../pages/settings/Security";
 import PersonalizationSettings from "../pages/settings/Personalization";
 import NotificationsSettings from "../pages/settings/Notification";
-import NewChatPage from "../pages/chat/ChatNew";
+// import NewChatPage from "../pages/chat/ChatNew";
 import ChatDetail from "../pages/chat/ChatDetail";
 import UploadDocument from "../components/UploadDocument";
 import EditDocument from "../components/EditDocument";
@@ -33,6 +33,7 @@ import BookmarksPage from "../pages/bookmarks/BookmarksPage";
 import NewVersionDocument from "../pages/editor/NewVersionDocument";
 import ChatIndexPage from "../pages/chat/ChatIndex";
 import Tags from "../pages/manager/Tags";
+import DocumentLibrary from "../pages/document/DocumentLibrary.tsx";
 
 const PublicRoutes: RouteObject[] = [
   // {
@@ -92,6 +93,10 @@ const PublicRoutes: RouteObject[] = [
   {
     path: "/bookmarks",
     element: <BookmarksPage />,
+  },
+  {
+    path: "/document-library",
+    element: <DocumentLibrary />,
   },
   {
     path: "/manager",

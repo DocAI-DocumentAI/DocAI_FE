@@ -167,15 +167,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Update interface để match với API response thực tế
-  interface SendMessageAPIResponse {
-    sessionId: string;
-    message: string;
-    role: number;
-    tokenCount: number;
-    timestamp: string;
-    modelUsed: string;
-  }
+
 
   // Use useCallback to prevent unnecessary re-renders
   const sendMessage = useCallback(
