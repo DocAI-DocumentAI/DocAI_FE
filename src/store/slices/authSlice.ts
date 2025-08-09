@@ -71,11 +71,60 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.loading = false;
       state.error = null;
+      // Clear localStorage on logout
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    },
+    // Google OAuth specific actions
+    googleAuthStart(state) {
+      state.loading = true;
+      state.error = null;
+    },
+    googleAuthSuccess(state, action: PayloadAction<User>) {
+      state.user = action.payload;
+      state.isAuthenticated = true;
+      state.loading = false;
+      state.error = null;
+    },
+    googleAuthFailure(state, action: PayloadAction<string>) {
+      state.loading = false;
+      state.error = action.payload;
+    },
+    // Clear error state
+    clearError(state) {
+      state.error = null;
+    },
+    // Initialize auth state from localStorage
+    initializeAuth(state) {
+      const token = localStorage.getItem("token");
+      const userStr = localStorage.getItem("user");
+
+      if (token && userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          state.user = user;
+          state.isAuthenticated = true;
+        } catch (error) {
+          // If parsing fails, clear localStorage
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+        }
+      }
+      state.loading = false;
     },
   },
 });
 
-export const { loginStart, loginSuccess, loginFailure, logout } =
-  authSlice.actions;
+export const {
+  loginStart,
+  loginSuccess,
+  loginFailure,
+  logout,
+  googleAuthStart,
+  googleAuthSuccess,
+  googleAuthFailure,
+  clearError,
+  initializeAuth,
+} = authSlice.actions;
 
 export default authSlice.reducer;

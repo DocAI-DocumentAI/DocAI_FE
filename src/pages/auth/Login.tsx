@@ -4,6 +4,8 @@ import { AuthContainer } from "../../components/auth-container";
 import LayoutAuth from "../../components/layout/LayoutAuth";
 import { useForm } from "react-hook-form";
 import { authApi } from "../../lib/api/auth";
+import GoogleLoginButton from "../../components/GoogleLoginButton";
+import { toast } from "react-hot-toast";
 
 export default function Login() {
   type FormValues = { email: string; password: string };
@@ -13,6 +15,7 @@ export default function Login() {
     formState: { errors },
   } = useForm<FormValues>();
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
@@ -39,7 +42,7 @@ export default function Login() {
         default:
           navigate("/");
           break;
-      } 
+      }
     } catch (err: any) {
       setError(err?.response?.data?.message || "Login failed");
     } finally {
@@ -47,10 +50,43 @@ export default function Login() {
     }
   };
 
+  const handleGoogleLoading = (isLoading: boolean) => {
+    setGoogleLoading(isLoading);
+  };
+
+  const handleGoogleError = (errorMessage: string) => {
+    setError(errorMessage);
+    toast.error(errorMessage);
+  };
+
+  const isFormDisabled = loading || googleLoading;
+
   return (
     <LayoutAuth>
       <AuthContainer>
         <h2 className="mb-6 text-2xl font-bold">Login</h2>
+
+        {/* Google Login Button */}
+        <div className="mb-6">
+          <GoogleLoginButton
+            onLoading={handleGoogleLoading}
+            onError={handleGoogleError}
+            disabled={isFormDisabled}
+          />
+        </div>
+
+        {/* Divider */}
+        <div className="relative mb-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-gray-500">
+              Or continue with email
+            </span>
+          </div>
+        </div>
+
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-2">
             <label htmlFor="email" className="block font-medium">
@@ -67,7 +103,7 @@ export default function Login() {
                 },
               })}
               className="w-full px-4 py-3 bg-gray-100 rounded-md"
-              disabled={loading}
+              disabled={isFormDisabled}
             />
             {errors.email && typeof errors.email.message === "string" && (
               <div className="text-sm text-red-600">{errors.email.message}</div>
@@ -89,7 +125,7 @@ export default function Login() {
             id="password"
             {...register("password", { required: "Password is required" })}
             className="w-full px-4 py-3 bg-gray-100 rounded-md"
-            disabled={loading}
+            disabled={isFormDisabled}
           />
           {errors.password && typeof errors.password.message === "string" && (
             <div className="text-sm text-red-600">
@@ -102,7 +138,7 @@ export default function Login() {
               id="remember"
               name="remember"
               className="w-4 h-4 border-gray-300 rounded"
-              disabled={loading}
+              disabled={isFormDisabled}
             />
             <label htmlFor="remember" className="block ml-2 text-sm">
               Keep me sign in
@@ -111,10 +147,14 @@ export default function Login() {
           {error && <div className="text-sm text-red-600">{error}</div>}
           <button
             type="submit"
-            className="w-full py-3 font-medium text-white bg-blue-800 rounded-md hover:bg-blue-900"
-            disabled={loading}
+            className="w-full py-3 font-medium text-white bg-blue-800 rounded-md hover:bg-blue-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isFormDisabled}
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading
+              ? "Logging in..."
+              : googleLoading
+              ? "Please wait..."
+              : "Login"}
           </button>
         </form>
         <p className="mt-6 text-sm text-center">

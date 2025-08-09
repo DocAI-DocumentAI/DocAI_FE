@@ -5,6 +5,7 @@ import VerifyEmail from "../pages/auth/VerifyEmail";
 import ResetPassword from "../pages/auth/ResetPassword";
 import Login from "../pages/auth/Login";
 import ForgotPassword from "../pages/auth/ForgotPassword";
+import GoogleCallbackPage from "../pages/auth/GoogleCallback";
 import HomePage from "../pages/HomePage";
 import SettingsLayout from "../components/layout/SettingsLayout";
 import AccountSettings from "../pages/settings/Account";
@@ -17,13 +18,13 @@ import ChatDetail from "../pages/chat/ChatDetail";
 import UploadDocument from "../components/UploadDocument";
 import EditDocument from "../components/EditDocument";
 import AdminPage from "../pages/admin/adminPage";
-import DocumentPage from "../pages/document/DocumentDetail"; 
-import SearchPage from "../pages/search/SearchPage"; 
+import DocumentPage from "../pages/document/DocumentDetail";
+import SearchPage from "../pages/search/SearchPage";
 import ApprovalManagerTable from "../pages/editor/ApprovalManagerTable";
 import ViewDraftTable from "../pages/editor/ViewDraftTable";
 import ManagerTable from "../pages/editor/ManagerTable";
 import EditedLayout from "../components/layout/EditedLayoutLayout";
-import ManagerLayoutLayout from "../components/layout/ManagerLayoutLayout"; 
+import ManagerLayoutLayout from "../components/layout/ManagerLayoutLayout";
 import ApprovalQueue from "../pages/manager/ApprovalQueue";
 import DocumentReview from "../pages/manager/DocumentReview";
 import DocumentManagement from "../pages/manager/DocumentManagement";
@@ -51,7 +52,7 @@ const PublicRoutes: RouteObject[] = [
     path: "/admin",
     element: <AdminPage />,
   },
-  
+
   {
     path: "/verify-email",
     element: <VerifyEmail />,
@@ -67,6 +68,10 @@ const PublicRoutes: RouteObject[] = [
   {
     path: "/login",
     element: <Login />,
+  },
+  {
+    path: "/auth/google/callback",
+    element: <GoogleCallbackPage />,
   },
   {
     path: "/chat",
@@ -109,7 +114,7 @@ const PublicRoutes: RouteObject[] = [
         path: "approvalQueue",
         element: <ApprovalQueue />,
       },
-            {
+      {
         path: "tags",
         element: <Tags />,
       },
@@ -117,8 +122,7 @@ const PublicRoutes: RouteObject[] = [
         path: "document-review/:id/:versionId",
         element: <DocumentReview />,
       },
-
-    ]
+    ],
   },
   {
     path: "/editor",
@@ -128,7 +132,7 @@ const PublicRoutes: RouteObject[] = [
         path: "upload-document",
         element: <UploadDocument />,
       },
-         {
+      {
         path: "document/new-version/:id",
         element: <NewVersionDocument />,
       },

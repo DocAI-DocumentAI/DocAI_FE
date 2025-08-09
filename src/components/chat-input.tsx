@@ -1,5 +1,5 @@
 import { useState, useRef, KeyboardEvent } from "react";
-import {  FileText, Mic, Send } from "lucide-react";
+import { FileText, Mic } from "lucide-react";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -32,9 +32,11 @@ export function ChatInput({
 
   return (
     <div className="w-full">
-      <div className={`relative flex items-end bg-white rounded-2xl border border-gray-200 px-4 py-2 shadow-sm ${
-        disabled ? 'opacity-50' : ''
-      }`}>
+      <div
+        className={`relative flex items-end bg-white rounded-2xl border border-gray-200 px-4 py-2 shadow-sm ${
+          disabled ? "opacity-50" : ""
+        }`}
+      >
         <button
           type="button"
           className="mr-2 text-gray-400 hover:text-blue-500"

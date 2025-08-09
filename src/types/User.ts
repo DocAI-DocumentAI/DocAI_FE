@@ -37,3 +37,17 @@ export interface User {
   googleRefreshToken: string | null;
   requirePasswordChange: boolean;
 }
+
+// Google OAuth specific types
+export interface GoogleAuthUrlResponse {
+  authUrl: string;
+}
+
+export interface GoogleAuthCodeRequest {
+  code: string;
+}
+
+export interface GoogleOAuthErrorData {
+  message: string;
+  status?: number;
+}
