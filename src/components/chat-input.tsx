@@ -1,5 +1,5 @@
-import React, { useState, useRef } from "react";
-import { FileText, Mic } from "lucide-react";
+import { useState, useRef, KeyboardEvent } from "react";
+import {  FileText, Mic, Send } from "lucide-react";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -23,7 +23,7 @@ export function ChatInput({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey && !disabled) {
       e.preventDefault();
       handleSend();

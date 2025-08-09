@@ -29,7 +29,7 @@ export function Navbar() {
   return (
     <nav className="flex h-16 items-center justify-between bg-blue-800 px-6">
       <div className="flex items-center">
-        <Link to="/dashboard" className="text-2xl font-medium text-white">
+        <Link to="/" className="text-2xl font-medium text-white">
           Docs<span className="text-blue-300">+</span>AI
         </Link>
       </div>

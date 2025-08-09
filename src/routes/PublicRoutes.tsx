@@ -74,6 +74,10 @@ const PublicRoutes: RouteObject[] = [
     element: <ChatIndexPage />,
   },
   {
+    path: "/chat/new",
+    element: <NewChatPage />,
+  },
+  {
     path: "/chat/:id",
     element: <ChatDetail />,
   },

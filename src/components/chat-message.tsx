@@ -2,15 +2,21 @@ import React from "react";
 import { User, Bot } from "lucide-react";
 
 type ChatMessageProps = {
-  role: "user" | "assistant";
+  role: "user" | "assistant" | number; // Support both string and number
   content: string;
-  timestamp?: Date;
+  timestamp?: Date | string;
 };
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, timestamp }) => {
+  // Convert role to string if it's a number (from API)
+  const messageRole = typeof role === 'number' 
+    ? (role === 1 ? 'user' : 'assistant')
+    : role;
+
   // Format timestamp
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('vi-VN', { 
+  const formatTime = (date: Date | string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleTimeString('vi-VN', { 
       hour: '2-digit', 
       minute: '2-digit',
       hour12: false 
@@ -18,23 +24,23 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, timestamp }) =
   };
 
   return (
-    <div className={`mb-6 flex ${role === "user" ? "justify-end" : "justify-start"}`}>
-      <div className={`flex max-w-[80%] ${role === "user" ? "flex-row-reverse" : "flex-row"}`}>
+    <div className={`mb-6 flex ${messageRole === "user" ? "justify-end" : "justify-start"}`}>
+      <div className={`flex max-w-[80%] ${messageRole === "user" ? "flex-row-reverse" : "flex-row"}`}>
         {/* Avatar */}
-        <div className={`flex-shrink-0 ${role === "user" ? "ml-3" : "mr-3"}`}>
+        <div className={`flex-shrink-0 ${messageRole === "user" ? "ml-3" : "mr-3"}`}>
           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-            role === "user" 
+            messageRole === "user" 
               ? "bg-blue-600 text-white" 
               : "bg-gray-100 text-gray-600"
           }`}>
-            {role === "user" ? <User size={16} /> : <Bot size={16} />}
+            {messageRole === "user" ? <User size={16} /> : <Bot size={16} />}
           </div>
         </div>
         
         {/* Message content */}
         <div className="flex flex-col">
           <div className={`rounded-lg px-4 py-3 ${
-            role === "user"
+            messageRole === "user"
               ? "bg-blue-600 text-white"
               : "bg-gray-100 text-gray-900"
           }`}>
@@ -44,7 +50,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, timestamp }) =
           {/* Timestamp */}
           {timestamp && (
             <div className={`text-xs text-gray-500 mt-1 ${
-              role === "user" ? "text-right" : "text-left"
+              messageRole === "user" ? "text-right" : "text-left"
             }`}>
               {formatTime(timestamp)}
             </div>
@@ -55,4 +61,4 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, timestamp }) =
   );
 };
 
-export default ChatMessage; 
+export default ChatMessage;

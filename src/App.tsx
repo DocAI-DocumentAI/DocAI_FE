@@ -4,6 +4,7 @@ import PublicRoutes from "./routes/PublicRoutes";
 // import PrivateRoute from "./routes/PrivateRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { ChatProvider } from "./context/chat-context";
 
 // Import admin pages
 import AdminPage from "./pages/admin/adminPage";
@@ -24,70 +25,72 @@ import UpdatePermissionPage from "./pages/admin/UpdatePermissionPage";
 
 const App: React.FC = () => {
   return (
-    <BrowserRouter>
-      <ToastContainer />
-      <Routes>
-        {/* Public Routes */}
-        {PublicRoutes.map((route) => (
-          <Route key={route.path} path={route.path} element={route.element}>
-            {route.children &&
-              route.children.map((child: any) => (
-                <Route
-                  key={child.path}
-                  path={child.path}
-                  element={child.element}
-                />
-              ))}
+    <ChatProvider>
+      <BrowserRouter>
+        <ToastContainer />
+        <Routes>
+          {/* Public Routes */}
+          {PublicRoutes.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element}>
+              {route.children &&
+                route.children.map((child: any) => (
+                  <Route
+                    key={child.path}
+                    path={child.path}
+                    element={child.element}
+                  />
+                ))}
+            </Route>
+          ))}
+
+          {/* Private Routes với Admin Layout */}
+          <Route
+            path="/admin"
+            element={
+              // <PrivateRoute>
+              <AdminPage />
+              // </PrivateRoute>
+            }
+          >
+            <Route path="dashboard" element={<OverviewPage />} />
+            <Route path="users" element={<UsersPage />} />
+            <Route path="departments" element={<DepartmentPage />} />
+            <Route path="roles" element={<RolePage />} />
+            <Route path="permissions" element={<PermissionPage />} />
+            <Route path="notifications" element={<NotifyPage />} />
+            <Route path="/admin/users/create" element={<CreateUserPage />} />
+            <Route
+              path="/admin/departments/create"
+              element={<CreateDepartmentPage />}
+            />
+            <Route path="/admin/roles/create" element={<CreateRolePage />} />
+            <Route
+              path="/admin/permissions/create"
+              element={<CreatePermissionPage />}
+            />
+            <Route
+              path="/admin/users/update/:userId"
+              element={<UpdateUserPage />}
+            />
+            <Route
+              path="/admin/departments/update/:departmentId"
+              element={<UpdateDepartmentPage />}
+            />
+            <Route
+              path="/admin/roles/update/:roleId"
+              element={<UpdateRolePage />}
+            />
+            <Route
+              path="/admin/permissions/update/:permissionId"
+              element={<UpdatePermissionPage />}
+            />
+            <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
-        ))}
 
-        {/* Private Routes với Admin Layout */}
-        <Route
-          path="/admin"
-          element={
-            // <PrivateRoute>
-            <AdminPage />
-            // </PrivateRoute>
-          }
-        >
-          <Route path="dashboard" element={<OverviewPage />} />
-          <Route path="users" element={<UsersPage />} />
-          <Route path="departments" element={<DepartmentPage />} />
-          <Route path="roles" element={<RolePage />} />
-          <Route path="permissions" element={<PermissionPage />} />
-          <Route path="notifications" element={<NotifyPage />} />
-          <Route path="/admin/users/create" element={<CreateUserPage />} />
-          <Route
-            path="/admin/departments/create"
-            element={<CreateDepartmentPage />}
-          />
-          <Route path="/admin/roles/create" element={<CreateRolePage />} />
-          <Route
-            path="/admin/permissions/create"
-            element={<CreatePermissionPage />}
-          />
-          <Route
-            path="/admin/users/update/:userId"
-            element={<UpdateUserPage />}
-          />
-          <Route
-            path="/admin/departments/update/:departmentId"
-            element={<UpdateDepartmentPage />}
-          />
-          <Route
-            path="/admin/roles/update/:roleId"
-            element={<UpdateRolePage />}
-          />
-          <Route
-            path="/admin/permissions/update/:permissionId"
-            element={<UpdatePermissionPage />}
-          />
-          <Route index element={<Navigate to="dashboard" replace />} />
-        </Route>
-
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </BrowserRouter>
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </ChatProvider>
   );
 };
 
