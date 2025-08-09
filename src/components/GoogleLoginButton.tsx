@@ -18,12 +18,34 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
     onLoading?.(true);
 
     try {
+      console.log("🔍 Google Login Debug Info:");
+      console.log("Current URL:", window.location.href);
+      console.log("API Base URL:", import.meta.env.VITE_API_BASE_URL);
+      console.log("Environment:", import.meta.env.MODE);
+
       // Get Google OAuth URL from the API
       const { authUrl } = await GoogleAuthService.getGoogleAuthUrl();
+
+      console.log("✅ Received auth URL:", authUrl);
+
+      // Parse and log the auth URL details
+      const url = new URL(authUrl);
+      console.log("Auth URL Details:");
+      console.log("  - Host:", url.host);
+      console.log("  - Client ID:", url.searchParams.get("client_id"));
+      console.log("  - Redirect URI:", url.searchParams.get("redirect_uri"));
+      console.log("  - Scope:", url.searchParams.get("scope"));
 
       // Redirect to Google OAuth
       GoogleAuthService.redirectToGoogle(authUrl);
     } catch (error: any) {
+      console.error("❌ Google Login Error:", error);
+      console.error("Error details:", {
+        message: error.message,
+        status: error.status,
+        response: error.response?.data,
+      });
+
       const errorMessage = error.message || "Failed to initiate Google login";
       onError?.(errorMessage);
       setIsLoading(false);
