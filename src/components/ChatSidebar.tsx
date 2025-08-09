@@ -1,16 +1,38 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, Plus, MessageSquare, MoreHorizontal, Search, FileText } from "lucide-react";
+import { Menu, Plus, MessageSquare, MoreHorizontal, Home, Library, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { getChatSessions, ChatSession } from "../lib/api/chat";
 import { useChat } from "../context/chat-context";
 
 function ChatSidebar() {
-  const [isOpen, setIsOpen] = useState(true);
+  // Initialize sidebar state based on screen size
+  const [isOpen, setIsOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 1024; // lg breakpoint
+    }
+    return true;
+  });
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
   const { clearCurrentChat } = useChat();
+
+  // Handle window resize for responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setIsOpen(false); // Auto-close on mobile
+        setIsCollapsed(false); // Reset collapse state on mobile
+      } else {
+        setIsOpen(true); // Auto-open on desktop
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Fetch chat sessions on component mount
   useEffect(() => {
@@ -98,9 +120,10 @@ function ChatSidebar() {
       {/* Sidebar */}
       <aside
         className={classNames(
-          "fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-blue-900 text-white transition-transform",
+          "fixed inset-y-0 left-0 z-50 flex flex-col bg-blue-900 text-white transition-all duration-300",
           isOpen ? "translate-x-0" : "-translate-x-full",
-          "lg:relative lg:z-0 lg:translate-x-0"
+          "lg:relative lg:z-0 lg:translate-x-0",
+          isCollapsed ? "lg:w-16" : "w-72"
         )}
       >
         {/* Sidebar header */}
@@ -112,23 +135,21 @@ function ChatSidebar() {
           >
             <Menu size={20} />
           </button>
-          <div className="flex flex-1 items-center justify-center lg:justify-start">
-            <Link to="/" className="text-2xl font-medium">
-              Docs<span className="text-blue-300">+</span>AI
-            </Link>
+          <div className={`flex flex-1 items-center ${isCollapsed ? 'justify-center' : 'justify-center lg:justify-start'}`}>
+            {!isCollapsed && (
+              <Link to="/" className="text-2xl font-medium">
+                Docs<span className="text-blue-300">+</span>AI
+              </Link>
+            )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <button
-              className="rounded-md p-2 hover:bg-blue-800"
-              aria-label="Search"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="rounded-md p-2 hover:bg-blue-800 hidden lg:block"
+              aria-label="Toggle sidebar collapse"
+              title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              <Search size={20} />
-            </button>
-            <button
-              className="rounded-md p-2 hover:bg-blue-800"
-              aria-label="Documents"
-            >
-              <FileText size={20} />
+              {isCollapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
             </button>
           </div>
         </div>
@@ -137,62 +158,87 @@ function ChatSidebar() {
         <div className="p-4">
           <button
             onClick={handleNewChatClick}
-            className="flex w-full items-center justify-center gap-2 rounded-md bg-blue-950 px-4 py-2 text-sm font-medium hover:bg-blue-900"
+            className={`flex w-full items-center ${isCollapsed ? 'justify-center px-2 py-2' : 'justify-center gap-2 px-4 py-2'} rounded-md bg-blue-950 text-sm font-medium hover:bg-blue-900 transition-all`}
+            title="New chat"
           >
             <Plus size={16} />
-            New chat
+            {!isCollapsed && "New chat"}
           </button>
         </div>
 
+        {/* Navigation buttons */}
+        <div className="px-4 pb-4">
+          <div className="space-y-2">
+            <Link
+              to="/"
+              className={`flex w-full items-center ${isCollapsed ? 'justify-center' : 'justify-start gap-3'} rounded-md px-3 py-2 text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors`}
+              title="Home"
+            >
+              <Home size={16} className="flex-shrink-0" />
+              {!isCollapsed && "Home"}
+            </Link>
+            <Link
+              to="/document-library"
+              className={`flex w-full items-center ${isCollapsed ? 'justify-center' : 'justify-start gap-3'} rounded-md px-3 py-2 text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors`}
+              title="Document Library"
+            >
+              <Library size={16} className="flex-shrink-0" />
+              {!isCollapsed && "Document Library"}
+            </Link>
+          </div>
+        </div>
+
         {/* Chat history */}
-        <div className="flex-1 overflow-auto">
-          {loading ? (
-            <div className="p-4">
-              <div className="animate-pulse space-y-2">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="h-8 bg-blue-800 rounded"></div>
+        {!isCollapsed && (
+          <div className="flex-1 overflow-auto">
+            {loading ? (
+              <div className="p-4">
+                <div className="animate-pulse space-y-2">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="h-8 bg-blue-800 rounded"></div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="px-4">
+                {Object.entries(groupedHistory).map(([groupKey, chats]) => (
+                  <div key={groupKey} className="mb-4">
+                    <h3 className="text-xs font-medium text-blue-300 mb-2 uppercase tracking-wider">
+                      {groupKey}
+                    </h3>
+                    <div className="space-y-1">
+                      {chats.map((chat) => (
+                        <Link
+                          key={chat.id}
+                          to={`/chat/${chat.id}`}
+                          className={classNames(
+                            "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                            currentChatId === chat.id
+                              ? "bg-blue-800 text-white"
+                              : "text-blue-100 hover:bg-blue-800 hover:text-white"
+                          )}
+                        >
+                          <MessageSquare size={16} className="flex-shrink-0" />
+                          <span className="flex-1 truncate">{chat.title}</span>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              // Handle chat options
+                            }}
+                            className="p-1 rounded hover:bg-blue-700"
+                          >
+                            <MoreHorizontal size={14} />
+                          </button>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
-            </div>
-          ) : (
-            <div className="px-4">
-              {Object.entries(groupedHistory).map(([groupKey, chats]) => (
-                <div key={groupKey} className="mb-4">
-                  <h3 className="text-xs font-medium text-blue-300 mb-2 uppercase tracking-wider">
-                    {groupKey}
-                  </h3>
-                  <div className="space-y-1">
-                    {chats.map((chat) => (
-                      <Link
-                        key={chat.id}
-                        to={`/chat/${chat.id}`}
-                        className={classNames(
-                          "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                          currentChatId === chat.id
-                            ? "bg-blue-800 text-white"
-                            : "text-blue-100 hover:bg-blue-800 hover:text-white"
-                        )}
-                      >
-                        <MessageSquare size={16} className="flex-shrink-0" />
-                        <span className="flex-1 truncate">{chat.title}</span>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            // Handle chat options
-                          }}
-                          className="p-1 rounded hover:bg-blue-700"
-                        >
-                          <MoreHorizontal size={14} />
-                        </button>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {/* Footer */}
         <div className="mt-auto border-t border-blue-800 p-4"></div>

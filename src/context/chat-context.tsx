@@ -53,6 +53,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const [currentChat, setCurrentChat] = useState<CurrentChat>(null);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  // Cache to store loaded chats and prevent reloading
+  const [chatCache, setChatCache] = useState<Map<string, ChatSessionDetail>>(new Map());
 
   const startNewTempChat = useCallback(async () => {
     setLoading(true);
@@ -189,9 +191,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
       setCurrentChat(prev => {
         if (!prev) return null;
+        let updatedChat: CurrentChat;
         // If temp chat, allow TempChatMessage
         if ('isTemp' in prev && prev.isTemp) {
-          return {
+          updatedChat = {
             ...prev,
             messages: [...prev.messages, assistantMessage]
           };
@@ -204,11 +207,16 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
             tokenCount: 0, // You may want to set this properly if available
             timestamp: typeof assistantMessage.timestamp === "string" ? assistantMessage.timestamp : (assistantMessage.timestamp as Date).toISOString()
           };
-          return {
+          updatedChat = {
             ...prev,
             messages: [...(prev as any).messages, chatMessage]
-          };
+          } as ChatSessionDetail;
+          // Update cache for real chats
+          if (prev.id) {
+            setChatCache(cache => new Map(cache).set(prev.id!, updatedChat as ChatSessionDetail));
+          }
         }
+        return updatedChat;
       });
 
     } catch (error) {
@@ -233,14 +241,23 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     } finally {
       setSending(false);
     }
-  }, [currentChat, sending]);
+  }, [currentChat, sending, setChatCache]);
 
   const loadChatDetail = useCallback(async (chatId: string) => {
     if (!chatId || chatId === 'new') return;
-    
+
+    // Check if chat is already cached
+    if (chatCache.has(chatId)) {
+      const cachedChat = chatCache.get(chatId)!;
+      setCurrentChat(cachedChat);
+      return;
+    }
+
     setLoading(true);
     try {
       const chatDetail = await getChatSessionDetail(chatId);
+      // Cache the loaded chat
+      setChatCache(prev => new Map(prev).set(chatId, chatDetail));
       setCurrentChat(chatDetail);
     } catch (error) {
       console.error('Failed to load chat detail:', error);
@@ -248,7 +265,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [chatCache]);
 
   const changeModel = useCallback((modelName: string) => {
     if (currentChat) {
