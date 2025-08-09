@@ -110,6 +110,15 @@ export function Navbar() {
                 </button>)}
               <button
                 onClick={() => {
+                  navigate("/settings/account");
+                  setShowDropdown(false);
+                }}
+                className="block w-full px-4 py-2 text-left text-sm text-black-600 hover:bg-gray-100"
+              >
+                Settings
+              </button>
+              <button
+                onClick={() => {
                   navigate("/bookmarks");
                   setShowDropdown(false);
                 }}
