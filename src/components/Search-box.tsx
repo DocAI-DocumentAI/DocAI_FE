@@ -28,29 +28,36 @@ export function SearchBox({ onSearch, placeholder = "Prompt to search" }: Search
   }
 
   return (
-    <div className="relative h-[130px] rounded-lg border border-gray-200 bg-white">
+    <div className="relative h-[140px] rounded-lg border-2 border-blue-200 bg-white shadow-sm hover:border-blue-300 transition-colors">
       <textarea
         ref={searchBoxRef}
-        className="absolute w-full resize-none rounded-l-lg border-0 px-4 py-3 outline-none"
+        className="absolute w-full resize-none rounded-lg border-0 px-4 py-4 pr-24 outline-none text-gray-800 placeholder-gray-500"
         placeholder={placeholder}
-        rows={2}
+        rows={3}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={handleKeyDown}
         style={{
-          minHeight: "48px",
-          maxHeight: "120px",
+          minHeight: "56px",
+          maxHeight: "130px",
           overflow: "auto",
-          lineHeight: "1.5",
+          lineHeight: "1.6",
+          fontSize: "16px",
         }}
       />
       <button
         onClick={handleSearch}
-        className="absolute bottom-3 right-3 m-1 flex items-center rounded-md bg-blue-800 px-4 py-2 text-white hover:bg-blue-900"
+        disabled={!query.trim()}
+        className="absolute bottom-4 right-4 flex items-center rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
       >
-        <Search className="mr-2 h-5 w-5" />
+        <Search className="mr-2 h-4 w-4" />
         Search
       </button>
+      {query.trim() && (
+        <div className="absolute top-2 right-2 text-xs text-gray-400">
+          Press Enter to search
+        </div>
+      )}
     </div>
   )
 }

@@ -1,0 +1,202 @@
+import React from 'react';
+import {
+  Card,
+  Input,
+  Select,
+  DatePicker,
+  Button,
+  Space,
+  Typography,
+  Divider
+} from 'antd';
+import {
+  FilterOutlined,
+  ClearOutlined,
+  SearchOutlined,
+  FileTextOutlined,
+  TagsOutlined,
+  CalendarOutlined,
+  FolderOutlined,
+  UserOutlined
+} from '@ant-design/icons';
+import type {
+  DocumentTypeResponse,
+  TagResponse
+} from '../types/DocumentLibrary';
+
+const { Text } = Typography;
+const { RangePicker } = DatePicker;
+
+interface DocumentLibraryFilterProps {
+  onFilterChange: (filters: any) => void;
+  onClearFilters: () => void;
+  documentTypes?: DocumentTypeResponse[];
+  tags?: TagResponse[];
+  loading?: boolean;
+}
+
+export const DocumentLibraryFilter: React.FC<DocumentLibraryFilterProps> = ({
+  onFilterChange,
+  onClearFilters,
+  documentTypes = [],
+  tags = [],
+  loading = false
+}) => {
+  const handleFilterChange = (key: string, value: any) => {
+    onFilterChange({ [key]: value });
+  };
+
+  return (
+    <Card
+      title={
+        <div className="flex items-center">
+          <FilterOutlined className="mr-2 text-blue-800" />
+          <Text strong>Filters</Text>
+        </div>
+      }
+      extra={
+        <Button 
+          type="text" 
+          size="small" 
+          icon={<ClearOutlined />}
+          onClick={onClearFilters}
+          className="text-blue-800 hover:text-blue-600"
+        >
+          Clear All
+        </Button>
+      }
+      className="shadow-sm border border-blue-100"
+      bodyStyle={{ padding: '16px' }}
+      loading={loading}
+    >
+      <Space direction="vertical" style={{ width: '100%' }} size="middle">
+        {/* Title Search */}
+        <div>
+          <div className="flex items-center mb-2">
+            <FileTextOutlined style={{ color: '#1e40af', marginRight: '6px' }} />
+            <Text type="secondary" className="text-sm font-medium">Document Title</Text>
+          </div>
+          <Input
+            prefix={<SearchOutlined style={{ color: '#6b7280' }} />}
+            placeholder="Search by title..."
+            onChange={(e) => handleFilterChange('title', e.target.value)}
+            allowClear
+            className="border-blue-200 focus:border-blue-500"
+          />
+        </div>
+
+        {/* Keyword Search */}
+        <div>
+          <div className="flex items-center mb-2">
+            <SearchOutlined style={{ color: '#1e40af', marginRight: '6px' }} />
+            <Text type="secondary" className="text-sm font-medium">Keywords</Text>
+          </div>
+          <Input
+            prefix={<SearchOutlined style={{ color: '#6b7280' }} />}
+            placeholder="Search by keywords..."
+            onChange={(e) => handleFilterChange('keyword', e.target.value)}
+            allowClear
+            className="border-blue-200 focus:border-blue-500"
+          />
+        </div>
+
+        <Divider className="my-3" />
+
+        {/* Document Type */}
+        <div>
+          <div className="flex items-center mb-2">
+            <FolderOutlined style={{ color: '#1e40af', marginRight: '6px' }} />
+            <Text type="secondary" className="text-sm font-medium">Document Type</Text>
+          </div>
+          <Select
+            placeholder="Select document type..."
+            onChange={(value) => handleFilterChange('documentTypeId', value)}
+            allowClear
+            style={{ width: '100%' }}
+            className="[&_.ant-select-selector]:border-blue-200 [&_.ant-select-focused_.ant-select-selector]:border-blue-500"
+          >
+            <Select.Option key="all" value="">
+              <div className="flex items-center">
+                <FolderOutlined style={{ color: '#1e40af', marginRight: '8px' }} />
+                <span className="font-medium">All Document Types</span>
+              </div>
+            </Select.Option>
+            {documentTypes.map(type => (
+              <Select.Option key={type.id} value={type.id}>
+                <div className="flex items-center">
+                  <FolderOutlined style={{ color: '#1e40af', marginRight: '8px' }} />
+                  {type.name}
+                </div>
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
+
+        {/* Tags */}
+        <div>
+          <div className="flex items-center mb-2">
+            <TagsOutlined style={{ color: '#1e40af', marginRight: '6px' }} />
+            <Text type="secondary" className="text-sm font-medium">Tags</Text>
+          </div>
+          <Select
+            mode="multiple"
+            placeholder="Select tags..."
+            onChange={(value) => handleFilterChange('selectedTags', value)}
+            allowClear
+            style={{ width: '100%' }}
+            className="[&_.ant-select-selector]:border-blue-200 [&_.ant-select-focused_.ant-select-selector]:border-blue-500"
+          >
+            {tags.map(tag => (
+              <Select.Option key={tag.id} value={tag.id}>
+                <div className="flex items-center">
+                  <TagsOutlined style={{ color: '#1e40af', marginRight: '8px' }} />
+                  {tag.name}
+                </div>
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
+
+        <Divider className="my-3" />
+
+        {/* Date Range */}
+        <div>
+          <div className="flex items-center mb-2">
+            <CalendarOutlined style={{ color: '#1e40af', marginRight: '6px' }} />
+            <Text type="secondary" className="text-sm font-medium">Date Range</Text>
+          </div>
+          <RangePicker
+            style={{ width: '100%' }}
+            className="[&_.ant-picker]:border-blue-200 [&_.ant-picker-focused]:border-blue-500"
+            onChange={(dates) => {
+              if (dates) {
+                handleFilterChange('fromDate', dates[0]?.format('YYYY-MM-DD'));
+                handleFilterChange('toDate', dates[1]?.format('YYYY-MM-DD'));
+              } else {
+                handleFilterChange('fromDate', '');
+                handleFilterChange('toDate', '');
+              }
+            }}
+          />
+        </div>
+
+
+
+        {/* Author */}
+        <div>
+          <div className="flex items-center mb-2">
+            <UserOutlined style={{ color: '#1e40af', marginRight: '6px' }} />
+            <Text type="secondary" className="text-sm font-medium">Author</Text>
+          </div>
+          <Input
+            prefix={<UserOutlined style={{ color: '#6b7280' }} />}
+            placeholder="Search by author..."
+            onChange={(e) => handleFilterChange('submittedBy', e.target.value)}
+            allowClear
+            className="border-blue-200 focus:border-blue-500"
+          />
+        </div>
+      </Space>
+    </Card>
+  );
+};

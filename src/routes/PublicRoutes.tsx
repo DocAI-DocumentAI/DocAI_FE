@@ -35,6 +35,7 @@ import NewVersionDocument from "../pages/editor/NewVersionDocument";
 import ChatIndexPage from "../pages/chat/ChatIndex";
 import Tags from "../pages/manager/Tags";
 import UploadDocumentReplacement from "../pages/editor/UploadDocumentReplacement";
+import DocumentLibrary from "../pages/document/DocumentLibrary.tsx";
 
 const PublicRoutes: RouteObject[] = [
   // {
@@ -101,6 +102,10 @@ const PublicRoutes: RouteObject[] = [
   {
     path: "/bookmarks",
     element: <BookmarksPage />,
+  },
+  {
+    path: "/document-library",
+    element: <DocumentLibrary />,
   },
   {
     path: "/manager",
