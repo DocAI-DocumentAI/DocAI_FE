@@ -385,7 +385,7 @@ export default function DocumentPage() {
                         border: 'none'
                       }}
                       title="Document Preview"
-                      sandbox="allow-scripts allow-same-origin"
+                      // sandbox="allow-scripts allow-same-origin"
                     />
                   </div>
                 </div>
