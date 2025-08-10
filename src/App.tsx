@@ -5,6 +5,7 @@ import PublicRoutes from "./routes/PublicRoutes";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ChatProvider } from "./context/chat-context";
+import { PreferencesProvider } from "./context/preferences-context";
 
 // Import admin pages
 import AdminPage from "./pages/admin/adminPage";
@@ -25,9 +26,10 @@ import UpdatePermissionPage from "./pages/admin/UpdatePermissionPage";
 
 const App: React.FC = () => {
   return (
-    <ChatProvider>
-      <BrowserRouter>
-        <ToastContainer />
+    <PreferencesProvider>
+      <ChatProvider>
+        <BrowserRouter>
+          <ToastContainer />
         <Routes>
           {/* Public Routes */}
           {PublicRoutes.map((route) => (
@@ -91,6 +93,7 @@ const App: React.FC = () => {
         </Routes>
       </BrowserRouter>
     </ChatProvider>
+    </PreferencesProvider>
   );
 };
 

@@ -187,3 +187,38 @@ export const sendMessageStream = async (
     onError(error instanceof Error ? error : new Error('Unknown streaming error'));
   }
 };
+
+// User Preferences interfaces
+export interface UserPreferences {
+  userId: string;
+  sessionId: string | null;
+  userName: string;
+  chatbotCharacteristics: string[];
+  additionalInfo: string;
+  applyToNewChats: boolean;
+  hasAnyPreferences: boolean;
+}
+
+export interface UpdateUserPreferencesRequest {
+  userName: string;
+  chatbotCharacteristics: string[];
+  additionalInfo: string;
+  applyToNewChats: boolean;
+}
+
+// Get user preferences
+export const getUserPreferences = async (): Promise<UserPreferences> => {
+  const response = await api.get('/chatbox/user/preferences');
+  return response.data;
+};
+
+// Update user preferences
+export const updateUserPreferences = async (data: UpdateUserPreferencesRequest): Promise<UserPreferences> => {
+  const response = await api.patch('/chatbox/user', data);
+  return response.data;
+};
+
+// Delete chat session
+export const deleteChatSession = async (sessionId: string): Promise<void> => {
+  await api.delete(`/chatbox/session/${sessionId}`);
+};
