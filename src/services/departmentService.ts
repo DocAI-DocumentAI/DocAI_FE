@@ -55,9 +55,7 @@ const fetchDepartments = async (
   if (filters.description) params.append("description", filters.description);
 
   const response = await fetch(
-    `${
-      import.meta.env.VITE_API_BASE_URL_PRODUCTION
-    }/auth/departments?${params}`,
+    `https://production.docai.asia/api/auth/departments?${params}`,
     {
       method: "GET",
       headers: {
@@ -81,7 +79,7 @@ const createDepartment = async (data: CreateDepartmentData) => {
   }
 
   const response = await fetch(
-    `${import.meta.env.VITE_API_BASE_URL_PRODUCTION}/auth/create/department`,
+    `https://production.docai.asia/api/auth/create/department`,
     {
       method: "POST",
       headers: {
@@ -136,9 +134,7 @@ const fetchDepartmentById = async (
   }
 
   const response = await fetch(
-    `${
-      import.meta.env.VITE_API_BASE_URL_PRODUCTION
-    }/auth/department/${departmentId}`,
+    `https://production.docai.asia/api/auth/department/${departmentId}`,
     {
       method: "GET",
       headers: {
@@ -179,9 +175,7 @@ const updateDepartment = async (
   }
 
   const response = await fetch(
-    `${
-      import.meta.env.VITE_API_BASE_URL_PRODUCTION
-    }/auth/update/department?departmentId=${departmentId}`,
+    `https://production.docai.asia/api/auth/update/department?departmentId=${departmentId}`,
     {
       method: "PATCH",
       headers: {

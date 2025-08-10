@@ -9,7 +9,10 @@ export const uploadDraftDocument = async (data: any) => {
   formData.append("Description", data.description || "");
   formData.append("EffectiveFrom", data.effectiveFrom || "");
   formData.append("EffectiveUntil", data.effectiveUntil || "");
-  formData.append("Tags", Array.isArray(data.tags) ? data.tags.join(",") : (data.tags || ""));
+  formData.append(
+    "Tags",
+    Array.isArray(data.tags) ? data.tags.join(",") : data.tags || ""
+  );
   formData.append("ReplacementDocumentId", data.replacementDocumentId || "");
   formData.append("DocumentTypeId", data.documentTypeId || "");
   formData.append("IsPublic", data.isPublic ? "true" : "false"); // Add missing IsPublic field
@@ -32,13 +35,25 @@ export const analyzeDocument = async (file: File) => {
   });
   return response.data;
 };
-export const recreateDocument = async (id: string,  data: any, userId: string) => {
-  const response = await api.post(`/document/documents/${id}/versions?userId=${userId}`, data, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+export const recreateDocument = async (
+  id: string,
+  data: any,
+  userId: string
+) => {
+  const response = await api.post(
+    `/document/documents/${id}/versions?userId=${userId}`,
+    data,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+    }
+  );
   return response.data;
 };
-export const getDocuments = async (pageNumber = 1, pageSize = 10, title?: string) => {
+export const getDocuments = async (
+  pageNumber = 1,
+  pageSize = 10,
+  title?: string
+) => {
   let url = `/document/documents?pageNumber=${pageNumber}&pageSize=${pageSize}`;
   if (title) {
     url += `&Title=${encodeURIComponent(title)}`;
@@ -47,7 +62,12 @@ export const getDocuments = async (pageNumber = 1, pageSize = 10, title?: string
   return response.data.data;
 };
 
-export const getMyDocuments = async (userId: string, pageNumber = 1, pageSize = 10, title?: string) => {
+export const getMyDocuments = async (
+  userId: string,
+  pageNumber = 1,
+  pageSize = 10,
+  title?: string
+) => {
   let url = `/document/my-documents?userId=${userId}&pageNumber=${pageNumber}&pageSize=${pageSize}`;
   if (title) {
     url += `&Title=${encodeURIComponent(title)}`;
@@ -56,7 +76,11 @@ export const getMyDocuments = async (userId: string, pageNumber = 1, pageSize = 
   return response.data.data;
 };
 
-export const getApprovalQueue = async (pageNumber = 1, pageSize = 10, title?: string) => {
+export const getApprovalQueue = async (
+  pageNumber = 1,
+  pageSize = 10,
+  title?: string
+) => {
   let url = `/document/approval-queue?pageNumber=${pageNumber}&pageSize=${pageSize}`;
   if (title) {
     url += `&Title=${encodeURIComponent(title)}`;
@@ -88,11 +112,11 @@ export interface SemanticSearchParams {
 
 export const semanticSearchDocuments = async (params: SemanticSearchParams) => {
   const {
-    Query = '',
+    Query = "",
     Tags = [],
     EffectiveFrom,
     EffectiveUntil,
-    userId = '',
+    userId = "",
     pageNumber = 1,
     pageSize = 10,
     // Enhanced filter parameters
@@ -109,27 +133,38 @@ export const semanticSearchDocuments = async (params: SemanticSearchParams) => {
   } = params;
 
   const searchParams = new URLSearchParams();
-  if (Query) searchParams.append('Query', Query);
-  if (Tags && Tags.length > 0) Tags.forEach(tag => searchParams.append('Tags', tag));
-  if (EffectiveFrom) searchParams.append('EffectiveFrom', EffectiveFrom);
-  if (EffectiveUntil) searchParams.append('EffectiveUntil', EffectiveUntil);
-  if (userId) searchParams.append('userId', userId);
-  if (pageNumber) searchParams.append('pageNumber', String(pageNumber));
-  if (pageSize) searchParams.append('pageSize', String(pageSize));
+  if (Query) searchParams.append("Query", Query);
+  if (Tags && Tags.length > 0)
+    Tags.forEach((tag) => searchParams.append("Tags", tag));
+  if (EffectiveFrom) searchParams.append("EffectiveFrom", EffectiveFrom);
+  if (EffectiveUntil) searchParams.append("EffectiveUntil", EffectiveUntil);
+  if (userId) searchParams.append("userId", userId);
+  if (pageNumber) searchParams.append("pageNumber", String(pageNumber));
+  if (pageSize) searchParams.append("pageSize", String(pageSize));
 
   // Enhanced filter parameters
-  if (minRelevance !== undefined) searchParams.append('minRelevance', String(minRelevance));
-  if (maxResults !== undefined) searchParams.append('maxResults', String(maxResults));
-  if (enableHybridScoring !== undefined) searchParams.append('enableHybridScoring', String(enableHybridScoring));
-  if (boostDepartmentResults !== undefined) searchParams.append('boostDepartmentResults', String(boostDepartmentResults));
-  if (latestVersionsOnly !== undefined) searchParams.append('latestVersionsOnly', String(latestVersionsOnly));
-  if (scope !== undefined) searchParams.append('scope', String(scope));
-  if (documentTypeId) searchParams.append('documentTypeId', documentTypeId);
-  if (signedBy) searchParams.append('signedBy', signedBy);
-  if (fromDate) searchParams.append('fromDate', fromDate);
-  if (toDate) searchParams.append('toDate', toDate);
+  if (minRelevance !== undefined)
+    searchParams.append("minRelevance", String(minRelevance));
+  if (maxResults !== undefined)
+    searchParams.append("maxResults", String(maxResults));
+  if (enableHybridScoring !== undefined)
+    searchParams.append("enableHybridScoring", String(enableHybridScoring));
+  if (boostDepartmentResults !== undefined)
+    searchParams.append(
+      "boostDepartmentResults",
+      String(boostDepartmentResults)
+    );
+  if (latestVersionsOnly !== undefined)
+    searchParams.append("latestVersionsOnly", String(latestVersionsOnly));
+  if (scope !== undefined) searchParams.append("scope", String(scope));
+  if (documentTypeId) searchParams.append("documentTypeId", documentTypeId);
+  if (signedBy) searchParams.append("signedBy", signedBy);
+  if (fromDate) searchParams.append("fromDate", fromDate);
+  if (toDate) searchParams.append("toDate", toDate);
 
-  const response = await api.get(`/document/semantic-search?${searchParams.toString()}`);
+  const response = await api.get(
+    `/document/semantic-search?${searchParams.toString()}`
+  );
   return response.data;
 };
 
@@ -171,7 +206,9 @@ export interface ReplaceableDocument {
 }
 
 export const getDocumentTypes = async () => {
-  const response = await api.get("/document/document-types?pageNumber=1&pageSize=100");
+  const response = await api.get(
+    "/document/document-types?pageNumber=1&pageSize=100"
+  );
   return response.data.data.items as DocumentType[];
 };
 
@@ -197,7 +234,9 @@ export interface ReplaceableDocumentsResponse {
   hasNextPage: boolean;
 }
 
-export const getReplaceableDocuments = async (request: ReplaceableDocumentsRequest): Promise<ReplaceableDocumentsResponse> => {
+export const getReplaceableDocuments = async (
+  request: ReplaceableDocumentsRequest
+): Promise<ReplaceableDocumentsResponse> => {
   const response = await api.get("/document/replaceable-documents", {
     params: {
       title: request.title,
@@ -205,11 +244,11 @@ export const getReplaceableDocuments = async (request: ReplaceableDocumentsReque
       fromDate: request.fromDate,
       toDate: request.toDate,
       documentTypeId: request.documentTypeId,
-      tags: request.tags?.join(','),
+      tags: request.tags?.join(","),
       signedBy: request.signedBy,
       pageNumber: request.pageNumber || 1,
-      pageSize: request.pageSize || 10
-    }
+      pageSize: request.pageSize || 10,
+    },
   });
   return response.data.data;
 };
@@ -231,7 +270,7 @@ export const getSearchUsers = async (): Promise<SearchUser[]> => {
     const token = userData.docaiToken;
 
     const response = await fetch(
-      `${import.meta.env.VITE_API_BASE_URL_PRODUCTION}/auth/users?page=1&size=100&isAsc=true`,
+      `https://production.docai.asia/api/auth/users?page=1&size=100&isAsc=true`,
       {
         method: "GET",
         headers: {
@@ -252,7 +291,7 @@ export const getSearchUsers = async (): Promise<SearchUser[]> => {
       email: user.email,
     }));
   } catch (error) {
-    console.error('Error fetching users for search:', error);
+    console.error("Error fetching users for search:", error);
     return [];
   }
 };
@@ -312,12 +351,16 @@ export const getReplacementSuggestions = async (
     isPublic: request.isPublic || false,
     maxSuggestions: request.maxSuggestions || 10,
     minSimilarityThreshold: request.minSimilarityThreshold || 0.45,
-    sameDepartmentOnly: request.sameDepartmentOnly || false
+    sameDepartmentOnly: request.sameDepartmentOnly || false,
   };
 
-  const response = await api.post("/document/replacement-suggestions", requestBody, {
-    headers: { "Content-Type": "application/json" },
-  });
+  const response = await api.post(
+    "/document/replacement-suggestions",
+    requestBody,
+    {
+      headers: { "Content-Type": "application/json" },
+    }
+  );
   return response.data.data;
 };
 
@@ -334,17 +377,23 @@ export const getReplacementSuggestionsForDocument = async (
     isPublic: request.isPublic || false,
     maxSuggestions: request.maxSuggestions || 10,
     minSimilarityThreshold: request.minSimilarityThreshold || 0.45,
-    sameDepartmentOnly: request.sameDepartmentOnly || false
+    sameDepartmentOnly: request.sameDepartmentOnly || false,
   };
 
-  const response = await api.post(`/document/documents/${documentId}/replacement-suggestions`, requestBody, {
-    headers: { "Content-Type": "application/json" },
-  });
+  const response = await api.post(
+    `/document/documents/${documentId}/replacement-suggestions`,
+    requestBody,
+    {
+      headers: { "Content-Type": "application/json" },
+    }
+  );
   return response.data.data;
 };
 
 // Submit document for approval (separate from draft upload)
-export const submitDocumentForApproval = async (versionId: string): Promise<any> => {
+export const submitDocumentForApproval = async (
+  versionId: string
+): Promise<any> => {
   const response = await api.post(`/document/submit/${versionId}`);
   return response.data;
 };
@@ -356,7 +405,7 @@ import type {
   DocumentTypesResponse,
   TagsResponse,
   DocumentDraftResponse,
-  ApiResponse
+  ApiResponse,
 } from "../../types/DocumentLibrary";
 import { cleanApiParams, getErrorMessage } from "../../utils/documentLibrary";
 
@@ -364,56 +413,93 @@ import { cleanApiParams, getErrorMessage } from "../../utils/documentLibrary";
  * Enhanced official documents endpoint with comprehensive filtering
  * Includes proper error handling and response transformation
  */
-export const getOfficialDocuments = async (params: OfficialDocumentsRequest = {}): Promise<DocumentLibraryResponse> => {
+export const getOfficialDocuments = async (
+  params: OfficialDocumentsRequest = {}
+): Promise<DocumentLibraryResponse> => {
   try {
     // Clean and validate parameters
     const cleanedParams = cleanApiParams(params);
     const searchParams = new URLSearchParams();
 
     // Pagination
-    if (cleanedParams.pageNumber) searchParams.append('pageNumber', cleanedParams.pageNumber.toString());
-    if (cleanedParams.pageSize) searchParams.append('pageSize', cleanedParams.pageSize.toString());
+    if (cleanedParams.pageNumber)
+      searchParams.append("pageNumber", cleanedParams.pageNumber.toString());
+    if (cleanedParams.pageSize)
+      searchParams.append("pageSize", cleanedParams.pageSize.toString());
 
     // Content Search Filters
-    if (cleanedParams.title) searchParams.append('title', cleanedParams.title);
-    if (cleanedParams.keyword) searchParams.append('keyword', cleanedParams.keyword);
-    if (cleanedParams.versionName) searchParams.append('versionName', cleanedParams.versionName);
+    if (cleanedParams.title) searchParams.append("title", cleanedParams.title);
+    if (cleanedParams.keyword)
+      searchParams.append("keyword", cleanedParams.keyword);
+    if (cleanedParams.versionName)
+      searchParams.append("versionName", cleanedParams.versionName);
 
     // Date Filters
-    if (cleanedParams.fromDate) searchParams.append('fromDate', cleanedParams.fromDate);
-    if (cleanedParams.toDate) searchParams.append('toDate', cleanedParams.toDate);
-    if (cleanedParams.effectiveFrom) searchParams.append('effectiveFrom', cleanedParams.effectiveFrom);
-    if (cleanedParams.effectiveUntil) searchParams.append('effectiveUntil', cleanedParams.effectiveUntil);
-    if (cleanedParams.lastSubmittedFrom) searchParams.append('lastSubmittedFrom', cleanedParams.lastSubmittedFrom);
-    if (cleanedParams.lastSubmittedTo) searchParams.append('lastSubmittedTo', cleanedParams.lastSubmittedTo);
+    if (cleanedParams.fromDate)
+      searchParams.append("fromDate", cleanedParams.fromDate);
+    if (cleanedParams.toDate)
+      searchParams.append("toDate", cleanedParams.toDate);
+    if (cleanedParams.effectiveFrom)
+      searchParams.append("effectiveFrom", cleanedParams.effectiveFrom);
+    if (cleanedParams.effectiveUntil)
+      searchParams.append("effectiveUntil", cleanedParams.effectiveUntil);
+    if (cleanedParams.lastSubmittedFrom)
+      searchParams.append("lastSubmittedFrom", cleanedParams.lastSubmittedFrom);
+    if (cleanedParams.lastSubmittedTo)
+      searchParams.append("lastSubmittedTo", cleanedParams.lastSubmittedTo);
 
     // Document Metadata Filters
-    if (cleanedParams.documentTypeId) searchParams.append('documentTypeId', cleanedParams.documentTypeId);
+    if (cleanedParams.documentTypeId)
+      searchParams.append("documentTypeId", cleanedParams.documentTypeId);
     if (cleanedParams.tags && cleanedParams.tags.length > 0) {
-      cleanedParams.tags.forEach(tag => searchParams.append('tags', tag));
+      cleanedParams.tags.forEach((tag) => searchParams.append("tags", tag));
     }
-    if (cleanedParams.signedBy) searchParams.append('signedBy', cleanedParams.signedBy);
-    if (cleanedParams.fileType) searchParams.append('fileType', cleanedParams.fileType);
-    if (cleanedParams.submittedBy) searchParams.append('submittedBy', cleanedParams.submittedBy);
+    if (cleanedParams.signedBy)
+      searchParams.append("signedBy", cleanedParams.signedBy);
+    if (cleanedParams.fileType)
+      searchParams.append("fileType", cleanedParams.fileType);
+    if (cleanedParams.submittedBy)
+      searchParams.append("submittedBy", cleanedParams.submittedBy);
 
     // Access Control Filters
-    if (cleanedParams.isPublic !== undefined) searchParams.append('isPublic', cleanedParams.isPublic.toString());
+    if (cleanedParams.isPublic !== undefined)
+      searchParams.append("isPublic", cleanedParams.isPublic.toString());
 
     // File Property Filters
-    if (cleanedParams.minFileSize !== undefined && cleanedParams.minFileSize > 0) {
-      searchParams.append('minFileSize', cleanedParams.minFileSize.toString());
+    if (
+      cleanedParams.minFileSize !== undefined &&
+      cleanedParams.minFileSize > 0
+    ) {
+      searchParams.append("minFileSize", cleanedParams.minFileSize.toString());
     }
-    if (cleanedParams.maxFileSize !== undefined && cleanedParams.maxFileSize > 0) {
-      searchParams.append('maxFileSize', cleanedParams.maxFileSize.toString());
+    if (
+      cleanedParams.maxFileSize !== undefined &&
+      cleanedParams.maxFileSize > 0
+    ) {
+      searchParams.append("maxFileSize", cleanedParams.maxFileSize.toString());
     }
-    if (cleanedParams.minDownloads !== undefined && cleanedParams.minDownloads > 0) {
-      searchParams.append('minDownloads', cleanedParams.minDownloads.toString());
+    if (
+      cleanedParams.minDownloads !== undefined &&
+      cleanedParams.minDownloads > 0
+    ) {
+      searchParams.append(
+        "minDownloads",
+        cleanedParams.minDownloads.toString()
+      );
     }
-    if (cleanedParams.maxDownloads !== undefined && cleanedParams.maxDownloads > 0) {
-      searchParams.append('maxDownloads', cleanedParams.maxDownloads.toString());
+    if (
+      cleanedParams.maxDownloads !== undefined &&
+      cleanedParams.maxDownloads > 0
+    ) {
+      searchParams.append(
+        "maxDownloads",
+        cleanedParams.maxDownloads.toString()
+      );
     }
 
-    const response = await api.get(`/document/documents?${searchParams.toString()}`);
+    const response = await api.get(
+      `/document/documents?${searchParams.toString()}`
+    );
 
     // Transform response to ensure consistency
     const transformedResponse: DocumentLibraryResponse = {
@@ -423,15 +509,16 @@ export const getOfficialDocuments = async (params: OfficialDocumentsRequest = {}
         page: response.data.data?.page || response.data.page || 1,
         size: response.data.data?.size || response.data.size || 10,
         total: response.data.data?.total || response.data.total || 0,
-        totalPages: response.data.data?.totalPages || response.data.totalPages || 0
+        totalPages:
+          response.data.data?.totalPages || response.data.totalPages || 0,
       },
-      message: response.data.message || 'Documents retrieved successfully',
-      statusCode: response.status || 200
+      message: response.data.message || "Documents retrieved successfully",
+      statusCode: response.status || 200,
     };
 
     return transformedResponse;
   } catch (error: any) {
-    console.error('Error fetching official documents:', error);
+    console.error("Error fetching official documents:", error);
 
     // Return a consistent error response
     return {
@@ -441,10 +528,10 @@ export const getOfficialDocuments = async (params: OfficialDocumentsRequest = {}
         page: 1,
         size: 10,
         total: 0,
-        totalPages: 0
+        totalPages: 0,
       },
       message: getErrorMessage(error),
-      statusCode: error?.response?.status || 500
+      statusCode: error?.response?.status || 500,
     };
   }
 };
@@ -452,39 +539,43 @@ export const getOfficialDocuments = async (params: OfficialDocumentsRequest = {}
 /**
  * Enhanced document types endpoint with error handling
  */
-export const getDocumentTypesEnhanced = async (): Promise<DocumentTypesResponse> => {
-  try {
-    const response = await api.get("/document/document-types?pageNumber=1&pageSize=100");
+export const getDocumentTypesEnhanced =
+  async (): Promise<DocumentTypesResponse> => {
+    try {
+      const response = await api.get(
+        "/document/document-types?pageNumber=1&pageSize=100"
+      );
 
-    return {
-      success: response.data.success || true,
-      data: {
-        items: response.data.data?.items || response.data.items || [],
-        page: response.data.data?.page || 1,
-        size: response.data.data?.size || 100,
-        total: response.data.data?.total || 0,
-        totalPages: response.data.data?.totalPages || 0
-      },
-      message: response.data.message || 'Document types retrieved successfully',
-      statusCode: response.status || 200
-    };
-  } catch (error: any) {
-    console.error('Error fetching document types:', error);
+      return {
+        success: response.data.success || true,
+        data: {
+          items: response.data.data?.items || response.data.items || [],
+          page: response.data.data?.page || 1,
+          size: response.data.data?.size || 100,
+          total: response.data.data?.total || 0,
+          totalPages: response.data.data?.totalPages || 0,
+        },
+        message:
+          response.data.message || "Document types retrieved successfully",
+        statusCode: response.status || 200,
+      };
+    } catch (error: any) {
+      console.error("Error fetching document types:", error);
 
-    return {
-      success: false,
-      data: {
-        items: [],
-        page: 1,
-        size: 100,
-        total: 0,
-        totalPages: 0
-      },
-      message: getErrorMessage(error),
-      statusCode: error?.response?.status || 500
-    };
-  }
-};
+      return {
+        success: false,
+        data: {
+          items: [],
+          page: 1,
+          size: 100,
+          total: 0,
+          totalPages: 0,
+        },
+        message: getErrorMessage(error),
+        statusCode: error?.response?.status || 500,
+      };
+    }
+  };
 
 /**
  * Enhanced tags endpoint with error handling
@@ -500,13 +591,13 @@ export const getTagsEnhanced = async (): Promise<TagsResponse> => {
         page: response.data.data?.page || 1,
         size: response.data.data?.size || 100,
         total: response.data.data?.total || 0,
-        totalPages: response.data.data?.totalPages || 0
+        totalPages: response.data.data?.totalPages || 0,
       },
-      message: response.data.message || 'Tags retrieved successfully',
-      statusCode: response.status || 200
+      message: response.data.message || "Tags retrieved successfully",
+      statusCode: response.status || 200,
     };
   } catch (error: any) {
-    console.error('Error fetching tags:', error);
+    console.error("Error fetching tags:", error);
 
     return {
       success: false,
@@ -515,10 +606,10 @@ export const getTagsEnhanced = async (): Promise<TagsResponse> => {
         page: 1,
         size: 100,
         total: 0,
-        totalPages: 0
+        totalPages: 0,
       },
       message: getErrorMessage(error),
-      statusCode: error?.response?.status || 500
+      statusCode: error?.response?.status || 500,
     };
   }
 };
@@ -526,24 +617,26 @@ export const getTagsEnhanced = async (): Promise<TagsResponse> => {
 /**
  * Get a single document by ID
  */
-export const getDocumentById = async (documentId: string): Promise<ApiResponse<DocumentDraftResponse>> => {
+export const getDocumentById = async (
+  documentId: string
+): Promise<ApiResponse<DocumentDraftResponse>> => {
   try {
     const response = await api.get(`/document/documents/${documentId}`);
 
     return {
       success: response.data.success || true,
       data: response.data.data || response.data,
-      message: response.data.message || 'Document retrieved successfully',
-      statusCode: response.status || 200
+      message: response.data.message || "Document retrieved successfully",
+      statusCode: response.status || 200,
     };
   } catch (error: any) {
-    console.error('Error fetching document:', error);
+    console.error("Error fetching document:", error);
 
     return {
       success: false,
       data: {} as DocumentDraftResponse,
       message: getErrorMessage(error),
-      statusCode: error?.response?.status || 500
+      statusCode: error?.response?.status || 500,
     };
   }
 };
@@ -551,19 +644,22 @@ export const getDocumentById = async (documentId: string): Promise<ApiResponse<D
 /**
  * Download a document
  */
-export const downloadDocument = async (documentId: string, versionId?: string): Promise<Blob> => {
+export const downloadDocument = async (
+  documentId: string,
+  versionId?: string
+): Promise<Blob> => {
   try {
     const url = versionId
       ? `/document/documents/${documentId}/download?versionId=${versionId}`
       : `/document/documents/${documentId}/download`;
 
     const response = await api.get(url, {
-      responseType: 'blob'
+      responseType: "blob",
     });
 
     return response.data;
   } catch (error: any) {
-    console.error('Error downloading document:', error);
+    console.error("Error downloading document:", error);
     throw new Error(getErrorMessage(error));
   }
 };
@@ -571,24 +667,26 @@ export const downloadDocument = async (documentId: string, versionId?: string): 
 /**
  * Delete a document
  */
-export const deleteDocument = async (documentId: string): Promise<ApiResponse<void>> => {
+export const deleteDocument = async (
+  documentId: string
+): Promise<ApiResponse<void>> => {
   try {
     const response = await api.delete(`/document/documents/${documentId}`);
 
     return {
       success: response.data.success || true,
       data: undefined,
-      message: response.data.message || 'Document deleted successfully',
-      statusCode: response.status || 200
+      message: response.data.message || "Document deleted successfully",
+      statusCode: response.status || 200,
     };
   } catch (error: any) {
-    console.error('Error deleting document:', error);
+    console.error("Error deleting document:", error);
 
     return {
       success: false,
       data: undefined,
       message: getErrorMessage(error),
-      statusCode: error?.response?.status || 500
+      statusCode: error?.response?.status || 500,
     };
   }
 };
@@ -604,7 +702,7 @@ export const searchDocuments = async (
     keyword: query,
     pageNumber: 1,
     pageSize: 20,
-    ...filters
+    ...filters,
   };
 
   return getOfficialDocuments(searchParams);
@@ -613,23 +711,25 @@ export const searchDocuments = async (
 /**
  * Get document statistics
  */
-export const getDocumentStats = async (): Promise<ApiResponse<{
-  total: number;
-  byType: Record<string, number>;
-  byStatus: Record<string, number>;
-  recentUploads: number;
-}>> => {
+export const getDocumentStats = async (): Promise<
+  ApiResponse<{
+    total: number;
+    byType: Record<string, number>;
+    byStatus: Record<string, number>;
+    recentUploads: number;
+  }>
+> => {
   try {
-    const response = await api.get('/document/documents/stats');
+    const response = await api.get("/document/documents/stats");
 
     return {
       success: response.data.success || true,
       data: response.data.data || response.data,
-      message: response.data.message || 'Statistics retrieved successfully',
-      statusCode: response.status || 200
+      message: response.data.message || "Statistics retrieved successfully",
+      statusCode: response.status || 200,
     };
   } catch (error: any) {
-    console.error('Error fetching document stats:', error);
+    console.error("Error fetching document stats:", error);
 
     return {
       success: false,
@@ -637,11 +737,10 @@ export const getDocumentStats = async (): Promise<ApiResponse<{
         total: 0,
         byType: {},
         byStatus: {},
-        recentUploads: 0
+        recentUploads: 0,
       },
       message: getErrorMessage(error),
-      statusCode: error?.response?.status || 500
+      statusCode: error?.response?.status || 500,
     };
   }
 };
-

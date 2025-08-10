@@ -61,27 +61,33 @@ export interface SendMessageResponse {
 }
 
 export const getChatSessions = async (): Promise<ChatSession[]> => {
-  const response = await api.get('/chatbox/sessions');
+  const response = await api.get("/chatbox/sessions");
   return response.data;
 };
 
-export const getChatSessionDetail = async (sessionId: string): Promise<ChatSessionDetail> => {
+export const getChatSessionDetail = async (
+  sessionId: string
+): Promise<ChatSessionDetail> => {
   const response = await api.get(`/chatbox/session/${sessionId}`);
   return response.data;
 };
 
 export const getChatModels = async (): Promise<ChatModel[]> => {
-  const response = await api.get('/chatbox/models');
+  const response = await api.get("/chatbox/models");
   return response.data;
 };
 
-export const createChatSession = async (data: CreateChatRequest): Promise<ChatSession> => {
-  const response = await api.post('/chatbox/session', data);
+export const createChatSession = async (
+  data: CreateChatRequest
+): Promise<ChatSession> => {
+  const response = await api.post("/chatbox/session", data);
   return response.data;
 };
 
-export const sendMessage = async (data: SendMessageRequest): Promise<SendMessageResponse> => {
-  const response = await api.post('/chatbox/send', data);
+export const sendMessage = async (
+  data: SendMessageRequest
+): Promise<SendMessageResponse> => {
+  const response = await api.post("/chatbox/send", data);
   return response.data;
 };
 
@@ -105,19 +111,19 @@ export const sendMessageStream = async (
 ): Promise<void> => {
   // Set up timeout
   const timeoutId = setTimeout(() => {
-    onError(new Error('Request timeout - the response took too long'));
+    onError(new Error("Request timeout - the response took too long"));
   }, timeoutMs);
 
   try {
     const token = localStorage.getItem("token");
-    const baseURL = import.meta.env.VITE_API_BASE_URL;
+    const baseURL = "https://production.docai.asia/api";
 
     const response = await fetch(`${baseURL}/chatbox/send/stream`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
-        'Accept': 'text/event-stream'
+        "Content-Type": "application/json",
+        Authorization: token ? `Bearer ${token}` : "",
+        Accept: "text/event-stream",
       },
       body: JSON.stringify(data),
     });
@@ -129,12 +135,12 @@ export const sendMessageStream = async (
 
     if (!response.body) {
       clearTimeout(timeoutId);
-      throw new Error('Response body is null');
+      throw new Error("Response body is null");
     }
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
-    let accumulatedContent = '';
+    let accumulatedContent = "";
 
     try {
       while (true) {
@@ -149,7 +155,7 @@ export const sendMessageStream = async (
             role: 2, // assistant
             tokenCount: 0,
             timestamp: new Date().toISOString(),
-            modelUsed: data.modelName
+            modelUsed: data.modelName,
           };
           onComplete(finalMessage);
           break;
@@ -170,7 +176,7 @@ export const sendMessageStream = async (
             timestamp: new Date().toISOString(),
             role: 2,
             tokenCount: 0,
-            modelUsed: data.modelName
+            modelUsed: data.modelName,
           };
 
           onChunk(streamChunk);
@@ -178,12 +184,20 @@ export const sendMessageStream = async (
       }
     } catch (readError) {
       clearTimeout(timeoutId);
-      onError(new Error(`Stream reading failed: ${readError instanceof Error ? readError.message : 'Unknown error'}`));
+      onError(
+        new Error(
+          `Stream reading failed: ${
+            readError instanceof Error ? readError.message : "Unknown error"
+          }`
+        )
+      );
     } finally {
       reader.releaseLock();
     }
   } catch (error) {
     clearTimeout(timeoutId);
-    onError(error instanceof Error ? error : new Error('Unknown streaming error'));
+    onError(
+      error instanceof Error ? error : new Error("Unknown streaming error")
+    );
   }
 };
