@@ -1,5 +1,3 @@
-import React from 'react';
-import { Filter } from "lucide-react";
 import {
   DatePicker,
   Card,
@@ -16,8 +14,6 @@ import {
 import {
   FilterOutlined,
   ClearOutlined,
-  SearchOutlined,
-  FileTextOutlined,
   TagsOutlined,
   CalendarOutlined,
   FolderOutlined,
@@ -25,15 +21,15 @@ import {
   SettingOutlined,
   GlobalOutlined
 } from '@ant-design/icons';
-import moment from "moment";
+import type { Dayjs } from 'dayjs';
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
 
 export interface SearchFilterValue {
   documentTags: string[];
-  startDate: moment.Moment | null;
-  endDate: moment.Moment | null;
+  startDate: Dayjs | null;
+  endDate: Dayjs | null;
   // Enhanced filter parameters
   minRelevance: number;
   maxResults: number;
@@ -43,8 +39,8 @@ export interface SearchFilterValue {
   scope: number; // 0: All documents, 1: Public documents only, 2: Department documents only
   documentTypeId: string;
   signedBy: string;
-  fromDate: moment.Moment | null;
-  toDate: moment.Moment | null;
+  fromDate: Dayjs | null;
+  toDate: Dayjs | null;
 }
 
 export interface TagItem {
@@ -114,7 +110,7 @@ export function SearchFilter({ value, onChange, tags, documentTypes }: SearchFil
         </Button>
       }
       className="shadow-sm border border-blue-100"
-      bodyStyle={{ padding: '16px' }}
+      styles={{ body: { padding: '16px' } }}
     >
       <Space direction="vertical" style={{ width: '100%' }} size="middle">
         {/* Search Quality Settings */}

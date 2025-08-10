@@ -2,17 +2,17 @@ import { api } from "./api";
 
 export const uploadDraftDocument = async (data: any) => {
   const formData = new FormData();
+  formData.append("Title", data.title || "");
   formData.append("VersionName", data.versionName || "");
   formData.append("Summary", data.summary || "");
-  formData.append("ReplacementDocumentId", data.replacementDocumentId || "");
-  formData.append("DepartmentId", data.departmentId || ""); // <-- ensure this is mapped from form
-  formData.append("EffectiveFrom", data.effectiveFrom || "");
   formData.append("SignedBy", data.signedBy || "");
-  formData.append("EffectiveUntil", data.effectiveUntil || "");
-  formData.append("Title", data.title || "");
-  formData.append("Tags", Array.isArray(data.tags) ? data.tags.join(",") : (data.tags || ""));
   formData.append("Description", data.description || "");
-  formData.append("documentTypeId", data.documentTypeId || "");
+  formData.append("EffectiveFrom", data.effectiveFrom || "");
+  formData.append("EffectiveUntil", data.effectiveUntil || "");
+  formData.append("Tags", Array.isArray(data.tags) ? data.tags.join(",") : (data.tags || ""));
+  formData.append("ReplacementDocumentId", data.replacementDocumentId || "");
+  formData.append("DocumentTypeId", data.documentTypeId || "");
+  formData.append("IsPublic", data.isPublic ? "true" : "false"); // Add missing IsPublic field
   if (data.file) {
     formData.append("File", data.file);
   }
@@ -20,7 +20,7 @@ export const uploadDraftDocument = async (data: any) => {
   const response = await api.post(`/document/drafts`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
-  return response.data;
+  return response.data.data; // Return the data object which contains versionId
 };
 
 export const analyzeDocument = async (file: File) => {
@@ -144,9 +144,74 @@ export interface DocumentType {
   documentCount: number;
 }
 
+export interface ReplaceableDocument {
+  id: string;
+  title: string;
+  description: string;
+  documentTypeId: string;
+  documentTypeName: string;
+  departmentId: string;
+  departmentName: string;
+  status: string;
+  createdBy: string;
+  createdByName: string;
+  createdTime: string;
+  lastUpdatedBy: string;
+  lastUpdatedByName: string;
+  lastUpdatedTime: string;
+  tags: string[];
+  isPublic: boolean;
+  isReplaced: boolean;
+  signedBy: string;
+  effectiveFrom: string;
+  effectiveUntil: string;
+  filePath: string;
+  fileSize: number;
+  fileType: string;
+}
+
 export const getDocumentTypes = async () => {
   const response = await api.get("/document/document-types?pageNumber=1&pageSize=100");
   return response.data.data.items as DocumentType[];
+};
+
+export interface ReplaceableDocumentsRequest {
+  title?: string;
+  keyword?: string;
+  fromDate?: string;
+  toDate?: string;
+  documentTypeId?: string;
+  tags?: string[];
+  signedBy?: string;
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+export interface ReplaceableDocumentsResponse {
+  items: ReplaceableDocument[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
+export const getReplaceableDocuments = async (request: ReplaceableDocumentsRequest): Promise<ReplaceableDocumentsResponse> => {
+  const response = await api.get("/document/replaceable-documents", {
+    params: {
+      title: request.title,
+      keyword: request.keyword,
+      fromDate: request.fromDate,
+      toDate: request.toDate,
+      documentTypeId: request.documentTypeId,
+      tags: request.tags?.join(','),
+      signedBy: request.signedBy,
+      pageNumber: request.pageNumber || 1,
+      pageSize: request.pageSize || 10
+    }
+  });
+  return response.data.data;
 };
 
 // Enhanced API functions for search filters
@@ -199,6 +264,88 @@ export const regenerateSummary = async (file: File) => {
   const response = await api.post("/document/regenerate-summary", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
+  return response.data;
+};
+
+// Replacement Suggestion Interfaces
+export interface ReplacementSuggestion {
+  documentId: string;
+  title: string;
+  description: string;
+  documentName: string;
+  documentTypeName: string;
+  departmentName: string;
+  ownerName: string;
+  status: string;
+  createdTime: string;
+  createdByName: string;
+  relevanceScore: number;
+  matchReason: string;
+}
+
+export interface ReplacementSuggestionsRequest {
+  title?: string;
+  description?: string;
+  tags?: string[];
+  documentTypeId?: string;
+  isPublic?: boolean;
+  maxSuggestions?: number;
+  minSimilarityThreshold?: number;
+  sameDepartmentOnly?: boolean;
+}
+
+export interface ReplacementSuggestionsResponse {
+  suggestions: ReplacementSuggestion[];
+  total: number;
+  hasMore: boolean;
+}
+
+// Get replacement suggestions for a new document
+export const getReplacementSuggestions = async (
+  request: ReplacementSuggestionsRequest
+): Promise<ReplacementSuggestionsResponse> => {
+  const requestBody = {
+    title: request.title || "",
+    description: request.description || "",
+    documentTypeId: request.documentTypeId || "",
+    tags: request.tags || [],
+    isPublic: request.isPublic || false,
+    maxSuggestions: request.maxSuggestions || 10,
+    minSimilarityThreshold: request.minSimilarityThreshold || 0.45,
+    sameDepartmentOnly: request.sameDepartmentOnly || false
+  };
+
+  const response = await api.post("/document/replacement-suggestions", requestBody, {
+    headers: { "Content-Type": "application/json" },
+  });
+  return response.data.data;
+};
+
+// Get replacement suggestions for an existing document
+export const getReplacementSuggestionsForDocument = async (
+  documentId: string,
+  request: ReplacementSuggestionsRequest
+): Promise<ReplacementSuggestionsResponse> => {
+  const requestBody = {
+    title: request.title || "",
+    description: request.description || "",
+    documentTypeId: request.documentTypeId || "",
+    tags: request.tags || [],
+    isPublic: request.isPublic || false,
+    maxSuggestions: request.maxSuggestions || 10,
+    minSimilarityThreshold: request.minSimilarityThreshold || 0.45,
+    sameDepartmentOnly: request.sameDepartmentOnly || false
+  };
+
+  const response = await api.post(`/document/documents/${documentId}/replacement-suggestions`, requestBody, {
+    headers: { "Content-Type": "application/json" },
+  });
+  return response.data.data;
+};
+
+// Submit document for approval (separate from draft upload)
+export const submitDocumentForApproval = async (versionId: string): Promise<any> => {
+  const response = await api.post(`/document/submit/${versionId}`);
   return response.data;
 };
 

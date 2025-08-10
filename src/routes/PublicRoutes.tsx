@@ -34,7 +34,8 @@ import BookmarksPage from "../pages/bookmarks/BookmarksPage";
 import NewVersionDocument from "../pages/editor/NewVersionDocument";
 import ChatIndexPage from "../pages/chat/ChatIndex";
 import Tags from "../pages/manager/Tags";
-import UploadDocumentReplacement from "../pages/editor/UploadDocumentReplacement";
+import DocumentChoice from "../pages/editor/DocumentChoice";
+import DocumentReplacement from "../pages/editor/DocumentReplacement";
 import DocumentLibrary from "../pages/document/DocumentLibrary.tsx";
 
 const PublicRoutes: RouteObject[] = [
@@ -137,9 +138,14 @@ const PublicRoutes: RouteObject[] = [
         path: "upload-document",
         element: <UploadDocument />,
       },
+
       {
-        path: "upload-document-replacement",
-        element: <UploadDocumentReplacement />,
+        path: "document-choice",
+        element: <DocumentChoice />,
+      },
+      {
+        path: "document-replacement",
+        element: <DocumentReplacement />,
       },
       {
         path: "document/new-version/:id",

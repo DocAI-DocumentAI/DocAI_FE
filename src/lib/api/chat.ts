@@ -178,7 +178,7 @@ export const sendMessageStream = async (
       }
     } catch (readError) {
       clearTimeout(timeoutId);
-      onError(new Error(`Stream reading failed: ${readError.message}`));
+      onError(new Error(`Stream reading failed: ${readError instanceof Error ? readError.message : 'Unknown error'}`));
     } finally {
       reader.releaseLock();
     }

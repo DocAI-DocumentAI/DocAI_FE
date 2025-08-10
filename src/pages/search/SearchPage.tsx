@@ -6,13 +6,13 @@ import { SearchFilter } from "../../components/Search-filter";
 import { semanticSearchDocuments, getDocumentTypes } from "../../lib/api/document";
 import { getTags } from "../../lib/api/tag";
 import type { SearchFilterValue, DocumentTypeItem } from "../../components/Search-filter";
-import moment from "moment";
-import { Card, Spin, Typography, Row, Col, Divider } from "antd";
+
+import { Card, Spin, Typography, Row, Col } from "antd";
 import { RobotOutlined, SearchOutlined, FilterOutlined, FileTextOutlined } from "@ant-design/icons";
 // Import test utilities for development/testing
 import { testSemanticSearchParams, testDefaultFilterValues } from "../../utils/searchTestUtils";
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Paragraph } = Typography;
 
 export default function SearchPage() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -164,7 +164,7 @@ export default function SearchPage() {
                 {/* Search Box Section */}
                 <Card
                   className="border border-blue-100"
-                  bodyStyle={{ padding: '24px' }}
+                  styles={{ body: { padding: '24px' } }}
                 >
                   <div className="flex items-center mb-4">
                     <SearchOutlined className="text-blue-600 text-xl mr-3" />

@@ -1,6 +1,5 @@
-import React from 'react';
 import { Link } from "react-router-dom";
-import { Card, Tag, Typography, Space, Divider, Empty } from 'antd';
+import { Tag, Typography, Space, Divider, Empty } from 'antd';
 import {
   FileTextOutlined,
   CalendarOutlined,
@@ -34,7 +33,7 @@ export function SearchResults({ results }: SearchResultsProps) {
 
   return (
     <div className="space-y-4">
-      {results.map((result, index) => (
+      {results.map((result) => (
         <div
           key={result.id}
           className="p-6 bg-white border border-gray-200 rounded-lg hover:shadow-md hover:border-blue-300 transition-all duration-200"
