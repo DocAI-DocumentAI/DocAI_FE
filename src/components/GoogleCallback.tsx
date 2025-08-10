@@ -16,13 +16,18 @@ const GoogleCallback: React.FC<GoogleCallbackProps> = ({
   onSuccess,
   onError,
 }) => {
+  console.log("GoogleCallback component rendered");
   const [status, setStatus] = useState<GoogleOAuthFlowStatus>("processing");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   useEffect(() => {
+    console.log("GoogleCallback useEffect triggered");
+    console.log("Current URL:", window.location.href);
+
     const handleCallback = async () => {
+      console.log("Starting handleCallback");
       dispatch(loginStart());
 
       try {
@@ -34,12 +39,15 @@ const GoogleCallback: React.FC<GoogleCallbackProps> = ({
 
         // Extract authorization code from URL
         const code = GoogleAuthService.extractCodeFromUrl();
+        console.log("Extracted code:", code);
         if (!code) {
           throw new Error("No authorization code found in URL");
         }
 
         // Exchange code for user data
+        console.log("Calling exchangeAuthCode with code:", code);
         const userData = await GoogleAuthService.exchangeAuthCode(code);
+        console.log("Received userData:", userData);
 
         // Store user data in localStorage
         localStorage.setItem("token", userData.docaiToken);
