@@ -72,7 +72,7 @@ const PublicRoutes: RouteObject[] = [
     element: <Login />,
   },
   {
-    path: "/auth/callback",
+    path: "/auth/google/callback",
     element: <GoogleCallbackPage />,
   },
   {
