@@ -1,15 +1,15 @@
-import { useState, useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { GoogleAuthService } from '../services/googleAuthService';
-import { 
-  googleAuthStart, 
-  googleAuthSuccess, 
+import { useState, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { GoogleAuthService } from "../services/googleAuthService";
+import {
+  googleAuthStart,
+  googleAuthSuccess,
   googleAuthFailure,
-  clearError 
-} from '../store/slices/authSlice';
-import { RootState } from '../store';
-import { User } from '../types/User';
+  clearError,
+} from "../store/slices/authSlice";
+import { RootState } from "../store";
+import { User } from "../types/User";
 
 interface UseGoogleAuthReturn {
   isLoading: boolean;
@@ -37,11 +37,11 @@ export const useGoogleAuth = (): UseGoogleAuthReturn => {
 
       // Get Google OAuth URL
       const { authUrl } = await GoogleAuthService.getGoogleAuthUrl();
-      
+
       // Redirect to Google
       GoogleAuthService.redirectToGoogle(authUrl);
     } catch (error: any) {
-      const errorMessage = error.message || 'Failed to initiate Google login';
+      const errorMessage = error.message || "Failed to initiate Google login";
       dispatch(googleAuthFailure(errorMessage));
       setLocalLoading(false);
       throw error;
@@ -64,15 +64,15 @@ export const useGoogleAuth = (): UseGoogleAuthReturn => {
       // Extract authorization code from URL
       const code = GoogleAuthService.extractCodeFromUrl();
       if (!code) {
-        throw new Error('No authorization code found in URL');
+        throw new Error("No authorization code found in URL");
       }
 
       // Exchange code for user data
       const userData = await GoogleAuthService.exchangeAuthCode(code);
 
       // Store user data in localStorage
-      localStorage.setItem('token', userData.docaiToken);
-      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem("token", userData.docaiToken);
+      localStorage.setItem("user", JSON.stringify(userData));
 
       // Update Redux state
       dispatch(googleAuthSuccess(userData));
@@ -82,12 +82,13 @@ export const useGoogleAuth = (): UseGoogleAuthReturn => {
 
       return userData;
     } catch (error: any) {
-      const errorMessage = error.message || 'Failed to complete Google authentication';
+      const errorMessage =
+        error.message || "Failed to complete Google authentication";
       dispatch(googleAuthFailure(errorMessage));
-      
+
       // Clean URL parameters even on error
       GoogleAuthService.cleanUrlParams();
-      
+
       throw error;
     }
   }, [dispatch]);
@@ -95,22 +96,25 @@ export const useGoogleAuth = (): UseGoogleAuthReturn => {
   /**
    * Navigate user based on their role
    */
-  const navigateByRole = useCallback((user: User) => {
-    switch (user.role?.roleName) {
-      case 'Editor':
-        navigate('/editor/view-draft');
-        break;
-      case 'Manager':
-        navigate('/manager/approvalQueue');
-        break;
-      case 'Admin':
-        navigate('/admin/dashboard');
-        break;
-      default:
-        navigate('/');
-        break;
-    }
-  }, [navigate]);
+  const navigateByRole = useCallback(
+    (user: User) => {
+      switch (user.role?.roleName) {
+        case "Editor":
+          navigate("/editor/view-draft");
+          break;
+        case "Manager":
+          navigate("/manager/approvalQueue");
+          break;
+        case "Admin":
+          navigate("/admin/dashboard");
+          break;
+        default:
+          navigate("/");
+          break;
+      }
+    },
+    [navigate]
+  );
 
   /**
    * Complete Google OAuth flow with navigation
@@ -128,7 +132,7 @@ export const useGoogleAuth = (): UseGoogleAuthReturn => {
     } catch (error) {
       // Redirect to login page on error
       setTimeout(() => {
-        navigate('/login');
+        navigate("/login");
       }, 3000);
       throw error;
     }
