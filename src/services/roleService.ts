@@ -53,7 +53,7 @@ const fetchRoles = async (filters: RoleFilters = {}): Promise<RoleResponse> => {
   if (filters.description) params.append("description", filters.description);
 
   const response = await fetch(
-    `https://production.docai.asia/api/auth/roles?${params}`,
+    `${import.meta.env.VITE_API_BASE_URL_PRODUCTION}/auth/roles?${params}`,
     {
       method: "GET",
       headers: {
@@ -77,7 +77,7 @@ const createRole = async (data: CreateRoleData) => {
   }
 
   const response = await fetch(
-    `https://production.docai.asia/api/auth/create/role`,
+    `${import.meta.env.VITE_API_BASE_URL_PRODUCTION}/auth/create/role`,
     {
       method: "POST",
       headers: {
@@ -130,7 +130,7 @@ const fetchRoleById = async (roleId: string): Promise<Role> => {
   }
 
   const response = await fetch(
-    `https://production.docai.asia/api/auth/role/${roleId}`,
+    `${import.meta.env.VITE_API_BASE_URL_PRODUCTION}/auth/role/${roleId}`,
     {
       method: "GET",
       headers: {
@@ -168,7 +168,9 @@ const updateRole = async (roleId: string, data: UpdateRoleData) => {
   }
 
   const response = await fetch(
-    `https://production.docai.asia/api/auth/update/role?roleId=${roleId}`,
+    `${
+      import.meta.env.VITE_API_BASE_URL_PRODUCTION
+    }/auth/update/role?roleId=${roleId}`,
     {
       method: "PATCH",
       headers: {

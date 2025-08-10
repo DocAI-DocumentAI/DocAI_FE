@@ -55,7 +55,9 @@ const fetchPermissions = async (
   if (filters.description) params.append("description", filters.description);
 
   const response = await fetch(
-    `https://production.docai.asia/api/auth/permissions?${params}`,
+    `${
+      import.meta.env.VITE_API_BASE_URL_PRODUCTION
+    }/auth/permissions?${params}`,
     {
       method: "GET",
       headers: {
@@ -79,7 +81,7 @@ const createPermission = async (data: CreatePermissionData) => {
   }
 
   const response = await fetch(
-    `https://production.docai.asia/api/auth/create/permission`,
+    `${import.meta.env.VITE_API_BASE_URL_PRODUCTION}/auth/create/permission`,
     {
       method: "POST",
       headers: {
@@ -134,7 +136,9 @@ const fetchPermissionById = async (
   }
 
   const response = await fetch(
-    `https://production.docai.asia/api/auth/permission/${permissionId}`,
+    `${
+      import.meta.env.VITE_API_BASE_URL_PRODUCTION
+    }/auth/permission/${permissionId}`,
     {
       method: "GET",
       headers: {
@@ -175,7 +179,9 @@ const updatePermission = async (
   }
 
   const response = await fetch(
-    `https://production.docai.asia/api/auth/update/permission?permissionId=${permissionId}`,
+    `${
+      import.meta.env.VITE_API_BASE_URL_PRODUCTION
+    }/auth/update/permission?permissionId=${permissionId}`,
     {
       method: "PATCH",
       headers: {

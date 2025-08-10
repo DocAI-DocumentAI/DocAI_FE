@@ -20,7 +20,7 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
     try {
       console.log("🔍 Google Login Debug Info:");
       console.log("Current URL:", window.location.href);
-      console.log("API Base URL:", "https://production.docai.asia/api");
+      console.log("API Base URL:", import.meta.env.VITE_API_BASE_URL);
       console.log("Environment:", import.meta.env.MODE);
 
       // Get Google OAuth URL from the API

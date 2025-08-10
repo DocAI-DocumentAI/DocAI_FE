@@ -4,7 +4,7 @@ import { Login } from "../types/Login";
 
 const loginApi = async (credentials: Login): Promise<User> => {
   const response = await fetch(
-    "https://production.docai.asia/api" + "/auth/login",
+    import.meta.env.VITE_API_BASE_URL + "/auth/login",
     {
       method: "POST",
       headers: {

@@ -90,7 +90,7 @@ const fetchUsers = async (filters: UserFilters = {}): Promise<UserResponse> => {
   if (filters.permissionId) params.append("permissionId", filters.permissionId);
 
   const response = await fetch(
-    `https://production.docai.asia/api/auth/users?${params}`,
+    `${import.meta.env.VITE_API_BASE_URL_PRODUCTION}/auth/users?${params}`,
     {
       method: "GET",
       headers: {
@@ -136,7 +136,7 @@ const createUser = async (userData: CreateUserData): Promise<User> => {
   }
 
   const response = await fetch(
-    `https://production.docai.asia/api/auth/create-user`,
+    `${import.meta.env.VITE_API_BASE_URL_PRODUCTION}/auth/create-user`,
     {
       method: "POST",
       headers: {
@@ -175,7 +175,7 @@ const fetchUserById = async (userId: string): Promise<User> => {
   }
 
   const response = await fetch(
-    `https://production.docai.asia/api/auth/user/${userId}`,
+    `${import.meta.env.VITE_API_BASE_URL_PRODUCTION}/auth/user/${userId}`,
     {
       method: "GET",
       headers: {
@@ -222,7 +222,9 @@ const updateUser = async (
   }
 
   const response = await fetch(
-    `https://production.docai.asia/api/auth/admin/users?userId=${userId}`,
+    `${
+      import.meta.env.VITE_API_BASE_URL_PRODUCTION
+    }/auth/admin/users?userId=${userId}`,
     {
       method: "PATCH",
       headers: {
