@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Typography, Card, Button, Input, Select, DatePicker, Upload, Form, Row, Col, Space, Spin, Table, Modal, Tag, Alert, Empty } from "antd"
+import { Layout, Typography, Card, Button, Input, Select, DatePicker, Form, Row, Col, Space, Spin, Table, Modal, Tag, Alert, Empty } from "antd"
 import { UploadOutlined, InboxOutlined, SearchOutlined, SwapOutlined, FileTextOutlined, ArrowLeftOutlined } from "@ant-design/icons"
 import {
   uploadDraftDocument,
@@ -17,21 +17,10 @@ import WysiwygEditor from 'react-simple-wysiwyg';
 import toast from 'react-hot-toast';
 import moment from "moment";
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 const { Content } = Layout;
-const { Dragger } = Upload;
 
-interface AnalysisData {
-  title: string;
-  description: string;
-  summary: string;
-  tags: string[];
-  effectiveFrom: string;
-  effectiveUntil: string;
-  signedBy: string;
-  documentTypeId: string;
-  file: File;
-}
+
 
 const DocumentReplacement: React.FC = () => {
   const [form] = Form.useForm()
@@ -204,8 +193,6 @@ const DocumentReplacement: React.FC = () => {
       return;
     }
 
-    const users = JSON.parse(userStr);
-
     const formValues = {
       title: values.title || "",
       versionName: values.versionName || "",
@@ -338,12 +325,12 @@ const DocumentReplacement: React.FC = () => {
                           id: suggestion.documentId,
                           title: suggestion.title,
                           description: suggestion.description,
-                          documentTypeId: suggestion.documentTypeId || "",
+                          documentTypeId: "", // Not available in suggestion
                           documentTypeName: suggestion.documentTypeName,
-                          departmentId: suggestion.departmentId || "",
+                          departmentId: "", // Not available in suggestion
                           departmentName: suggestion.departmentName,
                           status: suggestion.status,
-                          createdBy: suggestion.createdBy || "",
+                          createdBy: "", // Not available in suggestion
                           createdByName: suggestion.createdByName,
                           createdTime: suggestion.createdTime,
                           lastUpdatedBy: "",

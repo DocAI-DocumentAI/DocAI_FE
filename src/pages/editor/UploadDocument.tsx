@@ -131,8 +131,6 @@ export default function UploadDocument() {
       toast.error("User information not found, please login again!");
       return;
     }
-
-    const users = JSON.parse(userStr);
     const formValues = {
       title: values.title || "",
       versionName: values.versionName || "",
@@ -590,7 +588,7 @@ export default function UploadDocument() {
                 <Form.Item label="Description">
                   <WysiwygEditor
                     value={htmlDescription}
-                    onChange={setHtmlDescription}
+                    onChange={(e) => setHtmlDescription(e.target.value)}
                     className="wysiwyg-editor"
                   />
                 </Form.Item>
@@ -613,7 +611,7 @@ export default function UploadDocument() {
                 >
                   <WysiwygEditor
                     value={htmlSummary}
-                    onChange={setHtmlSummary}
+                    onChange={(e) => setHtmlSummary(e.target.value)}
                     className="wysiwyg-editor"
                   />
                 </Form.Item>
