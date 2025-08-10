@@ -56,24 +56,17 @@ const GoogleCallback: React.FC<GoogleCallbackProps> = ({
 
         // Navigate based on user role
         setTimeout(() => {
-          switch (userData.role?.roleName) {
-            case "Editor":
-              navigate("/editor/view-draft");
-              break;
-            case "Manager":
-              navigate("/manager/approvalQueue");
-              break;
-            case "Admin":
-              navigate("/admin/dashboard");
-              break;
-            default:
-              navigate("/");
-              break;
+          if (userData.role?.roleName === "Admin") {
+            navigate("/admin/dashboard");
+          } else {
+            navigate("/");
           }
         }, 1500);
-      } catch (error: any) {
+      } catch (error: unknown) {
         const errorMsg =
-          error.message || "Failed to complete Google authentication";
+          error instanceof Error
+            ? error.message
+            : "Failed to complete Google authentication";
         setErrorMessage(errorMsg);
         setStatus("error");
         dispatch(loginFailure(errorMsg));
