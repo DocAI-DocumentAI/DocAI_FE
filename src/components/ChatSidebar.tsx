@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, Plus, MessageSquare, MoreHorizontal, Home, Library, PanelLeftClose, PanelLeftOpen, Settings, Trash2 } from "lucide-react";
-import { getChatSessions, ChatSession, deleteChatSession } from "../lib/api/chat";
+import { Menu, Plus, MessageSquare, MoreHorizontal, Home, Library, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { getChatSessions, ChatSession } from "../lib/api/chat";
 import { useChat } from "../context/chat-context";
-import ChatSettingsModal from "./ChatSettingsModal";
 
 function ChatSidebar() {
   // Initialize sidebar state based on screen size
@@ -13,16 +12,12 @@ function ChatSidebar() {
     }
     return true;
   });
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [loading, setLoading] = useState(true);
-  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
-  const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { clearCurrentChat } = useChat();
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Handle window resize for responsive behavior
   useEffect(() => {
@@ -69,57 +64,6 @@ function ChatSidebar() {
   const handleNewChatClick = () => {
     clearCurrentChat();
     navigate('/chat/new');
-  };
-
-  // Handle click outside dropdown to close it
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setOpenDropdownId(null);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  // Handle delete chat session
-  const handleDeleteSession = async (sessionId: string) => {
-    if (!confirm('Are you sure you want to delete this chat? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      setDeletingSessionId(sessionId);
-      await deleteChatSession(sessionId);
-
-      // Remove from local state
-      setChatSessions(prev => prev.filter(session => session.id !== sessionId));
-
-      // Close dropdown
-      setOpenDropdownId(null);
-
-      // If we're currently viewing this chat, navigate away
-      const currentChatId = getCurrentChatId();
-      if (currentChatId === sessionId) {
-        clearCurrentChat();
-        navigate('/chat/new');
-      }
-    } catch (error) {
-      console.error('Failed to delete chat session:', error);
-      alert('Failed to delete chat session. Please try again.');
-    } finally {
-      setDeletingSessionId(null);
-    }
-  };
-
-  // Toggle dropdown menu
-  const toggleDropdown = (sessionId: string, event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setOpenDropdownId(openDropdownId === sessionId ? null : sessionId);
   };
 
   // Group chat sessions by date
@@ -264,48 +208,29 @@ function ChatSidebar() {
                     </h3>
                     <div className="space-y-1">
                       {chats.map((chat) => (
-                        <div key={chat.id} className="relative">
-                          <Link
-                            to={`/chat/${chat.id}`}
-                            className={classNames(
-                              "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                              currentChatId === chat.id
-                                ? "bg-blue-800 text-white"
-                                : "text-blue-100 hover:bg-blue-800 hover:text-white"
-                            )}
-                          >
-                            <MessageSquare size={16} className="flex-shrink-0" />
-                            <span className="flex-1 truncate">{chat.title}</span>
-                            <button
-                              onClick={(e) => toggleDropdown(chat.id, e)}
-                              className="p-1 rounded hover:bg-blue-700 relative z-10"
-                              disabled={deletingSessionId === chat.id}
-                            >
-                              {deletingSessionId === chat.id ? (
-                                <div className="animate-spin h-3.5 w-3.5 border border-white border-t-transparent rounded-full"></div>
-                              ) : (
-                                <MoreHorizontal size={14} />
-                              )}
-                            </button>
-                          </Link>
-
-                          {/* Dropdown Menu */}
-                          {openDropdownId === chat.id && (
-                            <div
-                              ref={dropdownRef}
-                              className="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50"
-                            >
-                              <button
-                                onClick={() => handleDeleteSession(chat.id)}
-                                disabled={deletingSessionId === chat.id}
-                                className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                <Trash2 size={14} />
-                                {deletingSessionId === chat.id ? 'Deleting...' : 'Delete Chat'}
-                              </button>
-                            </div>
+                        <Link
+                          key={chat.id}
+                          to={`/chat/${chat.id}`}
+                          className={classNames(
+                            "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                            currentChatId === chat.id
+                              ? "bg-blue-800 text-white"
+                              : "text-blue-100 hover:bg-blue-800 hover:text-white"
                           )}
-                        </div>
+                        >
+                          <MessageSquare size={16} className="flex-shrink-0" />
+                          <span className="flex-1 truncate">{chat.title}</span>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              // Handle chat options
+                            }}
+                            className="p-1 rounded hover:bg-blue-700"
+                          >
+                            <MoreHorizontal size={14} />
+                          </button>
+                        </Link>
                       ))}
                     </div>
                   </div>
@@ -316,20 +241,7 @@ function ChatSidebar() {
         )}
 
         {/* Footer */}
-        <div className="mt-auto border-t border-blue-800 p-4">
-          <div className="space-y-2">
-            {/* Navigation buttons */}
-            <div className="flex flex-col space-y-1">
-              <button
-                onClick={() => setIsSettingsModalOpen(true)}
-                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors w-full text-left"
-              >
-                <Settings size={16} className="flex-shrink-0" />
-                {!isCollapsed && <span>Settings</span>}
-              </button>
-            </div>
-          </div>
-        </div>
+        <div className="mt-auto border-t border-blue-800 p-4"></div>
       </aside>
 
       {/* Mobile header */}
@@ -343,12 +255,6 @@ function ChatSidebar() {
         </button>
         <div className="flex items-center gap-2"></div>
       </div>
-
-      {/* Settings Modal */}
-      <ChatSettingsModal
-        isOpen={isSettingsModalOpen}
-        onClose={() => setIsSettingsModalOpen(false)}
-      />
     </>
   );
 }
