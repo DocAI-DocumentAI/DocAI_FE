@@ -8,7 +8,7 @@ import { ChatProvider } from "./context/chat-context";
 
 // Import admin pages
 import AdminPage from "./pages/admin/adminPage";
-import OverviewPage from "./pages/admin/Dashboard";
+import DashboardPage from "./pages/admin/Dashboard";
 import UsersPage from "./pages/admin/UsersPage";
 import NotifyPage from "./pages/admin/NotifyPage";
 import DepartmentPage from "./pages/admin/DepartmentPage";
@@ -22,6 +22,9 @@ import UpdateUserPage from "./pages/admin/UpdateUserPage";
 import UpdateDepartmentPage from "./pages/admin/UpdateDepartmentPage";
 import UpdateRolePage from "./pages/admin/UpdateRolePage";
 import UpdatePermissionPage from "./pages/admin/UpdatePermissionPage";
+import DocumentTypePage from "./pages/admin/DocumentTypePage";
+import CreateDocumentTypePage from "./pages/admin/CreateDocumentTypePage";
+import UpdateDocumentTypePage from "./pages/admin/UpdateDocumentTypePage";
 
 const App: React.FC = () => {
   return (
@@ -52,11 +55,12 @@ const App: React.FC = () => {
               // </PrivateRoute>
             }
           >
-            <Route path="dashboard" element={<OverviewPage />} />
+            <Route path="dashboard" element={<DashboardPage />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="departments" element={<DepartmentPage />} />
             <Route path="roles" element={<RolePage />} />
             <Route path="permissions" element={<PermissionPage />} />
+            <Route path="document-types" element={<DocumentTypePage />} />
             <Route path="notifications" element={<NotifyPage />} />
             <Route path="/admin/users/create" element={<CreateUserPage />} />
             <Route
@@ -67,6 +71,10 @@ const App: React.FC = () => {
             <Route
               path="/admin/permissions/create"
               element={<CreatePermissionPage />}
+            />
+            <Route
+              path="/admin/document-types/create"
+              element={<CreateDocumentTypePage />}
             />
             <Route
               path="/admin/users/update/:userId"
@@ -83,6 +91,10 @@ const App: React.FC = () => {
             <Route
               path="/admin/permissions/update/:permissionId"
               element={<UpdatePermissionPage />}
+            />
+            <Route
+              path="/admin/document-types/update/:documentTypeId"
+              element={<UpdateDocumentTypePage />}
             />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>

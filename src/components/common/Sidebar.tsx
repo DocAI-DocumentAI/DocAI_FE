@@ -6,6 +6,7 @@ import {
   Shield,
   Key,
   Building2,
+  FileText,
 } from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -18,7 +19,7 @@ const SIDEBAR_ITEMS: {
   href: string;
 }[] = [
   {
-    name: "Overview",
+    name: "Dashboard",
     icon: BarChart2,
     color: "#F59E0B", // amber-500
     href: "/admin/dashboard",
@@ -48,10 +49,10 @@ const SIDEBAR_ITEMS: {
     href: "/admin/permissions",
   },
   {
-    name: "Notifications",
-    icon: Bell,
-    color: "#FBBF24", // yellow-400
-    href: "/admin/notifications",
+    name: "Document Types",
+    icon: FileText,
+    color: "#60A5FA", // blue-400
+    href: "/admin/document-types",
   },
 ];
 

@@ -7,9 +7,9 @@ import toast from "react-hot-toast";
 import Header from "../../components/common/Header";
 import StatCard from "../../components/common/StatCard";
 import UsersTable from "../../components/userAdmin/UsersTable";
-import UserGrowthChart from "../../components/userAdmin/UserGrowthChart";
-import UserActivityHeatmap from "../../components/userAdmin/UserActivityHeatmap";
-import UserDemographicsChart from "../../components/userAdmin/UserDemographicsChart";
+// import UserGrowthChart from "../../components/userAdmin/UserGrowthChart";
+// import UserActivityHeatmap from "../../components/userAdmin/UserActivityHeatmap";
+// import UserDemographicsChart from "../../components/userAdmin/UserDemographicsChart";
 
 const UsersPage: React.FC = () => {
   const [userStats, setUserStats] = useState({
@@ -104,11 +104,11 @@ const UsersPage: React.FC = () => {
         <UsersTable />
 
         {/* USER CHARTS */}
-        <div className="grid grid-cols-1 gap-6 mt-8 lg:grid-cols-2">
+        {/* <div className="grid grid-cols-1 gap-6 mt-8 lg:grid-cols-2">
           <UserGrowthChart />
           <UserActivityHeatmap />
           <UserDemographicsChart />
-        </div>
+        </div> */}
       </main>
     </div>
   );
