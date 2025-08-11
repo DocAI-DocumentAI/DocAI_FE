@@ -17,20 +17,19 @@ const GoogleCallback: React.FC<GoogleCallbackProps> = ({
   onError,
 }) => {
   console.log("GoogleCallback component rendered");
+  console.log("Current URL:", window.location.href);
+
   const [status, setStatus] = useState<GoogleOAuthFlowStatus>("processing");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   useEffect(() => {
-    if (
-      window.location.protocol === "https:" &&
-      window.location.host === "docai.asia"
-    ) {
-      const httpUrl = window.location.href.replace("https:", "http:");
-      window.location.href = httpUrl;
-      return;
-    }
+    console.log("GoogleCallback useEffect triggered");
+    console.log("Current URL:", window.location.href);
+    console.log("URL Protocol:", window.location.protocol);
+    console.log("URL Host:", window.location.host);
+    console.log("URL Search:", window.location.search);
 
     const handleCallback = async () => {
       console.log("Starting handleCallback");
@@ -52,52 +51,93 @@ const GoogleCallback: React.FC<GoogleCallbackProps> = ({
 
         // Exchange code for user data
         console.log("Calling exchangeAuthCode with code:", code);
+        console.log("API Base URL:", "https://production.docai.asia/api");
+
         const userData = await GoogleAuthService.exchangeAuthCode(code);
         console.log("Received userData:", userData);
+
+        if (!userData) {
+          throw new Error("No user data received from API");
+        }
+
+        if (!userData.docaiToken) {
+          throw new Error("No token received from API");
+        }
 
         // Store user data in localStorage
         localStorage.setItem("token", userData.docaiToken);
         localStorage.setItem("user", JSON.stringify(userData));
 
         // Update Redux state
+        console.log("Updating Redux state...");
         dispatch(loginSuccess(userData));
 
         // Clean URL parameters
+        console.log("Cleaning URL parameters...");
         GoogleAuthService.cleanUrlParams();
 
+        console.log("Setting status to success...");
         setStatus("success");
         onSuccess?.(userData);
 
         // Navigate based on user role
+        console.log("Preparing navigation...");
         setTimeout(() => {
           const roleName = userData.role?.roleName;
           console.log("User role:", roleName);
+          console.log("Navigating based on role...");
 
           if (roleName === "Admin") {
+            console.log("Navigating to admin dashboard");
             navigate("/admin/dashboard");
           } else {
+            console.log("Navigating to home page");
             navigate("/");
           }
         }, 1500);
       } catch (error: any) {
+        console.error("❌ Google authentication error:", error);
+        console.error("Error details:", {
+          message: error.message,
+          status: error.status,
+          response: error.response?.data,
+          stack: error.stack,
+        });
+
         const errorMsg =
           error.message || "Failed to complete Google authentication";
+        console.log("Setting error message:", errorMsg);
+
         setErrorMessage(errorMsg);
         setStatus("error");
         dispatch(loginFailure(errorMsg));
         onError?.(errorMsg);
 
         // Clean URL parameters even on error
+        console.log("Cleaning URL parameters after error...");
         GoogleAuthService.cleanUrlParams();
 
         // Redirect to login page after showing error
+        console.log("Will redirect to login in 3 seconds...");
         setTimeout(() => {
+          console.log("Redirecting to login page...");
           navigate("/login");
         }, 3000);
       }
     };
 
     handleCallback();
+
+    // Fallback timeout - if nothing happens in 30 seconds, show error
+    const timeoutId = setTimeout(() => {
+      console.log("⏰ Timeout reached - showing error");
+      setStatus("error");
+      setErrorMessage("Authentication timeout. Please try again.");
+    }, 30000);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [dispatch, navigate, onSuccess, onError]);
 
   const renderContent = () => {
