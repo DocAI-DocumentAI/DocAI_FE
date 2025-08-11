@@ -201,6 +201,14 @@ export const useUser = (userId: string) => {
   });
 };
 
+export const useUsers = () => {
+  return useQuery({
+    queryKey: ["users"],
+    queryFn: () => fetchUsers({ size: 1000 }),
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
 interface UpdateUserData {
   fullName: string;
   phone: string;

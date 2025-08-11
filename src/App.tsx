@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import PublicRoutes from "./routes/PublicRoutes";
 // import PrivateRoute from "./routes/PrivateRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ChatProvider } from "./context/chat-context";
+import { initializeAuth } from "./store/slices/authSlice";
 
 // Import admin pages
 import AdminPage from "./pages/admin/adminPage";
@@ -27,6 +29,13 @@ import CreateDocumentTypePage from "./pages/admin/CreateDocumentTypePage";
 import UpdateDocumentTypePage from "./pages/admin/UpdateDocumentTypePage";
 
 const App: React.FC = () => {
+  const dispatch = useDispatch();
+
+  // Initialize auth state from localStorage on app start
+  useEffect(() => {
+    dispatch(initializeAuth());
+  }, [dispatch]);
+
   return (
     <ChatProvider>
       <BrowserRouter>

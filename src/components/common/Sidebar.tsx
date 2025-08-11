@@ -1,7 +1,6 @@
 import {
   BarChart2,
   Menu,
-  Bell,
   Users,
   Shield,
   Key,

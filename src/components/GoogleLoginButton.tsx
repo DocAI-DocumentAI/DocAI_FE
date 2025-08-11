@@ -18,11 +18,6 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
     onLoading?.(true);
 
     try {
-      console.log("🔍 Google Login Debug Info:");
-      console.log("Current URL:", window.location.href);
-      console.log("API Base URL:", "https://production.docai.asia/api");
-      console.log("Environment:", import.meta.env.MODE);
-
       // Get Google OAuth URL from the API
       const { authUrl } = await GoogleAuthService.getGoogleAuthUrl();
 

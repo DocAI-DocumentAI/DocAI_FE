@@ -23,8 +23,14 @@ const GoogleCallback: React.FC<GoogleCallbackProps> = ({
   const dispatch = useDispatch();
 
   useEffect(() => {
-    console.log("GoogleCallback useEffect triggered");
-    console.log("Current URL:", window.location.href);
+    if (
+      window.location.protocol === "https:" &&
+      window.location.host === "docai.asia"
+    ) {
+      const httpUrl = window.location.href.replace("https:", "http:");
+      window.location.href = httpUrl;
+      return;
+    }
 
     const handleCallback = async () => {
       console.log("Starting handleCallback");
@@ -64,19 +70,13 @@ const GoogleCallback: React.FC<GoogleCallbackProps> = ({
 
         // Navigate based on user role
         setTimeout(() => {
-          switch (userData.role?.roleName) {
-            case "Editor":
-              navigate("/editor/view-draft");
-              break;
-            case "Manager":
-              navigate("/manager/approvalQueue");
-              break;
-            case "Admin":
-              navigate("/admin/dashboard");
-              break;
-            default:
-              navigate("/");
-              break;
+          const roleName = userData.role?.roleName;
+          console.log("User role:", roleName);
+
+          if (roleName === "Admin") {
+            navigate("/admin/dashboard");
+          } else {
+            navigate("/");
           }
         }, 1500);
       } catch (error: any) {

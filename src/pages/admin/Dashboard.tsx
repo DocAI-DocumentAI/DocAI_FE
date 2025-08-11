@@ -3,11 +3,16 @@
 // // import { logout } from "../../store/slices/authSlice";
 // import { Navigate } from "react-router-dom";
 
-import { BarChart2, ShoppingBag, Users, Zap } from "lucide-react";
+import { Users, Building2, Shield, Key, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 
 import Header from "../../components/common/Header";
 import StatCard from "../../components/common/StatCard";
+import { useUsers } from "../../services/userService";
+import { useDepartments } from "../../services/departmentService";
+import { usePermissions } from "../../services/permissionService";
+import { useRoles } from "../../services/roleService";
+import { useDocumentTypes } from "../../services/documentTypeService";
 import SalesOverviewChart from "../../components/dashboard/SalesOverviewChart";
 import CategoryDistributionChart from "../../components/dashboard/CategoryDistributionChart";
 import SalesChannelChart from "../../components/dashboard/SalesChannelChart";
@@ -15,14 +20,12 @@ import SalesChannelChart from "../../components/dashboard/SalesChannelChart";
 // Giả lập các component cho từng vai trò
 
 const Dashboard: React.FC = () => {
-  // const dispatch = useDispatch();
-  // const { user, isAuthenticated } = useSelector(
-  //   (state: RootState) => state.auth
-  // );
-
-  // if (!isAuthenticated) {
-  //   return <Navigate to="/login" replace />;
-  // }
+  // Fetch data for all entities
+  const { data: usersData } = useUsers();
+  const { data: departmentsData } = useDepartments();
+  const { data: permissionsData } = usePermissions();
+  const { data: rolesData } = useRoles();
+  const { data: documentTypesData } = useDocumentTypes();
 
   return (
     <div className="relative z-10 flex-1 overflow-auto">
@@ -37,28 +40,34 @@ const Dashboard: React.FC = () => {
           transition={{ duration: 1 }}
         >
           <StatCard
-            name="Total Sales"
-            icon={Zap}
-            value="$12,345"
-            color="#6366F1"
-          />
-          <StatCard
-            name="New Users"
+            name="Total Users"
             icon={Users}
-            value="1,234"
-            color="#8B5CF6"
+            value={usersData?.total?.toString() || "0"}
+            color="#34D399"
           />
           <StatCard
-            name="Total Products"
-            icon={ShoppingBag}
-            value="567"
-            color="#EC4899"
+            name="Total Departments"
+            icon={Building2}
+            value={departmentsData?.total?.toString() || "0"}
+            color="#F87171"
           />
           <StatCard
-            name="Conversion Rate"
-            icon={BarChart2}
-            value="12.5%"
-            color="#10B981"
+            name="Total Roles"
+            icon={Shield}
+            value={rolesData?.total?.toString() || "0"}
+            color="#A78BFA"
+          />
+          <StatCard
+            name="Total Permissions"
+            icon={Key}
+            value={permissionsData?.total?.toString() || "0"}
+            color="#F472B6"
+          />
+          <StatCard
+            name="Document Types"
+            icon={FileText}
+            value={documentTypesData?.total?.toString() || "0"}
+            color="#60A5FA"
           />
         </motion.div>
 
