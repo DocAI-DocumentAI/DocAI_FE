@@ -156,6 +156,43 @@ export const useRole = (roleId: string) => {
   });
 };
 
+// Delete role
+const deleteRole = async (roleId: string) => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
+  const response = await fetch(
+    `https://production.docai.asia/api/auth/delete/role?roleId=${roleId}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to delete role");
+  }
+
+  return response.json();
+};
+
+export const useDeleteRole = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteRole,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["roles"] });
+    },
+  });
+};
+
 export interface UpdateRoleData {
   roleName: string;
   description: string;

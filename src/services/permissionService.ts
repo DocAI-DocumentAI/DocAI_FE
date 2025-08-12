@@ -160,6 +160,43 @@ export const usePermission = (permissionId: string) => {
   });
 };
 
+// Delete permission
+const deletePermission = async (permissionId: string) => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
+  const response = await fetch(
+    `https://production.docai.asia/api/auth/delete/permission?permissionId=${permissionId}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to delete permission");
+  }
+
+  return response.json();
+};
+
+export const useDeletePermission = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deletePermission,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["permissions"] });
+    },
+  });
+};
+
 export interface UpdatePermissionData {
   permissionName: string;
   description: string;

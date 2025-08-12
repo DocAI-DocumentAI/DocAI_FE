@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Filter, Plus } from "lucide-react";
+import { Filter, Plus, Trash2 } from "lucide-react";
 import {
   getDepartmentsApi,
   Department,
+  useDeleteDepartment,
 } from "../../services/departmentService";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import DeleteConfirmationModal from "../common/DeleteConfirmationModal";
 
 interface Filters {
   name: string;
@@ -21,6 +23,12 @@ const DepartmentTable: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    department: Department | null;
+  }>({ isOpen: false, department: null });
+
+  const deleteDepartmentMutation = useDeleteDepartment();
 
   const [filters, setFilters] = useState<Filters>({
     name: "",
@@ -63,6 +71,29 @@ const DepartmentTable: React.FC = () => {
 
   const clearFilters = () => {
     setFilters({ name: "", description: "" });
+  };
+
+  const handleDeleteClick = (department: Department) => {
+    setDeleteModal({ isOpen: true, department });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deleteModal.department) return;
+
+    deleteDepartmentMutation.mutate(deleteModal.department.id, {
+      onSuccess: () => {
+        toast.success("Department deleted successfully!");
+        setDeleteModal({ isOpen: false, department: null });
+        fetchDepartments(currentPage); // Refresh the table
+      },
+      onError: (error: any) => {
+        toast.error(error.message || "Failed to delete department");
+      },
+    });
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModal({ isOpen: false, department: null });
   };
 
   return (
@@ -141,6 +172,9 @@ const DepartmentTable: React.FC = () => {
               <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-400 uppercase">
                 Updated At
               </th>
+              <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-400 uppercase">
+                Actions
+              </th>
             </tr>
           </thead>
 
@@ -171,7 +205,7 @@ const DepartmentTable: React.FC = () => {
               </tr>
             ) : departments.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-6 py-4 text-center text-gray-400">
+                <td colSpan={5} className="px-6 py-4 text-center text-gray-400">
                   No departments found
                 </td>
               </tr>
@@ -208,6 +242,15 @@ const DepartmentTable: React.FC = () => {
                       {new Date(dept.updateAt).toLocaleDateString()}
                     </div>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <button
+                      onClick={() => handleDeleteClick(dept)}
+                      className="p-2 text-red-400 transition-colors duration-200 hover:text-red-300 hover:bg-red-900 hover:bg-opacity-20 rounded-lg"
+                      title="Delete department"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
                 </motion.tr>
               ))
             )}
@@ -239,6 +282,17 @@ const DepartmentTable: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Department"
+        message="Are you sure you want to delete this department? This action cannot be undone and may affect users assigned to this department."
+        itemName={deleteModal.department?.name}
+        isLoading={deleteDepartmentMutation.isPending}
+      />
     </motion.div>
   );
 };

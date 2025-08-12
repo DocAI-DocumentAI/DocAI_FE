@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Filter, Plus } from "lucide-react";
-import { getRolesApi, Role } from "../../services/roleService";
+import { Filter, Plus, Trash2 } from "lucide-react";
+import { getRolesApi, Role, useDeleteRole } from "../../services/roleService";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import DeleteConfirmationModal from "../common/DeleteConfirmationModal";
 
 interface Filters {
   name: string;
@@ -18,6 +19,12 @@ const RoleTable: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    role: Role | null;
+  }>({ isOpen: false, role: null });
+
+  const deleteRoleMutation = useDeleteRole();
 
   const [filters, setFilters] = useState<Filters>({
     name: "",
@@ -67,6 +74,29 @@ const RoleTable: React.FC = () => {
 
   const clearFilters = () => {
     setFilters({ name: "", description: "" });
+  };
+
+  const handleDeleteClick = (role: Role) => {
+    setDeleteModal({ isOpen: true, role });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deleteModal.role) return;
+
+    deleteRoleMutation.mutate(deleteModal.role.id, {
+      onSuccess: () => {
+        toast.success("Role deleted successfully!");
+        setDeleteModal({ isOpen: false, role: null });
+        fetchRoles(currentPage);
+      },
+      onError: (error: any) => {
+        toast.error(error.message || "Failed to delete role");
+      },
+    });
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModal({ isOpen: false, role: null });
   };
 
   return (
@@ -143,6 +173,9 @@ const RoleTable: React.FC = () => {
               <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-400 uppercase">
                 Updated At
               </th>
+              <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-400 uppercase">
+                Actions
+              </th>
             </tr>
           </thead>
 
@@ -173,7 +206,7 @@ const RoleTable: React.FC = () => {
               </tr>
             ) : roles.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-6 py-4 text-center text-gray-400">
+                <td colSpan={5} className="px-6 py-4 text-center text-gray-400">
                   No roles found
                 </td>
               </tr>
@@ -208,6 +241,15 @@ const RoleTable: React.FC = () => {
                       {new Date(role.updateAt).toLocaleDateString()}
                     </div>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <button
+                      onClick={() => handleDeleteClick(role)}
+                      className="p-2 text-red-400 transition-colors duration-200 hover:text-red-300 hover:bg-red-900 hover:bg-opacity-20 rounded-lg"
+                      title="Delete role"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
                 </motion.tr>
               ))
             )}
@@ -239,6 +281,17 @@ const RoleTable: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Role"
+        message="Are you sure you want to delete this role? This action cannot be undone and may affect users assigned to this role."
+        itemName={deleteModal.role?.roleName}
+        isLoading={deleteRoleMutation.isPending}
+      />
     </motion.div>
   );
 };

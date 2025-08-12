@@ -160,6 +160,43 @@ export const useDepartment = (departmentId: string) => {
   });
 };
 
+// Delete department
+const deleteDepartment = async (departmentId: string) => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
+  const response = await fetch(
+    `https://production.docai.asia/api/auth/delete/department?departmentId=${departmentId}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to delete department");
+  }
+
+  return response.json();
+};
+
+export const useDeleteDepartment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteDepartment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["departments"] });
+    },
+  });
+};
+
 export interface UpdateDepartmentData {
   departmentName: string;
   description: string;

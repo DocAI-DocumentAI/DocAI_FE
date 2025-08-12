@@ -215,3 +215,40 @@ export const useDocumentType = (documentTypeId: string) => {
     staleTime: 5 * 60 * 1000,
   });
 };
+
+// Delete document type
+const deleteDocumentType = async (documentTypeId: string) => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
+  const response = await fetch(
+    `https://production.docai.asia/api/document/document-types/${documentTypeId}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to delete document type");
+  }
+
+  return response.json();
+};
+
+export const useDeleteDocumentType = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteDocumentType,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documentTypes"] });
+    },
+  });
+};

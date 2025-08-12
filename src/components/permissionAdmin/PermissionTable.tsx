@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Filter, Plus } from "lucide-react";
+import { Filter, Plus, Trash2 } from "lucide-react";
 import {
   getPermissionsApi,
   Permission,
+  useDeletePermission,
 } from "../../services/permissionService";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import DeleteConfirmationModal from "../common/DeleteConfirmationModal";
 
 interface Filters {
   name: string;
@@ -21,6 +23,12 @@ const PermissionTable: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    permission: Permission | null;
+  }>({ isOpen: false, permission: null });
+
+  const deletePermissionMutation = useDeletePermission();
 
   const [filters, setFilters] = useState<Filters>({
     name: "",
@@ -63,6 +71,29 @@ const PermissionTable: React.FC = () => {
 
   const clearFilters = () => {
     setFilters({ name: "", description: "" });
+  };
+
+  const handleDeleteClick = (permission: Permission) => {
+    setDeleteModal({ isOpen: true, permission });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deleteModal.permission) return;
+
+    deletePermissionMutation.mutate(deleteModal.permission.id, {
+      onSuccess: () => {
+        toast.success("Permission deleted successfully!");
+        setDeleteModal({ isOpen: false, permission: null });
+        fetchPermissions(currentPage);
+      },
+      onError: (error: any) => {
+        toast.error(error.message || "Failed to delete permission");
+      },
+    });
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModal({ isOpen: false, permission: null });
   };
 
   return (
@@ -141,6 +172,9 @@ const PermissionTable: React.FC = () => {
               <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-400 uppercase">
                 Updated At
               </th>
+              <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-400 uppercase">
+                Actions
+              </th>
             </tr>
           </thead>
 
@@ -171,7 +205,7 @@ const PermissionTable: React.FC = () => {
               </tr>
             ) : permissions.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-6 py-4 text-center text-gray-400">
+                <td colSpan={5} className="px-6 py-4 text-center text-gray-400">
                   No permissions found
                 </td>
               </tr>
@@ -208,6 +242,15 @@ const PermissionTable: React.FC = () => {
                       {new Date(permission.updateAt).toLocaleDateString()}
                     </div>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <button
+                      onClick={() => handleDeleteClick(permission)}
+                      className="p-2 text-red-400 transition-colors duration-200 hover:text-red-300 hover:bg-red-900 hover:bg-opacity-20 rounded-lg"
+                      title="Delete permission"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
                 </motion.tr>
               ))
             )}
@@ -239,6 +282,17 @@ const PermissionTable: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Permission"
+        message="Are you sure you want to delete this permission? This action cannot be undone and may affect roles that have this permission."
+        itemName={deleteModal.permission?.name}
+        isLoading={deletePermissionMutation.isPending}
+      />
     </motion.div>
   );
 };
