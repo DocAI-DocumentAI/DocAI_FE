@@ -65,7 +65,7 @@ export default function RecreateDocument() {
   const location = useLocation();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [isRegeneratingSummary, setIsRegeneratingSummary] = useState(false); // New state for summary regeneration
+  const [isRegeneratingSummary, setIsRegeneratingSummary] = useState(false);
   const [htmlDescription, setHtmlDescription] = useState("");
   const [htmlSummary, setHtmlSummary] = useState("");
   const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([]);
@@ -73,8 +73,8 @@ export default function RecreateDocument() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isAnalyzed, setIsAnalyzed] = useState(false);
   const [mode, setMode] = useState<'upload' | 'recreate'>('upload');
+  const [isPublicState, setIsPublicState] = useState(false);
 
-  // Load document types on component mount
   useEffect(() => {
     const fetchDocumentTypes = async () => {
       try {
@@ -91,7 +91,6 @@ export default function RecreateDocument() {
 
     fetchDocumentTypes();
 
-    // Handle pre-filled data from document choice step
     if (location.state?.analysisData && location.state?.mode === 'recreate') {
       const analysisData = location.state.analysisData;
       setMode('recreate');
@@ -99,63 +98,76 @@ export default function RecreateDocument() {
       setHtmlDescription(analysisData.description || "");
       setHtmlSummary(analysisData.summary || "");
       setIsAnalyzed(true);
+      
+      const isPublicValue = analysisData.isPublic || false;
+      setIsPublicState(isPublicValue);
 
-      form.setFieldsValue({
+      const formValues = {
         title: analysisData.title || "",
         tags: analysisData.tags || [],
         effectiveFrom: analysisData.effectiveFrom ? moment(analysisData.effectiveFrom) : null,
         effectiveTo: analysisData.effectiveUntil ? moment(analysisData.effectiveUntil) : null,
         signedBy: analysisData.signedBy || "",
         type: analysisData.documentTypeId || "",
-        isPublic: analysisData.isPublic || false,
-      });
+        isPublic: isPublicValue,
+      };
+
+      form.setFieldsValue(formValues);
     }
   }, [location.state, form]);
 
-  const handleSubmit = async (values: any) => {
-    console.log(id);
-    
-    if (!id) {
-      toast.error("Không tìm thấy documentId trên URL!");
-      return;
-    }
+  const handleSwitchChange = (checked: boolean) => {
+    setIsPublicState(checked);
+    form.setFieldValue('isPublic', checked);
+  };
 
-    if (!selectedFile) {
-      toast.error("Please select a file to upload!");
-      return;
-    }
-
-    
-    const formValues = {
-      versionName: values.versionName || "",
-      summary: htmlSummary || "",
-      replacementDocumentId: values.replacementDocumentId || "",
-      effectiveFrom: values.effectiveFrom && moment.isMoment(values.effectiveFrom) ? values.effectiveFrom.toISOString() : "",
-      signedBy: values.signedBy || "",
-      effectiveUntil: values.effectiveTo && moment.isMoment(values.effectiveTo) ? values.effectiveTo.toISOString() : "",
-      title: values.title || "",
-      tags: Array.isArray(values.tags) ? values.tags.filter(Boolean) : [],
-      description: htmlDescription || "",
-      file: selectedFile,
-      documentTypeId: values.type || "",
-      isPublic: values.isPublic || false,
-    };
-
-    setIsUploading(true);
+  const handleSubmit = async () => {
     try {
+      const values = await form.validateFields();
+      
+      if (!id) {
+        toast.error("Không tìm thấy documentId trên URL!");
+        return;
+      }
+
+      if (!selectedFile) {
+        toast.error("Please select a file to upload!");
+        return;
+      }
+
+      const formValues = {
+        versionName: values.versionName || "",
+        summary: htmlSummary || "",
+        replacementDocumentId: values.replacementDocumentId || "",
+        effectiveFrom: values.effectiveFrom ? values.effectiveFrom.toISOString() : "",
+        effectiveUntil:  values.effectiveTo ? values.effectiveTo.toISOString() : "",
+        signedBy: values.signedBy || "",
+        title: values.title || "",
+        tags: Array.isArray(values.tags) ? values.tags.filter(Boolean) : [],
+        description: htmlDescription || "",
+        file: selectedFile,
+        documentTypeId: values.type || "",
+        isPublic: isPublicState,
+      };
+
+      setIsUploading(true);
       await recreateDocument(id, formValues);
       toast.success("Tạo lại bản nháp thành công!");
       
-      // Reset form after successful action
       form.resetFields();
       setHtmlDescription("");
       setHtmlSummary("");
       setSelectedFile(null);
+      setIsPublicState(false);
       
-      navigate(-1); // hoặc chuyển hướng sang trang chi tiết mới nếu muốn
+      navigate(-1);
     } catch (error: any) {
-      toast.error(`Tạo lại bản nháp thất bại. Vui lòng thử lại! ${error?.response?.data?.message}`);
-      console.error(error);
+      if (error.errorFields) {
+        toast.error("Vui lòng kiểm tra lại thông tin form!");
+      } else {
+        toast.error(`Tạo lại bản nháp thất bại. Vui lòng thử lại! ${error?.response?.data?.message}`);
+        console.error(error);
+      }
     } finally {
       setIsUploading(false);
     }
@@ -163,11 +175,7 @@ export default function RecreateDocument() {
 
   const handleFileUpload = async (info: any) => {
     const { file } = info;
-    console.log("File info:", file);
-    console.log("File originFileObj:", file.originFileObj);
-    console.log("File status:", file.status);
 
-    // If file is removed
     if (file.status === 'removed') {
       setSelectedFile(null);
       setHtmlDescription("");
@@ -177,29 +185,18 @@ export default function RecreateDocument() {
       return;
     }
 
-    // Get file object - could be originFileObj or the file itself
     const fileObj = file.originFileObj || file;
 
-    // Check if it's a valid File object
     if (fileObj && fileObj instanceof File) {
-      console.log("Processing file:", fileObj.name, fileObj.size);
-
-      // Save file to state
       setSelectedFile(fileObj);
-      setIsAnalyzed(false); // Reset analysis state
-
-      // Clear any previous analysis data
+      setIsAnalyzed(false);
       setHtmlDescription("");
       setHtmlSummary("");
       form.resetFields();
-
       toast.success("File uploaded successfully! Click 'Analyze' to extract document information.");
-    } else {
-      console.log("No valid file object found");
     }
   };
 
-  // Separate function to handle document analysis
   const handleAnalyzeDocument = async () => {
     if (!selectedFile) {
       toast.error("Please upload a file first!");
@@ -208,19 +205,13 @@ export default function RecreateDocument() {
 
     setIsAnalyzing(true);
     try {
-      console.log("Analyzing document...");
-
       const analyzeResult = await analyzeDocument(selectedFile);
       const analyzedData = analyzeResult.data;
 
-      console.log("Analyze result:", analyzedData);
-
-      // Save analysis data to state
       setHtmlDescription(analyzedData.description || "");
       setHtmlSummary(analyzedData.summary || "");
       setIsAnalyzed(true);
 
-      // Auto-fill form with analyzed data
       form.setFieldsValue({
         title: analyzedData.title || "",
         tags: analyzedData.tags || [],
@@ -238,7 +229,6 @@ export default function RecreateDocument() {
     }
   };
 
-  // Separate function to regenerate summary only
   const handleRegenerateSummary = async () => {
     if (!selectedFile) {
       toast.error("Please upload a file first!");
@@ -247,16 +237,9 @@ export default function RecreateDocument() {
 
     setIsRegeneratingSummary(true);
     try {
-      console.log("Regenerating summary...");
-
       const summaryResult = await regenerateSummary(selectedFile);
       const summaryData = summaryResult.data;
-
-      console.log("Summary result:", summaryData);
-
-      // Update only the summary
       setHtmlSummary(summaryData.summary || summaryData || "");
-
       toast.success("Summary regenerated successfully!");
     } catch (error) {
       toast.error("Failed to regenerate summary. Please try again!");
@@ -266,7 +249,6 @@ export default function RecreateDocument() {
     }
   };
 
-  // Handle next button click
   const handleNext = () => {
     if (!selectedFile) {
       toast.error("Please upload a file first!");
@@ -278,7 +260,6 @@ export default function RecreateDocument() {
       return;
     }
 
- 
     setMode('recreate');
   };
 
@@ -297,7 +278,6 @@ export default function RecreateDocument() {
     maxCount: 1,
   }
 
-  // Helper to check if any operation is in progress
   const isAnyOperationInProgress = isUploading || isAnalyzing || isRegeneratingSummary;
 
   return (
@@ -555,9 +535,16 @@ export default function RecreateDocument() {
 
                 <Row gutter={16}>
                   <Col xs={24} sm={12}>
-                    <Form.Item name="isPublic" label="Document Visibility" valuePropName="checked">
+                    <Form.Item 
+                      name="isPublic" 
+                      label="Document Visibility"
+                    >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Switch disabled={isAnyOperationInProgress} />
+                        <Switch 
+                          checked={isPublicState}
+                          onChange={handleSwitchChange}
+                          disabled={isAnyOperationInProgress}
+                        />
                         <Text>Make this document public</Text>
                       </div>
                     </Form.Item>
@@ -670,7 +657,7 @@ export default function RecreateDocument() {
               title="Recreate Document"
               style={{ marginBottom: 24 }}
             >
-              <Form form={form} layout="vertical" onFinish={handleSubmit}>
+              <Form form={form} layout="vertical">
                 <Row gutter={16}>
                   <Col xs={24} sm={12}>
                     <Form.Item
@@ -734,9 +721,16 @@ export default function RecreateDocument() {
 
                 <Row gutter={16}>
                   <Col xs={24} sm={12}>
-                    <Form.Item name="isPublic" label="Document Visibility" valuePropName="checked">
+                    <Form.Item 
+                      name="isPublic" 
+                      label="Document Visibility"
+                    >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Switch disabled={isAnyOperationInProgress} />
+                        <Switch 
+                          checked={isPublicState}
+                          onChange={handleSwitchChange}
+                          disabled={isAnyOperationInProgress}
+                        />
                         <Text>Make this document public</Text>
                       </div>
                     </Form.Item>
@@ -840,7 +834,7 @@ export default function RecreateDocument() {
                     </Button>
                     <Button
                       type="primary"
-                      htmlType="submit"
+                      onClick={handleSubmit}
                       icon={isUploading ? <Spin size="small" /> : <UploadOutlined />}
                       loading={isUploading}
                       disabled={!selectedFile || isAnyOperationInProgress}
