@@ -26,7 +26,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
             <FeatureCard
               icon={<MessageSquare className="w-8 h-8 text-blue-500" />}
               title="Chat with AI"
@@ -55,7 +55,7 @@ export default function HomePage() {
               href="/profile"
             />
 
-            <FeatureCard
+            {/* <FeatureCard
               icon={<Lock className="w-8 h-8 text-blue-500" />}
               title="Login & security"
               description="Manage your password and account."
@@ -67,7 +67,7 @@ export default function HomePage() {
               title="Dashboard"
               description="Get your overall stats if you manage several properties on DocsAI."
               href="/stats"
-            />
+            /> */}
           </div>
         </div>
       </main>

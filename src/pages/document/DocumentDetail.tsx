@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ArrowLeft, User, Calendar, FileText, Eye, Download, Bookmark } from "lucide-react"
+import { ArrowLeft, User, Calendar, FileText, Eye, Download, Bookmark, Building, Shield, CheckCircle, Clock, Users } from "lucide-react"
 import { useParams } from "react-router-dom"
 import { Navbar } from "../../components/layout/Navbar"
 import { Link } from "react-router-dom"
@@ -11,7 +11,7 @@ import toast from "react-hot-toast"
 export default function DocumentPage() {
   const { id } = useParams()
   const [activeTab, setActiveTab] = useState<
-    "preview" | "information" | "summary" | "original" | "version" | "content"
+    "preview" | "information" | "content" | "original" | "version"
   >("preview")
   const [versions, setVersions] = useState<any[]>([]);
   const [isBookmarked, setIsBookmarked] = useState(false);
@@ -150,6 +150,24 @@ export default function DocumentPage() {
     }
   };
 
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      case 'draft': return 'bg-blue-100 text-blue-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   useEffect(() => {
     if (!id) return;
     api.get(`/document/documents/${id}/versions`).then(res => {
@@ -214,35 +232,119 @@ export default function DocumentPage() {
             </div>
           </div>
 
-          <h1 className="mb-4 text-2xl font-bold">{mainDoc.title || 'Chưa có'}</h1>
+          {/* Document Header */}
+          <div className="mb-6">
+            <h1 className="mb-4 text-3xl font-bold text-gray-900">{mainDoc.title || 'Chưa có tiêu đề'}</h1>
+            
+            {/* Status and Visibility */}
+            <div className="mb-4 flex items-center gap-3">
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(mainDoc.status)}`}>
+                <CheckCircle className="mr-1 h-4 w-4" />
+                {mainDoc.status || 'Unknown'}
+              </span>
+              
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                mainDoc.isPublic ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
+              }`}>
+                {mainDoc.isPublic ? (
+                  <>
+                    <Eye className="mr-1 h-4 w-4" />
+                    Public
+                  </>
+                ) : (
+                  <>
+                    <Shield className="mr-1 h-4 w-4" />
+                    Private
+                  </>
+                )}
+              </span>
 
-          <div className="mb-4 flex flex-wrap gap-4 text-sm text-gray-500">
-            <div className="flex items-center">
-              <User className="mr-1 h-4 w-4" />
-              {mainDoc.author || mainDoc.createdByName || 'Chưa có'}
+              {mainDoc.isReplaced && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                  <Clock className="mr-1 h-4 w-4" />
+                  Replaced
+                </span>
+              )}
             </div>
-            <div className="flex items-center">
-              <Calendar className="mr-1 h-4 w-4" />
-              {mainDoc.createdTime ? new Date(mainDoc.createdTime).toLocaleString() : 'Chưa có'}
+
+            {/* Document Meta Info */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+              <div className="flex items-center">
+                <User className="mr-2 h-4 w-4 text-gray-400" />
+                <div>
+                  <div className="font-medium">Owner</div>
+                  <div>{mainDoc.ownerName || 'N/A'}</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center">
+                <Building className="mr-2 h-4 w-4 text-gray-400" />
+                <div>
+                  <div className="font-medium">Department</div>
+                  <div>{mainDoc.departmentName || 'N/A'}</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center">
+                <FileText className="mr-2 h-4 w-4 text-gray-400" />
+                <div>
+                  <div className="font-medium">Type</div>
+                  <div>{mainDoc.documentTypeName || 'N/A'}</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center">
+                <Calendar className="mr-2 h-4 w-4 text-gray-400" />
+                <div>
+                  <div className="font-medium">Created</div>
+                  <div>{mainDoc.createdTime ? new Date(mainDoc.createdTime).toLocaleDateString() : 'N/A'}</div>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center">
-              <Calendar className="mr-1 h-4 w-4" />
-              {mainDoc.lastUpdatedTime ? new Date(mainDoc.lastUpdatedTime).toLocaleString() : 'Chưa có'}
-            </div>
-            <div className="flex items-center">
-              <FileText className="mr-1 h-4 w-4" />
-              {mainDoc.fileType || 'Chưa có'}
-            </div>
-            <div className="flex items-center">
-              <Eye className="mr-1 h-4 w-4" />
-              {mainDoc.views || 'Chưa có'}
-            </div>
-            <div className="flex items-center">
-              <Download className="mr-1 h-4 w-4" />
-              {mainDoc.downloads || 'Chưa có'}
-            </div>
+
+            {/* Effective Dates */}
+            {(mainDoc.effectiveFrom || mainDoc.effectiveUntil || mainDoc.signedBy) && (
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                <h3 className="text-sm font-medium text-blue-900 mb-2">Document Validity</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  {mainDoc.effectiveFrom && (
+                    <div>
+                      <span className="font-medium text-blue-800">Effective From:</span>
+                      <div className="text-blue-700">{new Date(mainDoc.effectiveFrom).toLocaleDateString()}</div>
+                    </div>
+                  )}
+                  {mainDoc.effectiveUntil && (
+                    <div>
+                      <span className="font-medium text-blue-800">Effective Until:</span>
+                      <div className="text-blue-700">{new Date(mainDoc.effectiveUntil).toLocaleDateString()}</div>
+                    </div>
+                  )}
+                  {mainDoc.signedBy && (
+                    <div>
+                      <span className="font-medium text-blue-800">Signed By:</span>
+                      <div className="text-blue-700">{mainDoc.signedBy}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Tags */}
+            {Array.isArray(mainDoc.tags) && mainDoc.tags.length > 0 && (
+              <div className="mt-4">
+                <span className="text-sm font-medium text-gray-700 mr-2">Tags:</span>
+                <div className="inline-flex flex-wrap gap-2">
+                  {mainDoc.tags.map((tag: string, index: number) => (
+                    <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
+          {/* Tabs */}
           <div className="mb-6 border-b border-gray-200">
             <div className="flex overflow-x-auto">
               <button
@@ -255,83 +357,35 @@ export default function DocumentPage() {
               <button
                 className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "content" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
                 onClick={() => setActiveTab("content")}
-              >Content</button>
+              >
+                <FileText className="mr-1 h-4 w-4 inline" />
+                Content & Summary
+              </button>
               <button
                 className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "information" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
                 onClick={() => setActiveTab("information")}
-              >Information</button>
-              <button
-                className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "summary" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
-                onClick={() => setActiveTab("summary")}
-              >Summary</button>
-
+              >
+                <Users className="mr-1 h-4 w-4 inline" />
+                Information
+              </button>
               <button
                 className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "original" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
                 onClick={() => setActiveTab("original")}
-              >Original Document</button>
+              >
+                <FileText className="mr-1 h-4 w-4 inline" />
+                Original Document
+              </button>
               <button
                 className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "version" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
                 onClick={() => setActiveTab("version")}
-              >Version</button>
+              >
+                <Clock className="mr-1 h-4 w-4 inline" />
+                Versions
+              </button>
             </div>
           </div>
 
-          {activeTab === "content" && (
-            <div>
-              <div
-                className="prose max-w-none rounded-md border border-gray-200 bg-white p-6"
-                dangerouslySetInnerHTML={{ __html: mainDoc.content || mainDoc.description || 'Chưa có' }}
-              />
-            </div>
-          )}
-
-          {activeTab === "information" && (
-            <div className="rounded-md border border-gray-200 bg-white p-6">
-              <h2 className="mb-4 text-lg font-medium">Document information</h2>
-              <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="text-sm font-medium">Author:</div>
-                  <div className="text-sm">{mainDoc.author || mainDoc.createdByName || 'Chưa có'}</div>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="text-sm font-medium">Size:</div>
-                  <div className="text-sm">{mainDoc.fileSize || 'Chưa có'}</div>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="text-sm font-medium">Downloads:</div>
-                  <div className="text-sm">{mainDoc.downloads || 'Chưa có'}</div>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="text-sm font-medium">Views:</div>
-                  <div className="text-sm">{mainDoc.views || 'Chưa có'}</div>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="text-sm font-medium">Type of document:</div>
-                  <div className="text-sm">{mainDoc.fileType || 'Chưa có'}</div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === "summary" && (
-            <div className="rounded-md border border-gray-200 bg-white p-6">
-              <h2 className="mb-4 text-lg font-medium">Summary</h2>
-              <div className="mb-2 text-sm">
-                Author: {mainDoc.author || mainDoc.createdByName || 'Chưa có'}<br />
-                Size: {mainDoc.fileSize || 'Chưa có'}<br />
-                Version: {mainDoc.versionName || mainDoc.versionId || 'Chưa có'}<br />
-                Expiration Date: {mainDoc.effectiveUntil ? new Date(mainDoc.effectiveUntil).toLocaleDateString() : 'Chưa có'}<br />
-                Publish Date: {mainDoc.createdTime ? new Date(mainDoc.createdTime).toLocaleDateString() : 'Chưa có'}<br />
-                Status: {mainDoc.status || 'Chưa có'}<br />
-                Document Type: {mainDoc.fileType || 'Chưa có'}<br />
-                Department: {mainDoc.departmentId || 'Chưa có'}<br />
-                Tag: {Array.isArray(mainDoc.tags) && mainDoc.tags.length > 0 ? mainDoc.tags.join(', ') : 'Chưa có'}<br />
-                Signed By: {mainDoc.signedBy || 'Chưa có'}<br />
-              </div>
-              <div className="text-sm" dangerouslySetInnerHTML={{ __html: `<b>Summary:</b> ${mainDoc.summary || 'Chưa có'}` }} />
-            </div>
-          )}
-
+          {/* Tab Content */}
           {activeTab === "preview" && (
             <div className="rounded-md border border-gray-200 bg-white">
               {previewLoading ? (
@@ -367,6 +421,9 @@ export default function DocumentPage() {
                       <span className="text-sm font-medium text-gray-700">
                         {mainDoc.fileName || 'Document Preview'}
                       </span>
+                      <span className="ml-2 text-xs text-gray-500">
+                        ({formatFileSize(mainDoc.fileSize)})
+                      </span>
                     </div>
                     <button
                       className="text-sm text-blue-600 hover:text-blue-800"
@@ -385,7 +442,6 @@ export default function DocumentPage() {
                         border: 'none'
                       }}
                       title="Document Preview"
-                      // sandbox="allow-scripts allow-same-origin"
                     />
                   </div>
                 </div>
@@ -401,35 +457,242 @@ export default function DocumentPage() {
             </div>
           )}
 
+          {activeTab === "content" && (
+            <div className="space-y-6">
+              {/* Description */}
+              {mainDoc.description && (
+                <div className="rounded-md border border-gray-200 bg-white p-6">
+                  <h2 className="mb-4 text-lg font-semibold text-gray-900">Description</h2>
+                  <div className="prose max-w-none text-gray-700">
+                    {mainDoc.description}
+                  </div>
+                </div>
+              )}
+
+              {/* Summary */}
+              {mainDoc.summary && (
+                <div className="rounded-md border border-gray-200 bg-white p-6">
+                  <h2 className="mb-4 text-lg font-semibold text-gray-900">Summary</h2>
+                  <div 
+                    className="prose max-w-none text-gray-700"
+                    dangerouslySetInnerHTML={{ __html: mainDoc.summary }}
+                  />
+                </div>
+              )}
+
+              {/* If no content available */}
+              {!mainDoc.description && !mainDoc.summary && (
+                <div className="rounded-md border border-gray-200 bg-white p-6">
+                  <div className="text-center text-gray-500">
+                    <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>No content or summary available for this document.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "information" && (
+            <div className="rounded-md border border-gray-200 bg-white p-6">
+              <h2 className="mb-6 text-lg font-semibold text-gray-900">Document Information</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Basic Information */}
+                <div className="space-y-4">
+                  <h3 className="text-md font-medium text-gray-800 border-b pb-2">Basic Information</h3>
+                  
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-600">Document ID:</span>
+                      <span className="text-gray-900 font-mono text-xs">{mainDoc.documentId || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-600">Version ID:</span>
+                      <span className="text-gray-900 font-mono text-xs">{mainDoc.versionId || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-600">Version Name:</span>
+                      <span className="text-gray-900">{mainDoc.versionName || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-600">File Name:</span>
+                      <span className="text-gray-900">{mainDoc.fileName || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-600">File Type:</span>
+                      <span className="text-gray-900">{mainDoc.fileType || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-600">File Size:</span>
+                      <span className="text-gray-900">{mainDoc.fileSize ? formatFileSize(mainDoc.fileSize) : 'N/A'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* People & Department */}
+                <div className="space-y-4">
+                  <h3 className="text-md font-medium text-gray-800 border-b pb-2">People & Department</h3>
+                  
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-600">Owner:</span>
+                      <span className="text-gray-900">{mainDoc.ownerName || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-600">Department:</span>
+                      <span className="text-gray-900">{mainDoc.departmentName || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-600">Document Type:</span>
+                      <span className="text-gray-900">{mainDoc.documentTypeName || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-600">Submitted By:</span>
+                      <span className="text-gray-900">{mainDoc.submittedByName || 'N/A'}</span>
+                    </div>
+                    {mainDoc.signedBy && (
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-600">Signed By:</span>
+                        <span className="text-gray-900">{mainDoc.signedBy}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Dates */}
+                <div className="space-y-4">
+                  <h3 className="text-md font-medium text-gray-800 border-b pb-2">Important Dates</h3>
+                  
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-600">Created:</span>
+                      <span className="text-gray-900">{mainDoc.createdTime ? new Date(mainDoc.createdTime).toLocaleString() : 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-600">Last Submitted:</span>
+                      <span className="text-gray-900">{mainDoc.lastSubmitted ? new Date(mainDoc.lastSubmitted).toLocaleString() : 'N/A'}</span>
+                    </div>
+                    {mainDoc.effectiveFrom && (
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-600">Effective From:</span>
+                        <span className="text-gray-900">{new Date(mainDoc.effectiveFrom).toLocaleString()}</span>
+                      </div>
+                    )}
+                    {mainDoc.effectiveUntil && (
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-600">Effective Until:</span>
+                        <span className="text-gray-900">{new Date(mainDoc.effectiveUntil).toLocaleString()}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Status & Properties */}
+                <div className="space-y-4">
+                  <h3 className="text-md font-medium text-gray-800 border-b pb-2">Status & Properties</h3>
+                  
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-gray-600">Status:</span>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(mainDoc.status)}`}>
+                        {mainDoc.status || 'Unknown'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-gray-600">Visibility:</span>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        mainDoc.isPublic ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
+                      }`}>
+                        {mainDoc.isPublic ? 'Public' : 'Private'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-gray-600">Is Replaced:</span>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        mainDoc.isReplaced ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                      }`}>
+                        {mainDoc.isReplaced ? 'Yes' : 'No'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeTab === "original" && (
             <div className="rounded-md border border-gray-200 bg-white p-6">
-              <h2 className="mb-4 text-lg font-medium">{mainDoc.title || 'Chưa có'}</h2>
-              <div className="mb-2 flex flex-wrap gap-2 text-xs text-gray-500">
-                <div className="flex items-center"><User className="mr-1 h-3 w-3" />{mainDoc.author || mainDoc.createdByName || 'Chưa có'}</div>
-                <div className="flex items-center"><Calendar className="mr-1 h-3 w-3" />{mainDoc.createdTime ? new Date(mainDoc.createdTime).toLocaleDateString() : 'Chưa có'}</div>
-                <div className="flex items-center"><Calendar className="mr-1 h-3 w-3" />{mainDoc.lastUpdatedTime ? new Date(mainDoc.lastUpdatedTime).toLocaleDateString() : 'Chưa có'}</div>
-                <div className="flex items-center"><FileText className="mr-1 h-3 w-3" />{mainDoc.fileType || 'Chưa có'}</div>
+              <h2 className="mb-4 text-lg font-semibold text-gray-900">{mainDoc.title || 'Document Title'}</h2>
+              
+              <div className="mb-4 flex flex-wrap gap-4 text-xs text-gray-500">
+                <div className="flex items-center">
+                  <User className="mr-1 h-3 w-3" />
+                  {mainDoc.ownerName || 'N/A'}
+                </div>
+                <div className="flex items-center">
+                  <Calendar className="mr-1 h-3 w-3" />
+                  {mainDoc.createdTime ? new Date(mainDoc.createdTime).toLocaleDateString() : 'N/A'}
+                </div>
+                <div className="flex items-center">
+                  <FileText className="mr-1 h-3 w-3" />
+                  {mainDoc.fileType || 'N/A'}
+                </div>
+                <div className="flex items-center">
+                  <Building className="mr-1 h-3 w-3" />
+                  {mainDoc.departmentName || 'N/A'}
+                </div>
               </div>
-              <div className="mb-2 text-sm">{mainDoc.description || 'Chưa có'}</div>
-              <div className="flex gap-2">
-                {Array.isArray(mainDoc.tags) && mainDoc.tags.length > 0 ? mainDoc.tags.map((tag: string) => (
-                  <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs" key={tag}>{tag}</span>
-                )) : <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs">Chưa có</span>}
+              
+              <div className="mb-4 text-sm text-gray-700">
+                {mainDoc.description || 'No description available.'}
+              </div>
+              
+              <div className="flex flex-wrap gap-2">
+                {Array.isArray(mainDoc.tags) && mainDoc.tags.length > 0 ? mainDoc.tags.map((tag: string, index: number) => (
+                  <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    {tag}
+                  </span>
+                )) : (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    No tags
+                  </span>
+                )}
               </div>
             </div>
           )}
 
           {activeTab === "version" && (
             <div className="rounded-md border border-gray-200 bg-white p-6">
-              <div className="mb-4">
-                {versions.length === 0 && <div>No versions found.</div>}
-                {versions.map((ver) => (
-                  <div className="mb-4 border rounded-md p-4" key={ver.versionId}>
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-sm font-medium">{ver.versionName || ver.title || 'Chưa có'}</h3>
+              <h2 className="mb-4 text-lg font-semibold text-gray-900">Document Versions</h2>
+              
+              <div className="space-y-4">
+                {versions.length === 0 && (
+                  <div className="text-center text-gray-500 py-8">
+                    <Clock className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>No versions found.</p>
+                  </div>
+                )}
+                
+                {versions.map((ver, index) => (
+                  <div key={ver.versionId} className="border rounded-lg p-4 hover:bg-gray-50">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-sm font-medium text-gray-900">
+                          {ver.versionName || ver.title || `Version ${index + 1}`}
+                        </h3>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ver.status)}`}>
+                          {ver.status || 'Unknown'}
+                        </span>
+                        {index === 0 && (
+                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            Current
+                          </span>
+                        )}
+                      </div>
+                      
                       <div className="flex gap-2">
                         <button
-                          className="text-xs text-blue-600 hover:text-blue-800 flex items-center"
+                          className="text-xs text-blue-600 hover:text-blue-800 flex items-center px-2 py-1 rounded border border-blue-200 hover:bg-blue-50"
                           onClick={() => loadPreview(ver.versionId)}
                           disabled={previewLoading}
                         >
@@ -437,7 +700,7 @@ export default function DocumentPage() {
                           Preview
                         </button>
                         <button
-                          className="text-xs text-green-600 hover:text-green-800 flex items-center"
+                          className="text-xs text-green-600 hover:text-green-800 flex items-center px-2 py-1 rounded border border-green-200 hover:bg-green-50"
                           onClick={() => downloadFile(ver.versionId)}
                         >
                           <Download className="mr-1 h-3 w-3" />
@@ -445,32 +708,35 @@ export default function DocumentPage() {
                         </button>
                       </div>
                     </div>
-                    <div className="mb-2 grid grid-cols-2 gap-2 text-xs text-gray-700">
-                      <div><b>Title:</b> {ver.title || 'Chưa có'}</div>
-                      <div><b>Description:</b> <span dangerouslySetInnerHTML={{ __html: ver.description || 'Chưa có' }} /></div>
-                      <div style={{ gridColumn: '1 / -1' }}>
-                        <b>Summary:</b> <span
-                          className="block overflow-hidden text-ellipsis"
-                          style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', maxHeight: '2.8em' }}
-                          dangerouslySetInnerHTML={{ __html: ver.summary || 'Chưa có' }}
-                        />
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-gray-600 mb-3">
+                      <div>
+                        <span className="font-medium">File:</span> {ver.fileName || 'N/A'}
                       </div>
-                      <div><b>File Name:</b> {ver.fileName || 'Chưa có'}</div>
-                      <div><b>File Path:</b> {ver.filePath || 'Chưa có'}</div>
-                      <div><b>File Size:</b> {ver.fileSize || 'Chưa có'}</div>
-                      <div><b>File Type:</b> {ver.fileType || 'Chưa có'}</div>
-                      <div><b>Status:</b> {ver.status || 'Chưa có'}</div>
-                      <div><b>Created Time:</b> {ver.createdTime ? new Date(ver.createdTime).toLocaleString() : 'Chưa có'}</div>
-                      <div><b>Last Submitted:</b> {ver.lastSubmitted ? new Date(ver.lastSubmitted).toLocaleString() : 'Chưa có'}</div>
-                      <div><b>Submitted By:</b> {ver.submittedBy || 'Chưa có'}</div>
-                      <div><b>Is Replaced:</b> {ver.isReplaced !== undefined ? (ver.isReplaced ? 'Có' : 'Không') : 'Chưa có'}</div>
+                      <div>
+                        <span className="font-medium">Size:</span> {ver.fileSize ? formatFileSize(ver.fileSize) : 'N/A'}
+                      </div>
+                      <div>
+                        <span className="font-medium">Type:</span> {ver.fileType || 'N/A'}
+                      </div>
+                      <div>
+                        <span className="font-medium">Created:</span> {ver.createdTime ? new Date(ver.createdTime).toLocaleDateString() : 'N/A'}
+                      </div>
                     </div>
-                    <div className="mb-2 text-xs text-gray-700">
-                      <b>Tags:</b> {Array.isArray(ver.tags) && ver.tags.length > 0 ? ver.tags.join(', ') : 'Chưa có'}
-                    </div>
-                    {ver.replacementDocument && (
-                      <div className="mb-2 text-xs text-gray-700">
-                        <b>Replacement Document:</b> {ver.replacementDocument.title || 'Chưa có'}
+                    
+                    {ver.description && (
+                      <div className="text-xs text-gray-700 mb-2">
+                        <span className="font-medium">Description:</span> {ver.description}
+                      </div>
+                    )}
+                    
+                    {Array.isArray(ver.tags) && ver.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {ver.tags.map((tag: string, tagIndex: number) => (
+                          <span key={tagIndex} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                            {tag}
+                          </span>
+                        ))}
                       </div>
                     )}
                   </div>

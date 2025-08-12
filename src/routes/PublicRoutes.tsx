@@ -138,6 +138,10 @@ const PublicRoutes: RouteObject[] = [
         path: "upload-document",
         element: <UploadDocument />,
       },
+      {
+        path: "upload-document-replacement",
+        element: <DocumentReplacement />,
+      },
 
       {
         path: "document-choice",

@@ -9,36 +9,20 @@ const SIDEBAR_ITEMS: {
   color: string;
   href: string;
 }[] = [
-  {
-    name: "Document",
-    icon: Upload,
-    color: "#6366f1",
-    href: "/manager/document-management",
-  },
+
   {
     name: "Approval Manager",
     icon: FileText,
     color: "#8B5CF6",
     href: "/manager/approvalQueue",
   },
-  {
-    name: "View Draft",
-    icon: FileText,
-    color: "#10B981",
-    href: "/manager/view-draft",
-  },
+ 
   {
     name: "Tags",
     icon: FileText,
     color: "#6366f1",
     href: "/manager/tags",
-  },
-    {
-    name: "My Document",
-    icon: FileText,
-    color: "#6366f1",
-    href: "/manager/my-document",
-  },
+  }, 
   {
     name: "Home",
     icon: Home,

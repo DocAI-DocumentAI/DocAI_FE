@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { Layout, Typography, Card, Button, Input, Space, Tag, Alert, Row, Col, Spin } from "antd"
+import { Layout, Typography, Card, Button, Input, Space, Tag, Alert, Row, Col, Spin, Modal } from "antd"
 import {
     ArrowLeftOutlined,
     FileTextOutlined,
@@ -10,6 +10,7 @@ import {
     CalendarOutlined,
     CheckOutlined,
     CloseOutlined,
+    EyeOutlined
 } from "@ant-design/icons"
 import { api } from "../../lib/api/api";
 import toast from 'react-hot-toast';
@@ -25,6 +26,9 @@ export default function DocumentReview() {
     const [loading, setLoading] = useState(true);
     const [rejectionComments, setRejectionComments] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    const [previewVisible, setPreviewVisible] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState<string>("");
+    const [previewLoading, setPreviewLoading] = useState(false);
 
     useEffect(() => {
         const fetchDocument = async () => {
@@ -72,6 +76,36 @@ export default function DocumentReview() {
         }
     };
 
+    const handlePreview = async () => {
+        if (!document?.versionId) {
+            toast.error("Không tìm thấy versionId!");
+            return;
+        }
+
+        setPreviewLoading(true);
+        try {
+            const response = await api.get(`/document/files/${document.versionId}/iframe-url`);
+            const data = response.data.data;
+            
+            if (data.canViewInline && data.iframeUrl) {
+                setPreviewUrl(data.iframeUrl);
+                setPreviewVisible(true);
+            } else {
+                toast.error("This file type cannot be previewed inline");
+            }
+        } catch (error: any) {
+            toast.error(`Preview failed: ${error?.response?.data?.message || error.message}`);
+            console.error("Preview error:", error);
+        } finally {
+            setPreviewLoading(false);
+        }
+    };
+
+    const handleClosePreview = () => {
+        setPreviewVisible(false);
+        setPreviewUrl("");
+    };
+
     if (loading) return <Spin style={{ margin: 40 }} />;
     if (!document) return <div>No document selected</div>;
 
@@ -116,6 +150,33 @@ export default function DocumentReview() {
                                             {document.title}
                                         </Title>
                                         <Text type="secondary">{document.content}</Text>
+                                        {/* Thêm thông tin tổng quan */}
+                                        <div style={{ marginTop: 12 }}>
+                                            <Text strong>Tóm tắt:</Text>
+                                            <div
+                                                style={{ background: "#f6f8fa", padding: 12, borderRadius: 6, marginTop: 4 }}
+                                                dangerouslySetInnerHTML={{ __html: document.summary }}
+                                            />
+                                        </div>
+                                        <div style={{ marginTop: 12 }}>
+                                            <Text strong>Tên file:</Text> <Text>{document.fileName}</Text>
+                                            <br />
+                                            <Text strong>Kích thước:</Text> <Text>{(document.fileSize / 1024).toFixed(1)} KB</Text>
+                                            <br />
+                                            <Text strong>Loại file:</Text> <Text>{document.fileType}</Text>
+                                            <br />
+                                            <Text strong>Hiệu lực:</Text>{" "}
+                                            <Text>
+                                                {formatDate(document.effectiveFrom)} - {formatDate(document.effectiveUntil)}
+                                            </Text>
+                                            <br />
+                                            <Text strong>Trạng thái:</Text> <Tag color="orange">{document.status}</Tag>
+                                            <br />
+                                            <Text strong>Tags:</Text>{" "}
+                                            {document.tags?.map((tag: string) => (
+                                                <Tag key={tag}>{tag}</Tag>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
 
@@ -162,9 +223,19 @@ export default function DocumentReview() {
 
                             {/* Document Content */}
                             <Card>
-                                <Title level={4} style={{ marginBottom: 16 }}>
-                                    Document Content
-                                </Title>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                                    <Title level={4} style={{ margin: 0 }}>
+                                        Document Content
+                                    </Title>
+                                    <Button 
+                                        icon={<EyeOutlined />} 
+                                        onClick={handlePreview}
+                                        disabled={!document.versionId}
+                                        loading={previewLoading}
+                                    >
+                                        {previewLoading ? "Loading Preview..." : "Preview File"}
+                                    </Button>
+                                </div>
                                 <div style={{ backgroundColor: "#f5f5f5", padding: 16, borderRadius: 6 }}>
                                     <Paragraph>{document.description}</Paragraph>
                                 </div>
@@ -239,6 +310,38 @@ export default function DocumentReview() {
                     </Row>
                 </div>
             </Content>
+
+            {/* Document Preview Modal */}
+            <Modal
+                title={
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <FileTextOutlined style={{ marginRight: 8 }} />
+                        Document Preview - {document?.fileName}
+                    </div>
+                }
+                open={previewVisible}
+                onCancel={handleClosePreview}
+                footer={[
+                    <Button key="close" onClick={handleClosePreview}>
+                        Close
+                    </Button>
+                ]}
+                width="90%"
+                style={{ top: 20 }}
+                bodyStyle={{ padding: 0, height: '80vh' }}
+            >
+                {previewUrl && (
+                    <iframe
+                        src={previewUrl}
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            border: 'none'
+                        }}
+                        title="Document Preview"
+                    />
+                )}
+            </Modal>
         </Layout>
     )
 }

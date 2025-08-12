@@ -111,9 +111,13 @@ export default function ApprovalQueue() {
       title: "Actions",
       key: "actions",
       render: (record: any) => (
-        <Button type="primary" size="small" onClick={() => navigate(`/manager/document-review/${record.documentFileId}/${record.versionId}`)}>
-          Review
-        </Button>
+        <>
+          {record.status === 'Pending' && (
+            <Button type="primary" size="small" onClick={() => navigate(`/manager/document-review/${record.documentFileId}/${record.versionId}`)}>
+              Review
+            </Button>
+          )}
+        </>
       ),
     },
   ]

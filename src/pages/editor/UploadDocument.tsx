@@ -1,4 +1,4 @@
-import { Layout, Typography, Card, Button, Input, Select, DatePicker, Upload, Form, Row, Col, Space, Spin } from "antd"
+import { Layout, Typography, Card, Button, Input, Select, DatePicker, Upload, Form, Row, Col, Space, Spin, Switch } from "antd"
 import {  UploadOutlined, InboxOutlined, ArrowRightOutlined } from "@ant-design/icons"
 import { uploadDraftDocument, analyzeDocument, regenerateSummary, getDocumentTypes, submitDocumentForApproval, DocumentType } from "../../lib/api/document";
 import { useState, useEffect } from "react";
@@ -72,6 +72,7 @@ export default function UploadDocument() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isAnalyzed, setIsAnalyzed] = useState(false);
   const [mode, setMode] = useState<'upload' | 'create-new'>('upload');
+  const [isRegeneratingSummary, setIsRegeneratingSummary] = useState(false);
 
   // Load document types on component mount and handle pre-filled data
   useEffect(() => {
@@ -266,7 +267,7 @@ export default function UploadDocument() {
       return;
     }
 
-    const loadingToast = toast.loading("Regenerating summary...");
+    setIsRegeneratingSummary(true);
     try {
       console.log("Regenerating summary...");
 
@@ -278,12 +279,12 @@ export default function UploadDocument() {
       // Update only the summary
       setHtmlSummary(summaryData.summary || summaryData || "");
 
-      toast.dismiss(loadingToast);
       toast.success("Summary regenerated successfully!");
     } catch (error) {
-      toast.dismiss(loadingToast);
       toast.error("Failed to regenerate summary. Please try again!");
       console.error("Summary regeneration error:", error);
+    } finally {
+      setIsRegeneratingSummary(false);
     }
   };
 
@@ -318,16 +319,18 @@ export default function UploadDocument() {
     });
   };
 
+  const isAnyOperationInProgress = isUploading || isAnalyzing || isRegeneratingSummary;
+
   const uploadProps = {
     name: "file",
     multiple: false,
     accept: ".pdf,.docx",
     beforeUpload: () => false,
     onChange: handleFileUpload,
-    disabled: isUploading || isAnalyzing, // Disable khi đang upload hoặc analyze
+    disabled: isAnyOperationInProgress,
     showUploadList: {
       showPreviewIcon: true,
-      showRemoveIcon: !isUploading, // Ẩn nút remove khi đang upload
+      showRemoveIcon: !isAnyOperationInProgress,
       showDownloadIcon: false,
     },
     maxCount: 1,
@@ -601,10 +604,18 @@ export default function UploadDocument() {
                         type="link"
                         size="small"
                         onClick={handleRegenerateSummary}
-                        disabled={!selectedFile}
+                        disabled={!selectedFile || isAnyOperationInProgress}
+                        loading={isRegeneratingSummary}
                         style={{ padding: "0 8px", fontSize: "12px" }}
                       >
-                        🔄 Regenerate Summary
+                        {isRegeneratingSummary ? (
+                          <>
+                            <Spin size="small" style={{ marginRight: 4 }} />
+                            Regenerating...
+                          </>
+                        ) : (
+                          "🔄 Regenerate Summary"
+                        )}
                       </Button>
                     </div>
                   }
@@ -644,6 +655,17 @@ export default function UploadDocument() {
                     )}
                   </Form.List>
                 </Form.Item>
+
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item name="isPublic" label="Document Visibility" valuePropName="checked">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Switch />
+                        <Text>Make this document public</Text>
+                      </div>
+                    </Form.Item>
+                  </Col>
+                </Row>
 
                 {/* Next Button */}
                 <Form.Item style={{ marginTop: 32, textAlign: "center" }}>
@@ -750,10 +772,18 @@ export default function UploadDocument() {
                         type="link"
                         size="small"
                         onClick={handleRegenerateSummary}
-                        disabled={!selectedFile}
+                        disabled={!selectedFile || isAnyOperationInProgress}
+                        loading={isRegeneratingSummary}
                         style={{ padding: "0 8px", fontSize: "12px" }}
                       >
-                        🔄 Regenerate Summary
+                        {isRegeneratingSummary ? (
+                          <>
+                            <Spin size="small" style={{ marginRight: 4 }} />
+                            Regenerating...
+                          </>
+                        ) : (
+                          "🔄 Regenerate Summary"
+                        )}
                       </Button>
                     </div>
                   }
@@ -795,7 +825,16 @@ export default function UploadDocument() {
                   </Form.List>
                 </Form.Item>
 
-
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item name="isPublic" label="Document Visibility" valuePropName="checked">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Switch />
+                        <Text>Make this document public</Text>
+                      </div>
+                    </Form.Item>
+                  </Col>
+                </Row>
 
                 {/* Action Buttons */}
                 <Form.Item style={{ marginTop: 32 }}>

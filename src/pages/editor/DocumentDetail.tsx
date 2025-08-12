@@ -451,7 +451,7 @@ export default function DocumentDetail({ onViewChange, }: any) {
                                             danger 
                                             block 
                                             size="large"
-                                            onClick={() => navigate(`/editor/document/recreate/${document.documentId}`)}
+                                            onClick={() => navigate(`/editor/document/recreate/${document.versionId}`)}
                                             disabled={submitting || deleteLoading}
                                         >
                                             Recreate Draft
@@ -570,7 +570,7 @@ export default function DocumentDetail({ onViewChange, }: any) {
                             border: 'none'
                         }}
                         title="Document Preview"
-                        sandbox="allow-scripts allow-same-origin"
+                        // sandbox="allow-scripts allow-same-origin"
                     />
                 )}
             </Modal>
