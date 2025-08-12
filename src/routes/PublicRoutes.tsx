@@ -22,7 +22,6 @@ import DocumentPage from "../pages/document/DocumentDetail";
 import SearchPage from "../pages/search/SearchPage";
 import ApprovalManagerTable from "../pages/editor/ApprovalManagerTable";
 import ViewDraftTable from "../pages/editor/ViewDraftTable";
-import ManagerTable from "../pages/editor/ManagerTable";
 import EditedLayout from "../components/layout/EditedLayoutLayout";
 import ManagerLayoutLayout from "../components/layout/ManagerLayoutLayout";
 import ApprovalQueue from "../pages/manager/ApprovalQueue";
