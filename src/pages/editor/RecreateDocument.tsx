@@ -278,20 +278,7 @@ export default function RecreateDocument() {
       return;
     }
 
-    // Prepare analysis data for navigation
-    const analysisData = {
-      title: form.getFieldValue('title') || "",
-      description: htmlDescription || "",
-      summary: htmlSummary || "",
-      tags: form.getFieldValue('tags') || [],
-      effectiveFrom: form.getFieldValue('effectiveFrom')?.toISOString() || "",
-      effectiveUntil: form.getFieldValue('effectiveTo')?.toISOString() || "",
-      signedBy: form.getFieldValue('signedBy') || "",
-      documentTypeId: form.getFieldValue('type') || "",
-      isPublic: form.getFieldValue('isPublic') || false,
-      file: selectedFile
-    };
-
+ 
     setMode('recreate');
   };
 

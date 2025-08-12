@@ -1,5 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
-import { useDepartments } from "./departmentService";
+import { useQuery } from "@tanstack/react-query"; 
 
 export interface DepartmentUserData {
   departmentId: string;

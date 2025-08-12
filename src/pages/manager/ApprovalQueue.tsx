@@ -37,8 +37,10 @@ export default function ApprovalQueue() {
         }
   
         const res = await getApprovalQueue( page, pageSize);
-        setDocuments(res.items || []);
-        setTotal(res.total || 0);
+        console.log(res);
+        
+        setDocuments(res?.documents?.items || []);
+        setTotal(res?.documents?.total || 0);
       } catch (error: any) {
         toast.error(`Lỗi khi tải dữ liệu: ${error?.response?.data?.message || error.message}`);
         setDocuments([]);

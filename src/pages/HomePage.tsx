@@ -2,9 +2,7 @@ import {
   MessageSquare,
   Search,
   Library,
-  UserCircle,
-  Lock,
-  BarChart3,
+  UserCircle, 
 } from "lucide-react"; 
 import { FeatureCard } from "../components/FeatureCard"; 
 import { Navbar } from "../components/layout/Navbar";

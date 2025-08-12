@@ -122,7 +122,7 @@ export default function NewVersionDocument() {
 
     setIsUploading(true);
     try {
-      await recreateDocument(id, formValues, users.userId);
+      await recreateDocument(id, formValues);
       toast.success("Tạo Version mới thành công!");
       
       // Reset form sau khi upload thành công
