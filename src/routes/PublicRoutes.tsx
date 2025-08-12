@@ -161,7 +161,7 @@ const PublicRoutes: RouteObject[] = [
       },
       {
         path: "my-document",
-        element: <ManagerTable />,
+        element: <ViewDraftTable />,
       },
       {
         path: "approval-manager",

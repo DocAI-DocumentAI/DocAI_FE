@@ -74,6 +74,9 @@ export default function UploadDocument() {
   const [mode, setMode] = useState<'upload' | 'create-new'>('upload');
   const [isRegeneratingSummary, setIsRegeneratingSummary] = useState(false);
 
+  // Thêm state để track switch value
+  const [isPublicState, setIsPublicState] = useState(false);
+
   // Load document types on component mount and handle pre-filled data
   useEffect(() => {
     const fetchDocumentTypes = async () => {
@@ -111,15 +114,15 @@ export default function UploadDocument() {
     }
   }, [location.state, form]);
 
-  const handleSaveAsDraft = async (values: any) => {
-    await handleDocumentAction(values, 'draft');
-  };
-
-  const handleSubmitForApproval = async (values: any) => {
-    await handleDocumentAction(values, 'submit');
-  };
-
+  // Kiểm tra và debug giá trị isPublic
   const handleDocumentAction = async (values: any, action: 'draft' | 'submit') => {
+    // Debug để xem values có gì
+    console.log('=== FORM VALUES DEBUG ===');
+    console.log('All form values:', values);
+    console.log('isPublic value:', values.isPublic);
+    console.log('isPublic type:', typeof values.isPublic);
+    console.log('=== END DEBUG ===');
+    
     // Kiểm tra file
     if (!selectedFile) {
       toast.error("Please select a file to upload!");
@@ -132,6 +135,7 @@ export default function UploadDocument() {
       toast.error("User information not found, please login again!");
       return;
     }
+    
     const formValues = {
       title: values.title || "",
       versionName: values.versionName || "",
@@ -143,8 +147,13 @@ export default function UploadDocument() {
       tags: Array.isArray(values.tags) ? values.tags.filter(Boolean) : [],
       file: selectedFile,
       documentTypeId: values.type || "",
-      isPublic: false, // Add missing IsPublic field
+      isPublic: values.isPublic === true, // Đảm bảo là boolean
     };
+
+    console.log('=== FINAL PAYLOAD DEBUG ===');
+    console.log('formValues.isPublic:', formValues.isPublic);
+    console.log('formValues.isPublic type:', typeof formValues.isPublic);
+    console.log('=== END FINAL DEBUG ===');
 
     const isSubmitting = action === 'submit';
     setIsUploading(true);
@@ -180,6 +189,26 @@ export default function UploadDocument() {
       setIsUploading(false);
       if (isSubmitting) setIsSubmitting(false);
     }
+  };
+
+  const handleSubmitForApproval = async (values: any) => {
+    // Debug trước khi gọi handleDocumentAction
+    console.log('=== SUBMIT FOR APPROVAL DEBUG ===');
+    console.log('Values passed to submit:', values);
+    console.log('isPublic in submit:', values.isPublic);
+    console.log('=== END SUBMIT DEBUG ===');
+    
+    await handleDocumentAction(values, 'submit');
+  };
+
+  const handleSaveAsDraft = async (values: any) => {
+    // Debug trước khi gọi handleDocumentAction
+    console.log('=== SAVE AS DRAFT DEBUG ===');
+    console.log('Values passed to draft:', values);
+    console.log('isPublic in draft:', values.isPublic);
+    console.log('=== END DRAFT DEBUG ===');
+    
+    await handleDocumentAction(values, 'draft');
   };
 
   const handleFileUpload = async (info: any) => {
@@ -658,10 +687,29 @@ export default function UploadDocument() {
 
                 <Row gutter={16}>
                   <Col xs={24} sm={12}>
-                    <Form.Item name="isPublic" label="Document Visibility" valuePropName="checked">
+                    <Form.Item 
+                      name="isPublic" 
+                      label="Document Visibility" 
+                      valuePropName="checked"
+                      initialValue={false}
+                    >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Switch />
+                        <Switch 
+                          checked={isPublicState}
+                          onChange={(checked) => {
+                            console.log('Switch changed to:', checked);
+                            setIsPublicState(checked);
+                            form.setFieldValue('isPublic', checked);
+                            
+                            // Verify form value after setting
+                            setTimeout(() => {
+                              console.log('Form value after change:', form.getFieldValue('isPublic'));
+                            }, 0);
+                          }}
+                        />
                         <Text>Make this document public</Text>
+                        {/* Debug display */}
+                       
                       </div>
                     </Form.Item>
                   </Col>
@@ -827,10 +875,28 @@ export default function UploadDocument() {
 
                 <Row gutter={16}>
                   <Col xs={24} sm={12}>
-                    <Form.Item name="isPublic" label="Document Visibility" valuePropName="checked">
+                    <Form.Item 
+                      name="isPublic" 
+                      label="Document Visibility" 
+                      valuePropName="checked"
+                      initialValue={false}
+                    >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Switch />
+                        <Switch 
+                          checked={isPublicState}
+                          onChange={(checked) => {
+                            console.log('Switch changed to:', checked);
+                            setIsPublicState(checked);
+                            form.setFieldValue('isPublic', checked);
+                            
+                            // Verify form value after setting
+                            setTimeout(() => {
+                              console.log('Form value after change:', form.getFieldValue('isPublic'));
+                            }, 0);
+                          }}
+                        />
                         <Text>Make this document public</Text>
+                 
                       </div>
                     </Form.Item>
                   </Col>
@@ -859,7 +925,14 @@ export default function UploadDocument() {
                       type="primary"
                       onClick={() => {
                         form.validateFields().then(values => {
+                          console.log('=== BUTTON CLICK VALUES ===');
+                          console.log('Validated values:', values);
+                          console.log('isPublic from validation:', values.isPublic);
+                          console.log('=== END BUTTON CLICK ===');
+                          
                           handleSubmitForApproval(values);
+                        }).catch(errorInfo => {
+                          console.log('Form validation failed:', errorInfo);
                         });
                       }}
                       icon={isSubmitting ? <Spin size="small" /> : <UploadOutlined />}

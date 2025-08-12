@@ -15,12 +15,12 @@ const SIDEBAR_ITEMS: {
     color: "#6366f1",
     href: "/editor/upload-document",
   },
-    {
-    name: "Upload Document Replacement",
-    icon: Upload,
-    color: "#10B981",
-    href: "/editor/upload-document-replacement",
-  },
+  //   {
+  //   name: "Upload Document Replacement",
+  //   icon: Upload,
+  //   color: "#10B981",
+  //   href: "/editor/upload-document-replacement",
+  // },
   {
     name: "Approval Manager",
     icon: FileText,
