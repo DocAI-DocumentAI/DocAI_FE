@@ -35,7 +35,7 @@ export function Navbar() {
       </div>
 
       <div className="flex items-center gap-4">
-        <button className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-blue-800">
+        <button onClick={() => navigate("/notifications")} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-blue-800">
           <BellRing className="h-5 w-5" />
         </button>
         <div className="relative max-w-64 ">

@@ -36,6 +36,7 @@ import Tags from "../pages/manager/Tags";
 import DocumentChoice from "../pages/editor/DocumentChoice";
 import DocumentReplacement from "../pages/editor/DocumentReplacement";
 import DocumentLibrary from "../pages/document/DocumentLibrary.tsx";
+import Notifications from "../pages/notification/Notifications.tsx";
 
 const PublicRoutes: RouteObject[] = [
   // {
@@ -106,6 +107,10 @@ const PublicRoutes: RouteObject[] = [
   {
     path: "/document-library",
     element: <DocumentLibrary />,
+  },
+  {
+    path: "/notifications",
+    element: <Notifications />,
   },
   {
     path: "/manager",
