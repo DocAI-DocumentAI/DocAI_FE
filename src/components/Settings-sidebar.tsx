@@ -8,26 +8,26 @@ const menuItems = [
         icon: <User className="h-4 w-4" />,
         href: "/settings/account",
     },
-    {
-        title: "Appearance",
-        icon: <Paintbrush className="h-4 w-4" />,
-        href: "/settings/appearance",
-    },
-    {
-        title: "Notifications",
-        icon: <Bell className="h-4 w-4" />,
-        href: "/settings/notifications",
-    },
-    {
-        title: "Chatbot",
-        href: "#",
-        isHeader: true,
-    },
-    {
-        title: "Personalization",
-        icon: <MessageSquare className="h-4 w-4" />,
-        href: "/settings/personalization",
-    },
+    // {
+    //     title: "Appearance",
+    //     icon: <Paintbrush className="h-4 w-4" />,
+    //     href: "/settings/appearance",
+    // },
+    // {
+    //     title: "Notifications",
+    //     icon: <Bell className="h-4 w-4" />,
+    //     href: "/settings/notifications",
+    // },
+    // {
+    //     title: "Chatbot",
+    //     href: "#",
+    //     isHeader: true,
+    // },
+    // {
+    //     title: "Personalization",
+    //     icon: <MessageSquare className="h-4 w-4" />,
+    //     href: "/settings/personalization",
+    // },
     {
         title: "Security",
         href: "#",
