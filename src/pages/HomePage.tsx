@@ -2,9 +2,9 @@ import {
   MessageSquare,
   Search,
   Library,
-  UserCircle, 
-} from "lucide-react"; 
-import { FeatureCard } from "../components/FeatureCard"; 
+  UserCircle,
+} from "lucide-react";
+import { FeatureCard } from "../components/FeatureCard";
 import { Navbar } from "../components/layout/Navbar";
 
 export default function HomePage() {

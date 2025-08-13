@@ -16,6 +16,8 @@ export interface ChatMessage {
   role: number; // 1 for user, 2 for assistant
   tokenCount: number;
   timestamp: string;
+  documentSources?: any[];
+  hasDocumentContext?: boolean;
 }
 
 export interface ChatSessionDetail {
@@ -100,6 +102,21 @@ export interface StreamingMessageChunk {
   role?: number;
   tokenCount?: number;
   modelUsed?: string;
+  documentSources?: any;
+  hasDocumentContext?: boolean;
+}
+
+export interface ServerStreamChunk {
+  sessionId: string;
+  messageChunk: string;
+  message: string;
+  role: number;
+  timestamp: string;
+  modelUsed: string;
+  documentSources: any;
+  hasDocumentContext: boolean;
+  isComplete: boolean;
+  totalTokenCount: number | null;
 }
 
 export const sendMessageStream = async (
@@ -141,6 +158,7 @@ export const sendMessageStream = async (
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let accumulatedContent = "";
+    let buffer = "";
 
     try {
       while (true) {
@@ -161,25 +179,134 @@ export const sendMessageStream = async (
           break;
         }
 
-        // Decode the chunk directly as text
+        // Decode the chunk and add to buffer
         const chunk = decoder.decode(value, { stream: true });
+        buffer += chunk;
 
-        if (chunk) {
-          accumulatedContent += chunk;
+        // Process Server-Sent Events format
+        let lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep incomplete line in buffer
 
-          // Send the accumulated content to update UI
-          const streamChunk: StreamingMessageChunk = {
-            content: accumulatedContent,
-            isComplete: false,
-            sessionId: data.sessionId,
-            messageId: Date.now().toString(),
-            timestamp: new Date().toISOString(),
-            role: 2,
-            tokenCount: 0,
-            modelUsed: data.modelName,
-          };
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (trimmedLine) {
+            console.log('📦 Raw streaming chunk:', trimmedLine);
 
-          onChunk(streamChunk);
+            // Handle Server-Sent Events format
+            if (trimmedLine.startsWith('event:')) {
+              // Skip event type lines
+              continue;
+            } else if (trimmedLine.startsWith('data:')) {
+              // Extract JSON data from SSE data line
+              const jsonData = trimmedLine.substring(5).trim(); // Remove 'data:' prefix
+
+              if (jsonData) {
+                try {
+                  // Parse the JSON chunk from server
+                  const serverChunk: ServerStreamChunk = JSON.parse(jsonData);
+
+                  console.log('✅ Parsed streaming chunk:', {
+                    sessionId: serverChunk.sessionId,
+                    messageChunk: serverChunk.messageChunk,
+                    messageLength: serverChunk.message?.length || 0,
+                    isComplete: serverChunk.isComplete,
+                    hasDocumentContext: serverChunk.hasDocumentContext
+                  });
+
+                  // Update accumulated content with the full message so far
+                  // Use the full message from server, not just the chunk
+                  if (serverChunk.message !== undefined && serverChunk.message !== null) {
+                    accumulatedContent = serverChunk.message;
+                  }
+
+                  // Send the streaming chunk to update UI
+                  const streamChunk: StreamingMessageChunk = {
+                    content: accumulatedContent,
+                    isComplete: serverChunk.isComplete,
+                    sessionId: serverChunk.sessionId,
+                    messageId: Date.now().toString(),
+                    timestamp: serverChunk.timestamp,
+                    role: serverChunk.role,
+                    tokenCount: serverChunk.totalTokenCount || 0,
+                    modelUsed: serverChunk.modelUsed,
+                    documentSources: serverChunk.documentSources,
+                    hasDocumentContext: serverChunk.hasDocumentContext,
+                  };
+
+                  onChunk(streamChunk);
+
+                  // If this chunk indicates completion, we can break early
+                  if (serverChunk.isComplete) {
+                    console.log('🏁 Stream completed, finalizing message');
+                    clearTimeout(timeoutId);
+                    const finalMessage: SendMessageResponse = {
+                      sessionId: serverChunk.sessionId,
+                      message: serverChunk.message,
+                      role: serverChunk.role,
+                      tokenCount: serverChunk.totalTokenCount || 0,
+                      timestamp: serverChunk.timestamp,
+                      modelUsed: serverChunk.modelUsed,
+                    };
+                    onComplete(finalMessage);
+                    return;
+                  }
+                } catch (parseError) {
+                  console.warn('❌ Failed to parse streaming chunk JSON:', jsonData, parseError);
+                  // Continue processing other chunks even if one fails to parse
+                }
+              }
+            } else {
+              // Handle lines that might be pure JSON (fallback)
+              try {
+                const serverChunk: ServerStreamChunk = JSON.parse(trimmedLine);
+
+                console.log('✅ Parsed direct JSON chunk:', {
+                  sessionId: serverChunk.sessionId,
+                  messageChunk: serverChunk.messageChunk,
+                  messageLength: serverChunk.message?.length || 0,
+                  isComplete: serverChunk.isComplete,
+                  hasDocumentContext: serverChunk.hasDocumentContext
+                });
+
+                if (serverChunk.message !== undefined && serverChunk.message !== null) {
+                  accumulatedContent = serverChunk.message;
+                }
+
+                const streamChunk: StreamingMessageChunk = {
+                  content: accumulatedContent,
+                  isComplete: serverChunk.isComplete,
+                  sessionId: serverChunk.sessionId,
+                  messageId: Date.now().toString(),
+                  timestamp: serverChunk.timestamp,
+                  role: serverChunk.role,
+                  tokenCount: serverChunk.totalTokenCount || 0,
+                  modelUsed: serverChunk.modelUsed,
+                  documentSources: serverChunk.documentSources,
+                  hasDocumentContext: serverChunk.hasDocumentContext,
+                };
+
+                onChunk(streamChunk);
+
+                if (serverChunk.isComplete) {
+                  console.log('🏁 Stream completed, finalizing message');
+                  clearTimeout(timeoutId);
+                  const finalMessage: SendMessageResponse = {
+                    sessionId: serverChunk.sessionId,
+                    message: serverChunk.message,
+                    role: serverChunk.role,
+                    tokenCount: serverChunk.totalTokenCount || 0,
+                    timestamp: serverChunk.timestamp,
+                    modelUsed: serverChunk.modelUsed,
+                  };
+                  onComplete(finalMessage);
+                  return;
+                }
+              } catch (parseError) {
+                console.warn('❌ Failed to parse line as JSON:', trimmedLine, parseError);
+                // Continue processing other chunks even if one fails to parse
+              }
+            }
+          }
         }
       }
     } catch (readError) {

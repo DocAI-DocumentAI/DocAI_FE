@@ -134,6 +134,8 @@ export default function ChatPage() {
                     content={message.content}
                     timestamp={message.timestamp}
                     isStreaming={(message as any).isStreaming}
+                    documentSources={(message as any).documentSources}
+                    hasDocumentContext={(message as any).hasDocumentContext}
                   />
                 ))}
               </div>
