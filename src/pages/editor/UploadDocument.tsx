@@ -334,6 +334,7 @@ export default function UploadDocument() {
     // Prepare analysis data for navigation
     const analysisData = {
       title: form.getFieldValue('title') || "",
+      versionName: form.getFieldValue('versionName') || "",
       description: htmlDescription || "",
       summary: htmlSummary || "",
       tags: form.getFieldValue('tags') || [],
