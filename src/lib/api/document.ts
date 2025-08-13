@@ -75,15 +75,40 @@ export const getMyDocuments = async (
   return response.data.data;
 };
 
+// Thêm interface cho filters
+interface ApprovalQueueFilters {
+  title?: string;
+  documentTypeId?: string;
+  isPublic?: boolean;
+  fromDate?: string;
+  toDate?: string;
+}
+
+// Cập nhật hàm getApprovalQueue
 export const getApprovalQueue = async (
   pageNumber = 1,
   pageSize = 10,
-  title?: string
+  filters: ApprovalQueueFilters = {}
 ) => {
   let url = `/document/approval-queue?pageNumber=${pageNumber}&pageSize=${pageSize}`;
-  if (title) {
-    url += `&Title=${encodeURIComponent(title)}`;
+  
+  // Thêm filters vào URL
+  if (filters.title) {
+    url += `&Title=${encodeURIComponent(filters.title)}`;
   }
+  if (filters.documentTypeId) {
+    url += `&DocumentTypeId=${encodeURIComponent(filters.documentTypeId)}`;
+  }
+  if (filters.isPublic !== undefined) {
+    url += `&IsPublic=${filters.isPublic}`;
+  }
+  if (filters.fromDate) {
+    url += `&FromDate=${encodeURIComponent(filters.fromDate)}`;
+  }
+  if (filters.toDate) {
+    url += `&ToDate=${encodeURIComponent(filters.toDate)}`;
+  }
+  
   const response = await api.get(url);
   return response.data.data;
 };
@@ -742,4 +767,31 @@ export const getDocumentStats = async (): Promise<
       statusCode: error?.response?.status || 500,
     };
   }
+};
+
+/**
+ * Create a new version of an existing document
+ */
+export const createNewVersion = async (
+  id: string,
+  data: any, 
+) => {
+  const formData = new FormData();
+  
+  // Append all form fields
+  Object.keys(data).forEach(key => {
+    if (key === 'file' && data[key]) {
+      formData.append('file', data[key]);
+    } else if (data[key] !== null && data[key] !== undefined && data[key] !== '') {
+      formData.append(key, data[key]);
+    }
+  });
+
+  const response = await api.post(`/document/documents/${id}/versions`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  
+  return response.data;
 };
