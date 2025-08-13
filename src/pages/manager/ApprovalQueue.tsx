@@ -163,14 +163,7 @@ export default function ApprovalQueue() {
     setPage(1); // Reset to first page when filtering
   };
 
-  const handleDateRangeChange = (dates: any, dateStrings: [string, string]) => {
-    setFilters(prev => ({
-      ...prev,
-      fromDate: dateStrings[0] || undefined,
-      toDate: dateStrings[1] || undefined,
-    }));
-    setPage(1);
-  };
+ 
 
   const clearFilters = () => {
     setFilters({});
