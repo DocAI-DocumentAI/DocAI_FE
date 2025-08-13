@@ -290,7 +290,7 @@ const GoogleCallback: React.FC<GoogleCallbackProps> = ({
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes fade-in {
           from {
             opacity: 0;
@@ -321,21 +321,13 @@ const GoogleCallback: React.FC<GoogleCallbackProps> = ({
         }
 
         @keyframes shake {
-          0%,
-          100% {
+          0%, 100% {
             transform: translateX(0);
           }
-          10%,
-          30%,
-          50%,
-          70%,
-          90% {
+          10%, 30%, 50%, 70%, 90% {
             transform: translateX(-2px);
           }
-          20%,
-          40%,
-          60%,
-          80% {
+          20%, 40%, 60%, 80% {
             transform: translateX(2px);
           }
         }
