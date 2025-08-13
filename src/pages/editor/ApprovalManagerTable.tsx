@@ -70,11 +70,11 @@ const ApprovalManagerTable = () => {
       dataIndex: "ownerName",
       key: "ownerName",
     },
-    {
-      title: "Người chấp nhận ",
-      dataIndex: "submittedByName",
-      key: "submittedByName",
-    },
+    // {
+    //   title: "Người chấp nhận ",
+    //   dataIndex: "submittedByName",
+    //   key: "submittedByName",
+    // },
     {
       title: "Ban/phòng",
       dataIndex: "departmentName",

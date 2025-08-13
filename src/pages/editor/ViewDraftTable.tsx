@@ -76,11 +76,11 @@ const ViewDraftTable = () => {
       dataIndex: "createdTime",
       key: "createdTime",
     },
-    {
-      title: "Người chấp nhận ",
-      dataIndex: "submittedByName",
-      key: "submittedByName",
-    },
+    // {
+    //   title: "Người chấp nhận ",
+    //   dataIndex: "submittedByName",
+    //   key: "submittedByName",
+    // },
     {
       title: "versionName ",
       dataIndex: "versionName",
