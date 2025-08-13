@@ -1,11 +1,14 @@
 import { Layout, Typography, Card, Button, Input, Select, DatePicker, Upload, Form, Row, Col, Space, Spin, Switch } from "antd"
-import {  UploadOutlined, InboxOutlined, ArrowRightOutlined } from "@ant-design/icons"
+import {  UploadOutlined, InboxOutlined, ArrowRightOutlined, FolderOutlined } from "@ant-design/icons"
 import { uploadDraftDocument, analyzeDocument, regenerateSummary, getDocumentTypes, submitDocumentForApproval, DocumentType } from "../../lib/api/document";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import WysiwygEditor from 'react-simple-wysiwyg';
 import toast from 'react-hot-toast';
 import moment from "moment";
+import { FolderSelectorInput } from "../../components/folder";
+import FolderDebug from "../../components/debug/FolderDebug";
+import TreeFolderSelectorTest from "../../components/debug/TreeFolderSelectorTest";
 
 const { Title, Text } = Typography
 const { Content } = Layout 
@@ -76,6 +79,7 @@ export default function UploadDocument() {
 
   // Thêm state để track switch value
   const [isPublicState, setIsPublicState] = useState(false);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(undefined);
 
   // Load document types on component mount and handle pre-filled data
   useEffect(() => {
@@ -105,6 +109,7 @@ export default function UploadDocument() {
 
       form.setFieldsValue({
         title: analysisData.title || "",
+        versionName: analysisData.versionName || "",
         tags: analysisData.tags || [],
         effectiveFrom: analysisData.effectiveFrom ? moment(analysisData.effectiveFrom) : null,
         effectiveTo: analysisData.effectiveUntil ? moment(analysisData.effectiveUntil) : null,
@@ -274,6 +279,7 @@ export default function UploadDocument() {
       // Auto-fill form with analyzed data
       form.setFieldsValue({
         title: analyzedData.title || "",
+        versionName: analyzedData.versionName || "",
         tags: analyzedData.tags || [],
         effectiveFrom: analyzedData.effectiveFrom ? moment(analyzedData.effectiveFrom) : null,
         effectiveTo: analyzedData.effectiveUntil ? moment(analyzedData.effectiveUntil) : null,
@@ -332,6 +338,7 @@ export default function UploadDocument() {
     // Prepare analysis data for navigation
     const analysisData = {
       title: form.getFieldValue('title') || "",
+      versionName: form.getFieldValue('versionName') || "",
       description: htmlDescription || "",
       summary: htmlSummary || "",
       tags: form.getFieldValue('tags') || [],
@@ -776,6 +783,34 @@ export default function UploadDocument() {
                 <Row gutter={16}>
                   <Col xs={24} sm={12}>
                     <Form.Item
+                      name="folderId"
+                      label={
+                        <span>
+                          <FolderOutlined style={{ marginRight: 4 }} />
+                          Folder Location
+                        </span>
+                      }
+                    >
+                      <FolderSelectorInput
+                        selectedFolderId={selectedFolderId}
+                        onFolderSelect={(folderId) => {
+                          setSelectedFolderId(folderId);
+                          form.setFieldValue('folderId', folderId);
+                        }}
+                        placeholder="Select folder (optional)"
+                        allowClear={true}
+                        filterPermission="write"
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    {/* Empty column for spacing */}
+                  </Col>
+                </Row>
+
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
                       name="versionName"
                       label="Version Name"
                       rules={[{ required: true, message: "Please enter version name" }]}
@@ -972,6 +1007,10 @@ export default function UploadDocument() {
           )}
         </div>
       </Content>
+
+      {/* Debug Components - Remove in production */}
+      <FolderDebug />
+      <TreeFolderSelectorTest />
     </Layout>
   )
 }

@@ -73,7 +73,7 @@ const fetchUsersInDateRange = async (
   });
 
   const response = await fetch(
-    `https://production.docai.asia/api/auth/users?${params}`,
+    `http://localhost:5000/api/auth/users?${params}`,
     {
       method: "GET",
       headers: {

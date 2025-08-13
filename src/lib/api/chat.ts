@@ -133,7 +133,7 @@ export const sendMessageStream = async (
 
   try {
     const token = localStorage.getItem("token");
-    const baseURL = "https://production.docai.asia/api";
+    const baseURL = "http://localhost:5000/api";
 
     const response = await fetch(`${baseURL}/chatbox/send/stream`, {
       method: "POST",

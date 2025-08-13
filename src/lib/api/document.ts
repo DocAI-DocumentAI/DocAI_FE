@@ -16,6 +16,7 @@ export const uploadDraftDocument = async (data: any) => {
   formData.append("ReplacementDocumentId", data.replacementDocumentId || "");
   formData.append("DocumentTypeId", data.documentTypeId || "");
   formData.append("IsPublic", data.isPublic ? "true" : "false"); // Add missing IsPublic field
+  formData.append("FolderId", data.folderId || ""); // Add folder ID field
   if (data.file) {
     formData.append("File", data.file);
   }
@@ -37,11 +38,33 @@ export const analyzeDocument = async (file: File) => {
 };
 export const recreateDocument = async (
   id: string,
-  data: any, 
+  data: any,
 ) => {
+  const formData = new FormData();
+
+  // Add all the standard fields
+  if (data.title) formData.append("Title", data.title);
+  if (data.versionName) formData.append("VersionName", data.versionName);
+  if (data.summary) formData.append("Summary", data.summary);
+  if (data.signedBy) formData.append("SignedBy", data.signedBy);
+  if (data.description) formData.append("Description", data.description);
+  if (data.effectiveFrom) formData.append("EffectiveFrom", data.effectiveFrom);
+  if (data.effectiveUntil) formData.append("EffectiveUntil", data.effectiveUntil);
+  if (data.tags) {
+    formData.append("Tags", Array.isArray(data.tags) ? data.tags.join(",") : data.tags);
+  }
+  if (data.replacementDocumentId) formData.append("ReplacementDocumentId", data.replacementDocumentId);
+  if (data.documentTypeId) formData.append("DocumentTypeId", data.documentTypeId);
+  formData.append("IsPublic", data.isPublic ? "true" : "false");
+  formData.append("FolderId", data.folderId || ""); // Add folder ID field
+
+  if (data.file) {
+    formData.append("File", data.file);
+  }
+
   const response = await api.put(
     `/document/drafts/${id}`,
-    data,
+    formData,
     {
       headers: { "Content-Type": "multipart/form-data" },
     }
@@ -51,11 +74,15 @@ export const recreateDocument = async (
 export const getDocuments = async (
   pageNumber = 1,
   pageSize = 10,
-  title?: string
+  title?: string,
+  folderId?: string
 ) => {
   let url = `/document/documents?pageNumber=${pageNumber}&pageSize=${pageSize}`;
   if (title) {
     url += `&Title=${encodeURIComponent(title)}`;
+  }
+  if (folderId) {
+    url += `&folderId=${encodeURIComponent(folderId)}`;
   }
   const response = await api.get(url);
   return response.data.data;
@@ -65,11 +92,15 @@ export const getMyDocuments = async (
   userId: string,
   pageNumber = 1,
   pageSize = 10,
-  title?: string
+  title?: string,
+  folderId?: string
 ) => {
   let url = `/document/my-documents?userId=${userId}&pageNumber=${pageNumber}&pageSize=${pageSize}`;
   if (title) {
     url += `&Title=${encodeURIComponent(title)}`;
+  }
+  if (folderId) {
+    url += `&folderId=${encodeURIComponent(folderId)}`;
   }
   const response = await api.get(url);
   return response.data.data;
@@ -82,6 +113,7 @@ interface ApprovalQueueFilters {
   isPublic?: boolean;
   fromDate?: string;
   toDate?: string;
+  folderId?: string;
 }
 
 // Cập nhật hàm getApprovalQueue
@@ -132,6 +164,7 @@ export interface SemanticSearchParams {
   signedBy?: string;
   fromDate?: string;
   toDate?: string;
+  folderId?: string; // Folder filtering support
 }
 
 export const semanticSearchDocuments = async (params: SemanticSearchParams) => {
@@ -154,6 +187,7 @@ export const semanticSearchDocuments = async (params: SemanticSearchParams) => {
     signedBy,
     fromDate,
     toDate,
+    folderId,
   } = params;
 
   const searchParams = new URLSearchParams();
@@ -185,6 +219,7 @@ export const semanticSearchDocuments = async (params: SemanticSearchParams) => {
   if (signedBy) searchParams.append("signedBy", signedBy);
   if (fromDate) searchParams.append("fromDate", fromDate);
   if (toDate) searchParams.append("toDate", toDate);
+  if (folderId) searchParams.append("folderId", folderId);
 
   const response = await api.get(
     `/document/semantic-search?${searchParams.toString()}`
@@ -294,7 +329,7 @@ export const getSearchUsers = async (): Promise<SearchUser[]> => {
     const token = userData.docaiToken;
 
     const response = await fetch(
-      `https://production.docai.asia/api/auth/users?page=1&size=100&isAsc=true`,
+      `http://localhost:5000/api/auth/users?page=1&size=100&isAsc=true`,
       {
         method: "GET",
         headers: {
@@ -488,6 +523,10 @@ export const getOfficialDocuments = async (
     // Access Control Filters
     if (cleanedParams.isPublic !== undefined)
       searchParams.append("isPublic", cleanedParams.isPublic.toString());
+
+    // Folder Organization Filters
+    if (cleanedParams.folderId)
+      searchParams.append("folderId", cleanedParams.folderId);
 
     // File Property Filters
     if (
@@ -774,24 +813,35 @@ export const getDocumentStats = async (): Promise<
  */
 export const createNewVersion = async (
   id: string,
-  data: any, 
+  data: any,
 ) => {
   const formData = new FormData();
-  
-  // Append all form fields
-  Object.keys(data).forEach(key => {
-    if (key === 'file' && data[key]) {
-      formData.append('file', data[key]);
-    } else if (data[key] !== null && data[key] !== undefined && data[key] !== '') {
-      formData.append(key, data[key]);
-    }
-  });
+
+  // Add all the standard fields with proper naming
+  if (data.title) formData.append("Title", data.title);
+  if (data.versionName) formData.append("VersionName", data.versionName);
+  if (data.summary) formData.append("Summary", data.summary);
+  if (data.signedBy) formData.append("SignedBy", data.signedBy);
+  if (data.description) formData.append("Description", data.description);
+  if (data.effectiveFrom) formData.append("EffectiveFrom", data.effectiveFrom);
+  if (data.effectiveUntil) formData.append("EffectiveUntil", data.effectiveUntil);
+  if (data.tags) {
+    formData.append("Tags", Array.isArray(data.tags) ? data.tags.join(",") : data.tags);
+  }
+  if (data.replacementDocumentId) formData.append("ReplacementDocumentId", data.replacementDocumentId);
+  if (data.documentTypeId) formData.append("DocumentTypeId", data.documentTypeId);
+  formData.append("IsPublic", data.isPublic ? "true" : "false");
+  formData.append("FolderId", data.folderId || ""); // Add folder ID field
+
+  if (data.file) {
+    formData.append("File", data.file);
+  }
 
   const response = await api.post(`/document/documents/${id}/versions`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
   });
-  
+
   return response.data;
 };

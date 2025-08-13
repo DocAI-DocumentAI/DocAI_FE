@@ -35,13 +35,16 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../../components/layout/Navbar';
 import { DocumentLibraryFilter } from '../../components/DocumentLibraryFilter';
+import { FolderTree, FolderBreadcrumb } from '../../components/folder';
 import { getOfficialDocuments, getDocumentTypesEnhanced, getTagsEnhanced } from '../../lib/api/document';
+import { getFolderTree } from '../../lib/api/folder';
 import type {
   DocumentDraftResponse,
   DocumentTypeResponse,
   TagResponse,
   OfficialDocumentsRequest
 } from '../../types/DocumentLibrary';
+import type { FolderNode } from '../../types/folder';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -242,6 +245,12 @@ const DocumentLibrary: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [authChecked, setAuthChecked] = useState<boolean>(false);
 
+  // Folder navigation state
+  const [folders, setFolders] = useState<FolderNode[]>([]);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(undefined);
+  const [showFolderTree, setShowFolderTree] = useState(false);
+  const [foldersLoading, setFoldersLoading] = useState(false);
+
   // Check authentication
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -289,6 +298,23 @@ const DocumentLibrary: React.FC = () => {
     }
   }, [isAuthenticated]);
 
+  // Load folders
+  const loadFolders = useCallback(async () => {
+    if (!isAuthenticated) return;
+
+    setFoldersLoading(true);
+    try {
+      const response = await getFolderTree(undefined, true);
+      if (response.success) {
+        setFolders(response.data.rootNodes);
+      }
+    } catch (error) {
+      console.error('Error loading folders:', error);
+    } finally {
+      setFoldersLoading(false);
+    }
+  }, [isAuthenticated]);
+
   // Load documents
   const loadDocuments = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -300,6 +326,7 @@ const DocumentLibrary: React.FC = () => {
         pageSize: pageSize,
         ...(searchTerm && { keyword: searchTerm }),
         ...(activeTab === 'public' && { isPublic: true }),
+        ...(selectedFolderId && { folderId: selectedFolderId }),
         ...filters // Include all filters
       };
 
@@ -316,14 +343,15 @@ const DocumentLibrary: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize, searchTerm, activeTab, filters, isAuthenticated]);
+  }, [currentPage, pageSize, searchTerm, activeTab, selectedFolderId, filters, isAuthenticated]);
 
-  // Load filter options when authenticated
+  // Load filter options and folders when authenticated
   useEffect(() => {
     if (isAuthenticated) {
       loadFilterOptions();
+      loadFolders();
     }
-  }, [loadFilterOptions, isAuthenticated]);
+  }, [loadFilterOptions, loadFolders, isAuthenticated]);
 
   // Load documents when dependencies change
   useEffect(() => {
@@ -362,6 +390,19 @@ const DocumentLibrary: React.FC = () => {
   const handleClearFilters = () => {
     setFilters({});
     setSearchTerm('');
+    setSelectedFolderId(undefined);
+    setCurrentPage(1);
+  };
+
+  // Handle folder selection
+  const handleFolderSelect = (folder: FolderNode) => {
+    setSelectedFolderId(folder.id);
+    setCurrentPage(1);
+  };
+
+  // Handle folder navigation
+  const handleFolderNavigation = (folderId?: string) => {
+    setSelectedFolderId(folderId);
     setCurrentPage(1);
   };
 
@@ -417,6 +458,41 @@ const DocumentLibrary: React.FC = () => {
             </div>
           ) : (
             <Row gutter={24}>
+              {/* Folder Navigation Sidebar */}
+              {showFolderTree && (
+                <Col xs={24} lg={6}>
+                  <Card
+                    title={
+                      <span>
+                        <FolderOutlined style={{ marginRight: 8 }} />
+                        Folder Navigation
+                      </span>
+                    }
+                    className="shadow-sm border border-blue-100"
+                    size="small"
+                  >
+                    {selectedFolderId && (
+                      <div className="mb-4">
+                        <FolderBreadcrumb
+                          folderId={selectedFolderId}
+                          folders={folders}
+                          onFolderClick={handleFolderNavigation}
+                          className="text-sm"
+                        />
+                      </div>
+                    )}
+                    <FolderTree
+                      folders={folders}
+                      selectedFolderId={selectedFolderId}
+                      onFolderSelect={handleFolderSelect}
+                      allowSelection={true}
+                      showContextMenu={false}
+                      className="max-h-96 overflow-auto"
+                    />
+                  </Card>
+                </Col>
+              )}
+
               {/* Filter Sidebar */}
               {showFilters && (
                 <Col xs={24} lg={6}>
@@ -431,7 +507,10 @@ const DocumentLibrary: React.FC = () => {
               )}
 
               {/* Main Content */}
-              <Col xs={24} lg={showFilters ? 18 : 24}>
+              <Col xs={24} lg={
+                (showFolderTree && showFilters) ? 12 :
+                (showFolderTree || showFilters) ? 18 : 24
+              }>
                 <div className="space-y-6">
                   {/* AI Search Promotion */}
                   <Card className="shadow-sm border border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50">
@@ -477,6 +556,15 @@ const DocumentLibrary: React.FC = () => {
                             className="[&_.ant-input]:border-blue-200 [&_.ant-input]:focus:border-blue-500"
                           />
                         </div>
+                        <Button
+                          icon={<FolderOutlined />}
+                          onClick={() => setShowFolderTree(!showFolderTree)}
+                          type={showFolderTree ? 'primary' : 'default'}
+                          size="large"
+                          className={showFolderTree ? 'bg-blue-800 border-blue-800 shadow-md' : 'border-blue-800 text-blue-800 hover:bg-blue-50 hover:border-blue-600'}
+                        >
+                          Folders
+                        </Button>
                         <Button
                           icon={<FilterOutlined />}
                           onClick={() => setShowFilters(!showFilters)}

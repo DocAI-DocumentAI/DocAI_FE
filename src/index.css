@@ -2,6 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Folder Tree Selector Styles */
+.folder-tree-selector .ant-tree-node-content-wrapper {
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.folder-tree-selector .ant-tree-node-content-wrapper:hover {
+  background-color: #f5f5f5;
+}
+
+.folder-tree-selector .ant-tree-node-content-wrapper.ant-tree-node-selected {
+  background-color: #e6f7ff;
+  border: 1px solid #91d5ff;
+}
+
+.folder-tree-selector .ant-tree-title {
+  width: 100%;
+}
+
+.folder-tree-selector .ant-tree-switcher {
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+}
+
+.folder-tree-selector .ant-tree-iconEle {
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+}
+
 /* Custom utilities */
 .line-clamp-2 {
   display: -webkit-box;

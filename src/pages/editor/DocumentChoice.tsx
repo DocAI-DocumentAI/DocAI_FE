@@ -9,6 +9,7 @@ const { Content } = Layout;
 
 interface AnalysisData {
   title: string;
+  versionName: string;
   description: string;
   summary: string;
   tags: string[];
@@ -220,6 +221,13 @@ const DocumentChoice: React.FC = () => {
                 <Title level={5} style={{ margin: "4px 0 16px 0", color: "#262626" }}>
                   {analysisData.title || "Untitled Document"}
                 </Title>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <Text strong style={{ color: "#595959" }}>Version Name</Text>
+                <Paragraph style={{ margin: "4px 0", color: "#595959" }}>
+                  {analysisData.versionName || "Not specified"}
+                </Paragraph>
               </div>
 
               <div style={{ marginBottom: 16 }}>

@@ -35,6 +35,8 @@ import ChatIndexPage from "../pages/chat/ChatIndex";
 import Tags from "../pages/manager/Tags";
 import DocumentChoice from "../pages/editor/DocumentChoice";
 import DocumentReplacement from "../pages/editor/DocumentReplacement";
+import EditorFolderManagement from "../pages/editor/FolderManagement";
+import ManagerFolderManagement from "../pages/manager/FolderManagement";
 import DocumentLibrary from "../pages/document/DocumentLibrary.tsx";
 
 const PublicRoutes: RouteObject[] = [
@@ -124,6 +126,10 @@ const PublicRoutes: RouteObject[] = [
         element: <Tags />,
       },
       {
+        path: "folder-management",
+        element: <ManagerFolderManagement />,
+      },
+      {
         path: "document-review/:id/:versionId",
         element: <DocumentReview />,
       },
@@ -177,6 +183,10 @@ const PublicRoutes: RouteObject[] = [
       {
         path: "document/recreate/:id",
         element: <RecreateDocument />,
+      },
+      {
+        path: "folder-management",
+        element: <EditorFolderManagement />,
       },
     ],
   },

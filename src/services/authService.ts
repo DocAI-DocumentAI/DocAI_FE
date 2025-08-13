@@ -6,7 +6,7 @@ import { logout as logoutAction } from "../store/slices/authSlice";
 
 const loginApi = async (credentials: Login): Promise<User> => {
   const response = await fetch(
-    "https://production.docai.asia/api" + "/auth/login",
+    "http://localhost:5000/api" + "/auth/login",
     {
       method: "POST",
       headers: {
@@ -61,7 +61,7 @@ const logoutUser = async (): Promise<void> => {
   }
 
   const response = await fetch(
-    "https://production.docai.asia/api/auth/logout",
+    "http://localhost:5000/api/auth/logout",
     {
       method: "POST",
       headers: {

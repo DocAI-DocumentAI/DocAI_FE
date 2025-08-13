@@ -51,7 +51,7 @@ const GoogleCallback: React.FC<GoogleCallbackProps> = ({
 
         // Exchange code for user data
         console.log("Calling exchangeAuthCode with code:", code);
-        console.log("API Base URL:", "https://production.docai.asia/api");
+        console.log("API Base URL:", "http://localhost:5000/api");
 
         const userData = await GoogleAuthService.exchangeAuthCode(code);
         console.log("Received userData:", userData);

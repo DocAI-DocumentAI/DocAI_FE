@@ -32,7 +32,7 @@ const ViewDraftTable = () => {
       }
       const user = JSON.parse(userStr);
 
-      const response = await getMyDocuments(user.userId, page, pageSize = 10, searchTitle || undefined);
+      const response = await getMyDocuments(user.userId, page, pageSize, searchTitle || undefined);
 
       setDataSource(response.items);
       console.log(response);

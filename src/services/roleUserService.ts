@@ -31,7 +31,7 @@ const fetchUsersByRole = async (roleId: string): Promise<number> => {
   });
 
   const response = await fetch(
-    `https://production.docai.asia/api/auth/users?${params}`,
+    `http://localhost:5000/api/auth/users?${params}`,
     {
       method: "GET",
       headers: {
@@ -58,7 +58,7 @@ const fetchRoleUserDistribution = async (): Promise<RoleUserData[]> => {
 
   // First, get all roles
   const rolesResponse = await fetch(
-    `https://production.docai.asia/api/auth/roles?page=1&size=1000&isAsc=true`,
+    `http://localhost:5000/api/auth/roles?page=1&size=1000&isAsc=true`,
     {
       method: "GET",
       headers: {

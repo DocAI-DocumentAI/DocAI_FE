@@ -31,7 +31,7 @@ const fetchUsersByDepartment = async (departmentId: string): Promise<number> => 
   });
 
   const response = await fetch(
-    `https://production.docai.asia/api/auth/users?${params}`,
+    `http://localhost:5000/api/auth/users?${params}`,
     {
       method: "GET",
       headers: {
@@ -58,7 +58,7 @@ const fetchDepartmentUserDistribution = async (): Promise<DepartmentUserData[]> 
 
   // First, get all departments
   const departmentsResponse = await fetch(
-    `https://production.docai.asia/api/auth/departments?page=1&size=1000&isAsc=true`,
+    `http://localhost:5000/api/auth/departments?page=1&size=1000&isAsc=true`,
     {
       method: "GET",
       headers: {

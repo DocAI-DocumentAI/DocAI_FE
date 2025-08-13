@@ -1,6 +1,6 @@
  
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Layout, Typography, Card, Button, Input, Select, Table, Tag, Space, Tooltip, Badge, Row, Col } from "antd"
 import {
   FileTextOutlined,
@@ -12,7 +12,11 @@ import {
   DeleteOutlined,
   ReloadOutlined,
   CalendarOutlined,
+  FolderOpenOutlined,
 } from "@ant-design/icons"
+import { FolderTree, FolderBreadcrumb } from "../../components/folder"
+import type { FolderNode } from "../../types/folder"
+import { getFolderTree } from "../../lib/api/folder"
 
 const { Title, Text } = Typography
 const { Content } = Layout
@@ -26,6 +30,8 @@ interface Document {
   status: "Draft" | "Rejected"
   created: string
   lastModified: string
+  folderId?: string
+  folderPath?: string
 }
 
 const documents: Document[] = [
@@ -38,6 +44,8 @@ const documents: Document[] = [
     status: "Draft",
     created: "7/9/2025",
     lastModified: "7/9/2025",
+    folderId: "folder-1",
+    folderPath: "/approved/IT/Development",
   },
   {
     key: "2",
@@ -48,6 +56,8 @@ const documents: Document[] = [
     status: "Rejected",
     created: "7/6/2025",
     lastModified: "7/6/2025",
+    folderId: "folder-2",
+    folderPath: "/approved/Product/Templates",
   },
 ]
 
@@ -55,6 +65,41 @@ export default function DocumentManagement() {
   const [searchText, setSearchText] = useState("")
   const [statusFilter, setStatusFilter] = useState("All Status")
   const [sortOrder, setSortOrder] = useState("Newest First")
+
+  // Folder state
+  const [folders, setFolders] = useState<FolderNode[]>([])
+  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(undefined)
+  const [showFolderTree, setShowFolderTree] = useState(false)
+  const [foldersLoading, setFoldersLoading] = useState(false)
+
+  // Load folders on component mount
+  useEffect(() => {
+    loadFolders()
+  }, [])
+
+  const loadFolders = async () => {
+    try {
+      setFoldersLoading(true)
+      const response = await getFolderTree(undefined, true)
+      if (response.success) {
+        setFolders(response.data.rootNodes)
+      }
+    } catch (error) {
+      console.error('Failed to load folders:', error)
+    } finally {
+      setFoldersLoading(false)
+    }
+  }
+
+  // Handle folder selection
+  const handleFolderSelect = (folder: FolderNode) => {
+    setSelectedFolderId(folder.id)
+  }
+
+  // Handle folder navigation
+  const handleFolderNavigation = (folderId?: string) => {
+    setSelectedFolderId(folderId)
+  }
 
   const columns = [
     {
@@ -73,6 +118,19 @@ export default function DocumentManagement() {
           <br />
           <Text type="secondary" style={{ fontSize: "12px" }}>
             {record.description}
+          </Text>
+        </div>
+      ),
+    },
+    {
+      title: "Folder",
+      dataIndex: "folderPath",
+      key: "folderPath",
+      render: (folderPath: string) => (
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <FolderOutlined style={{ marginRight: 4, color: "#1890ff" }} />
+          <Text type="secondary" style={{ fontSize: "12px" }}>
+            {folderPath || "No folder"}
           </Text>
         </div>
       ),
@@ -209,7 +267,7 @@ export default function DocumentManagement() {
 
             {/* Search and Filters */}
             <Row gutter={16} style={{ marginBottom: 16 }}>
-              <Col xs={24} sm={12} md={8}>
+              <Col xs={24} sm={12} md={6}>
                 <Input
                   placeholder="Search documents by title..."
                   prefix={<SearchOutlined />}
@@ -230,7 +288,44 @@ export default function DocumentManagement() {
                   <Select.Option value="Oldest First">Oldest First</Select.Option>
                 </Select>
               </Col>
+              <Col xs={24} sm={12} md={4}>
+                <Button
+                  icon={<FolderOpenOutlined />}
+                  onClick={() => setShowFolderTree(!showFolderTree)}
+                  type={showFolderTree ? 'primary' : 'default'}
+                  style={{ width: "100%" }}
+                >
+                  {showFolderTree ? 'Hide Folders' : 'Show Folders'}
+                </Button>
+              </Col>
             </Row>
+
+            {/* Folder Navigation */}
+            {showFolderTree && (
+              <Row gutter={16} style={{ marginBottom: 16 }}>
+                <Col span={24}>
+                  <Card size="small" title="Folder Navigation">
+                    {selectedFolderId && (
+                      <div style={{ marginBottom: 12 }}>
+                        <FolderBreadcrumb
+                          folderId={selectedFolderId}
+                          folders={folders}
+                          onFolderClick={handleFolderNavigation}
+                        />
+                      </div>
+                    )}
+                    <FolderTree
+                      folders={folders}
+                      selectedFolderId={selectedFolderId}
+                      onFolderSelect={handleFolderSelect}
+                      allowSelection={true}
+                      showContextMenu={false}
+                      className="max-h-64 overflow-auto"
+                    />
+                  </Card>
+                </Col>
+              </Row>
+            )}
 
             {/* Documents Table */}
             <Table columns={columns} dataSource={documents} pagination={false} size="middle" />

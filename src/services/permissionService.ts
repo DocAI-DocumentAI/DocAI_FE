@@ -55,7 +55,7 @@ const fetchPermissions = async (
   if (filters.description) params.append("description", filters.description);
 
   const response = await fetch(
-    `https://production.docai.asia/api/auth/permissions?${params}`,
+    `http://localhost:5000/api/auth/permissions?${params}`,
     {
       method: "GET",
       headers: {
@@ -79,7 +79,7 @@ const createPermission = async (data: CreatePermissionData) => {
   }
 
   const response = await fetch(
-    `https://production.docai.asia/api/auth/create/permission`,
+    `http://localhost:5000/api/auth/create/permission`,
     {
       method: "POST",
       headers: {
@@ -134,7 +134,7 @@ const fetchPermissionById = async (
   }
 
   const response = await fetch(
-    `https://production.docai.asia/api/auth/permission/${permissionId}`,
+    `http://localhost:5000/api/auth/permission/${permissionId}`,
     {
       method: "GET",
       headers: {
@@ -168,7 +168,7 @@ const deletePermission = async (permissionId: string) => {
   }
 
   const response = await fetch(
-    `https://production.docai.asia/api/auth/delete/permission?permissionId=${permissionId}`,
+    `http://localhost:5000/api/auth/delete/permission?permissionId=${permissionId}`,
     {
       method: "DELETE",
       headers: {
@@ -212,7 +212,7 @@ const updatePermission = async (
   }
 
   const response = await fetch(
-    `https://production.docai.asia/api/auth/update/permission?permissionId=${permissionId}`,
+    `http://localhost:5000/api/auth/update/permission?permissionId=${permissionId}`,
     {
       method: "PATCH",
       headers: {
