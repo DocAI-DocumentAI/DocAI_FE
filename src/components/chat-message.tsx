@@ -87,6 +87,11 @@ const DocumentSources: React.FC<{ sources: DocumentSource[] }> = ({ sources }) =
     return 'text-red-600 bg-red-50';
   };
 
+  // Validate sources is an array and has content
+  if (!Array.isArray(sources) || sources.length === 0) {
+    return null;
+  }
+
   // Get the best matching document (highest relevance score)
   const bestMatch = sources.reduce((best, current) =>
     current.relevanceScore > best.relevanceScore ? current : best
@@ -207,7 +212,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           </div>
           
           {/* Document Sources - only for assistant messages */}
-          {messageRole === "assistant" && documentSources && documentSources.length > 0 && (
+          {messageRole === "assistant" && Array.isArray(documentSources) && documentSources.length > 0 && (
             <DocumentSources sources={documentSources} />
           )}
 
