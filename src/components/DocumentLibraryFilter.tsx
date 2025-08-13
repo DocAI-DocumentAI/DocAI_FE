@@ -43,12 +43,7 @@ export const DocumentLibraryFilter: React.FC<DocumentLibraryFilterProps> = ({
   loading = false
 }) => {
   const handleFilterChange = (key: string, value: any) => {
-    // Handle tags array conversion
-    if (key === 'selectedTags') {
-      onFilterChange({ tags: value });
-    } else {
-      onFilterChange({ [key]: value });
-    }
+    onFilterChange({ [key]: value });
   };
 
   return (
@@ -175,51 +170,13 @@ export const DocumentLibraryFilter: React.FC<DocumentLibraryFilterProps> = ({
             className="[&_.ant-picker]:border-blue-200 [&_.ant-picker-focused]:border-blue-500"
             onChange={(dates) => {
               if (dates) {
-                handleFilterChange('fromDate', dates[0]?.startOf('day').toISOString());
-                handleFilterChange('toDate', dates[1]?.endOf('day').toISOString());
+                handleFilterChange('fromDate', dates[0]?.format('YYYY-MM-DD'));
+                handleFilterChange('toDate', dates[1]?.format('YYYY-MM-DD'));
               } else {
                 handleFilterChange('fromDate', '');
                 handleFilterChange('toDate', '');
               }
             }}
-          />
-        </div>
-
-        {/* Effective Date Range */}
-        <div>
-          <div className="flex items-center mb-2">
-            <CalendarOutlined style={{ color: '#1e40af', marginRight: '6px' }} />
-            <Text type="secondary" className="text-sm font-medium">Effective Date Range</Text>
-          </div>
-          <RangePicker
-            style={{ width: '100%' }}
-            className="[&_.ant-picker]:border-blue-200 [&_.ant-picker-focused]:border-blue-500"
-            onChange={(dates) => {
-              if (dates) {
-                handleFilterChange('effectiveFrom', dates[0]?.startOf('day').toISOString());
-                handleFilterChange('effectiveUntil', dates[1]?.endOf('day').toISOString());
-              } else {
-                handleFilterChange('effectiveFrom', '');
-                handleFilterChange('effectiveUntil', '');
-              }
-            }}
-          />
-        </div>
-
-        <Divider className="my-3" />
-
-        {/* Signed By */}
-        <div>
-          <div className="flex items-center mb-2">
-            <UserOutlined style={{ color: '#1e40af', marginRight: '6px' }} />
-            <Text type="secondary" className="text-sm font-medium">Signed By</Text>
-          </div>
-          <Input
-            prefix={<UserOutlined style={{ color: '#6b7280' }} />}
-            placeholder="Search by signer..."
-            onChange={(e) => handleFilterChange('signedBy', e.target.value)}
-            allowClear
-            className="border-blue-200 focus:border-blue-500"
           />
         </div>
 
