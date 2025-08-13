@@ -9,6 +9,7 @@ import {
   ChatSessionDetail,
   StreamingMessageChunk
 } from '../lib/api/chat';
+import type { DocumentSource } from '../components/chat-message';
 
 export interface TempChatMessage {
   id: string;
@@ -17,6 +18,8 @@ export interface TempChatMessage {
   timestamp: Date | string;
   isTemp?: boolean;
   isStreaming?: boolean;
+  documentSources?: DocumentSource[];
+  hasDocumentContext?: boolean;
 }
 
 export interface TempChatSession {
@@ -236,7 +239,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
                 messages[lastMessageIndex] = {
                   ...messages[lastMessageIndex],
                   content: chunk.content,
-                  isStreaming: !chunk.isComplete
+                  isStreaming: !chunk.isComplete,
+                  documentSources: chunk.documentSources,
+                  hasDocumentContext: chunk.hasDocumentContext
                 };
                 return {
                   ...prev,
@@ -245,7 +250,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
               } else {
                 messages[lastMessageIndex] = {
                   ...messages[lastMessageIndex],
-                  content: chunk.content
+                  content: chunk.content,
+                  documentSources: chunk.documentSources,
+                  hasDocumentContext: chunk.hasDocumentContext
                 };
                 const updatedChat = {
                   ...prev,

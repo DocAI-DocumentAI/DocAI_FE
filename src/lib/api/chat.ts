@@ -16,6 +16,8 @@ export interface ChatMessage {
   role: number; // 1 for user, 2 for assistant
   tokenCount: number;
   timestamp: string;
+  documentSources?: any[];
+  hasDocumentContext?: boolean;
 }
 
 export interface ChatSessionDetail {
