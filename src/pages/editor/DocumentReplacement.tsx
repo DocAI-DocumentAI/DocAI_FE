@@ -73,6 +73,7 @@ const DocumentReplacement: React.FC = () => {
       
       form.setFieldsValue({
         title: analysisData.title || "",
+        versionName: analysisData.versionName || "",
         tags: analysisData.tags || [],
         effectiveFrom: analysisData.effectiveFrom ? moment(analysisData.effectiveFrom) : null,
         effectiveTo: analysisData.effectiveUntil ? moment(analysisData.effectiveUntil) : null,

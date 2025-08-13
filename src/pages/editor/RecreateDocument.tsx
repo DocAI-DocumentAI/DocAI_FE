@@ -214,6 +214,7 @@ export default function RecreateDocument() {
 
       form.setFieldsValue({
         title: analyzedData.title || "",
+        versionName: analyzedData.versionName || "",
         tags: analyzedData.tags || [],
         effectiveFrom: analyzedData.effectiveFrom ? moment(analyzedData.effectiveFrom) : null,
         effectiveTo: analyzedData.effectiveUntil ? moment(analyzedData.effectiveUntil) : null,

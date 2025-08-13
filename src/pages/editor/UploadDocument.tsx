@@ -105,6 +105,7 @@ export default function UploadDocument() {
 
       form.setFieldsValue({
         title: analysisData.title || "",
+        versionName: analysisData.versionName || "",
         tags: analysisData.tags || [],
         effectiveFrom: analysisData.effectiveFrom ? moment(analysisData.effectiveFrom) : null,
         effectiveTo: analysisData.effectiveUntil ? moment(analysisData.effectiveUntil) : null,
@@ -274,6 +275,7 @@ export default function UploadDocument() {
       // Auto-fill form with analyzed data
       form.setFieldsValue({
         title: analyzedData.title || "",
+        versionName: analyzedData.versionName || "",
         tags: analyzedData.tags || [],
         effectiveFrom: analyzedData.effectiveFrom ? moment(analyzedData.effectiveFrom) : null,
         effectiveTo: analyzedData.effectiveUntil ? moment(analyzedData.effectiveUntil) : null,
