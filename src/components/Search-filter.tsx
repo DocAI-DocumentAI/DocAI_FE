@@ -1,7 +1,5 @@
-import {
-  DatePicker,
-  Card,
-  Input,
+import { 
+  Card, 
   Select,
   Slider,
   Switch,
@@ -13,18 +11,14 @@ import {
 } from "antd";
 import {
   FilterOutlined,
-  ClearOutlined,
-  TagsOutlined,
-  CalendarOutlined,
-  FolderOutlined,
-  UserOutlined,
+  ClearOutlined, 
+  FolderOutlined, 
   SettingOutlined,
   GlobalOutlined
 } from '@ant-design/icons';
 import type { Dayjs } from 'dayjs';
 
-const { Text } = Typography;
-const { RangePicker } = DatePicker;
+const { Text } = Typography; 
 
 export interface SearchFilterValue {
   documentTags: string[];
@@ -61,7 +55,7 @@ interface SearchFilterProps {
   documentTypes: DocumentTypeItem[];
 }
 
-export function SearchFilter({ value, onChange, tags, documentTypes }: SearchFilterProps) {
+export function SearchFilter({ value, onChange,  documentTypes }: SearchFilterProps) {
   const handleFilterChange = (key: string, filterValue: any) => {
     onChange({ ...value, [key]: filterValue });
   };
@@ -215,7 +209,7 @@ export function SearchFilter({ value, onChange, tags, documentTypes }: SearchFil
         </div>
 
         {/* Tags */}
-        <div>
+        {/* <div>
           <div className="flex items-center mb-2">
             <TagsOutlined style={{ color: '#1e40af', marginRight: '6px' }} />
             <Text type="secondary" className="text-sm font-medium">Tags</Text>
@@ -238,15 +232,15 @@ export function SearchFilter({ value, onChange, tags, documentTypes }: SearchFil
               </Select.Option>
             ))}
           </Select>
-        </div>
+        </div> */}
 
         <Divider className="my-3" />
 
         {/* Signed By */}
-        <div>
+        {/* <div>
           <div className="flex items-center mb-2">
             <UserOutlined style={{ color: '#1e40af', marginRight: '6px' }} />
-            <Text type="secondary" className="text-sm font-medium">Signed By</Text>
+            <Text type="secondary" className="text-sm font-medium">Signed By123</Text>
           </div>
           <Input
             prefix={<UserOutlined style={{ color: '#6b7280' }} />}
@@ -256,10 +250,10 @@ export function SearchFilter({ value, onChange, tags, documentTypes }: SearchFil
             allowClear
             className="border-blue-200 focus:border-blue-500"
           />
-        </div>
+        </div> */}
 
         {/* Date Ranges */}
-        <div>
+        {/* <div>
           <div className="flex items-center mb-2">
             <CalendarOutlined style={{ color: '#1e40af', marginRight: '6px' }} />
             <Text type="secondary" className="text-sm font-medium">Date Filters</Text>
@@ -294,7 +288,7 @@ export function SearchFilter({ value, onChange, tags, documentTypes }: SearchFil
               />
             </div>
           </div>
-        </div>
+        </div> */}
       </Space>
     </Card>
   );
