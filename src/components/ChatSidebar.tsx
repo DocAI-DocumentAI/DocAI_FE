@@ -478,10 +478,10 @@ function ChatSidebar() {
 
                           {/* Chat Options Menu */}
                           {showChatMenu === chat.id && (
-                            <div className="absolute right-0 top-full mt-1 z-60 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-32">
+                            <div className="absolute right-0 top-full mt-1 z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-32">
                               <button
                                 onClick={(e) => handleDeleteChat(chat.id, e)}
-                                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                className="flex w-full  items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                                 disabled={deletingChatId === chat.id}
                               >
                                 <Trash2 size={14} />

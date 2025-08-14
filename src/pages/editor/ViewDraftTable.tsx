@@ -308,7 +308,7 @@ const ViewDraftTable = () => {
               onClick={() => navigate(`/editor/doc/${record.documentId}/${record.versionId}`)}
             />
           </Tooltip>
-          <Tooltip title="Edit">
+          {/* <Tooltip title="Edit">
             <Button
               type="text"
               icon={<EditOutlined />}
@@ -322,7 +322,7 @@ const ViewDraftTable = () => {
               icon={<DownloadOutlined />}
               size="small"
             />
-          </Tooltip>
+          </Tooltip> */}
         </Space>
       )
     }

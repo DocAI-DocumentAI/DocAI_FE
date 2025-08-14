@@ -49,7 +49,7 @@ export const getNotificationLogs = async (
   pageSize = 10,
   filters: NotificationFilters = {}
 ) => {
-  let url = `/notification/logs?pageNumber=${pageNumber}&pageSize=${pageSize}`;
+  let url = `/notification/logs?Page=${pageNumber}&Size=${pageSize}`;
   
   // Add filters to URL
   if (filters.documentId) {
@@ -94,8 +94,8 @@ export const getUserNotifications = async (
   pageSize = 20,
   filters: UserNotificationFilters = {}
 ) => {
-  let url = `/notification/logs?pageNumber=${pageNumber}&pageSize=${pageSize}`;
-  
+  let url = `/notification/logs?Page=${pageNumber}&Size=${pageSize}`;
+
   if (filters.isRead !== undefined) {
     url += `&IsRead=${filters.isRead}`;
   }

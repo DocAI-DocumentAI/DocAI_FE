@@ -110,7 +110,7 @@ export default function DocumentDetail({ onViewChange, }: any) {
         try {
             const response = await api.get(`/document/files/${document.versionId}/iframe-url`);
             const data = response.data.data;
-            
+
             if (data.canViewInline && data.iframeUrl) {
                 setPreviewUrl(data.iframeUrl);
                 setPreviewVisible(true);
@@ -130,17 +130,17 @@ export default function DocumentDetail({ onViewChange, }: any) {
         setPreviewUrl("");
     };
 
-    
+
     const handleDeleteDraft = async () => {
         setDeleteLoading(true);
         try {
             console.log(`Deleting document: ${document.documentId}, version: ${document.versionId}`);
-            
+
             const response = await api.delete(`/document/drafts/${document.documentId}?versionId=${document.versionId}`);
             console.log('Delete response:', response);
-            
+
             toast.success("Đã xóa document draft thành công!");
-            
+
             // Navigate back to queue or previous page
             setTimeout(() => {
                 if (onViewChange) {
@@ -165,10 +165,10 @@ export default function DocumentDetail({ onViewChange, }: any) {
             return;
         }
 
-        if (document.status?.toLowerCase() !== 'draft') {
-            toast.error("Chỉ có thể xóa document ở trạng thái Draft!");
-            return;
-        }
+        // if (document.status?.toLowerCase() !== 'draft') {
+        //     toast.error("Chỉ có thể xóa document ở trạng thái Draft!");
+        //     return;
+        // }
 
         setDeleteModalVisible(true);
     };
@@ -282,8 +282,8 @@ export default function DocumentDetail({ onViewChange, }: any) {
                                 <Text>{formatFileSize(document.fileSize)}</Text>
                             </Col>
                             <Col xs={24}>
-                                <Button 
-                                    icon={<EyeOutlined />} 
+                                <Button
+                                    icon={<EyeOutlined />}
                                     onClick={handlePreview}
                                     disabled={!document.versionId}
                                     loading={previewLoading}
@@ -369,22 +369,22 @@ export default function DocumentDetail({ onViewChange, }: any) {
                                             {document.title}
                                         </Title>
                                         {document.summary && (
-                                            <div style={{ 
-                                                backgroundColor: "#f6f8fa", 
-                                                padding: 16, 
+                                            <div style={{
+                                                backgroundColor: "#f6f8fa",
+                                                padding: 16,
                                                 borderRadius: 6,
                                                 border: "1px solid #e1e4e8"
                                             }}>
                                                 <Text strong style={{ marginBottom: 8, display: 'block' }}>Summary:</Text>
-                                                <div 
+                                                <div
                                                     className="document-summary"
-                                                    style={{ 
-                                                        fontSize: 14, 
+                                                    style={{
+                                                        fontSize: 14,
                                                         lineHeight: '1.6',
                                                         maxHeight: '400px',
                                                         overflowY: 'auto'
-                                                    }} 
-                                                    dangerouslySetInnerHTML={{ __html: document.summary }} 
+                                                    }}
+                                                    dangerouslySetInnerHTML={{ __html: document.summary }}
                                                 />
                                             </div>
                                         )}
@@ -397,9 +397,9 @@ export default function DocumentDetail({ onViewChange, }: any) {
                                 <Title level={4} style={{ marginBottom: 16 }}>
                                     <FileTextOutlined /> Document Description
                                 </Title>
-                                <div style={{ 
-                                    backgroundColor: "#f5f5f5", 
-                                    padding: 16, 
+                                <div style={{
+                                    backgroundColor: "#f5f5f5",
+                                    padding: 16,
                                     borderRadius: 6,
                                     minHeight: 120
                                 }}>
@@ -416,9 +416,9 @@ export default function DocumentDetail({ onViewChange, }: any) {
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                                     {document.status === 'Draft' && (
                                         <>
-                                            <Button 
-                                                type="primary" 
-                                                onClick={handleSubmitForApproval} 
+                                            <Button
+                                                type="primary"
+                                                onClick={handleSubmitForApproval}
                                                 block
                                                 loading={submitting}
                                                 disabled={submitting || deleteLoading}
@@ -426,11 +426,11 @@ export default function DocumentDetail({ onViewChange, }: any) {
                                             >
                                                 Submit for Approval
                                             </Button>
-                                            
-                                           
+
+
 
                                             {/* Alternative Delete Button */}
-                                            <Button 
+                                            <Button
                                                 type="dashed"
                                                 danger
                                                 icon={<DeleteOutlined />}
@@ -444,24 +444,38 @@ export default function DocumentDetail({ onViewChange, }: any) {
                                             </Button>
                                         </>
                                     )}
-                                    
+
                                     {document.status === 'Rejected' && (
-                                        <Button 
-                                            type="primary" 
-                                            danger 
-                                            block 
-                                            size="large"
-                                            onClick={() => navigate(`/editor/document/recreate/${document.versionId}`)}
-                                            disabled={submitting || deleteLoading}
-                                        >
-                                            Recreate Draft
-                                        </Button>
+                                        <>
+                                            <Button
+                                                type="primary"
+                                                danger
+                                                block
+                                                size="large"
+                                                onClick={() => navigate(`/editor/document/recreate/${document.versionId}`)}
+                                                disabled={submitting || deleteLoading}
+                                            >
+                                                Recreate Draft
+                                            </Button>
+                                            <Button
+                                                type="dashed"
+                                                danger
+                                                icon={<DeleteOutlined />}
+                                                onClick={handleDeleteDraftAlternative}
+                                                block
+                                                loading={deleteLoading}
+                                                disabled={submitting || deleteLoading}
+                                                size="large"
+                                            >
+                                                Delete 
+                                            </Button>
+                                        </>
                                     )}
-                                    
+
                                     {document.status === 'Approved' && (
-                                        <Button 
-                                            type="default" 
-                                            block 
+                                        <Button
+                                            type="default"
+                                            block
                                             size="large"
                                             onClick={() => navigate(`/editor/document/new-version/${document.documentId}`)}
                                             disabled={submitting || deleteLoading}
@@ -469,10 +483,10 @@ export default function DocumentDetail({ onViewChange, }: any) {
                                             Create New Version
                                         </Button>
                                     )}
-                                    
+
                                     {document.status === 'Pending' && (
-                                        <div style={{ 
-                                            textAlign: 'center', 
+                                        <div style={{
+                                            textAlign: 'center',
                                             padding: 16,
                                             backgroundColor: '#fff7e6',
                                             borderRadius: 6,
@@ -484,9 +498,9 @@ export default function DocumentDetail({ onViewChange, }: any) {
                                             </Text>
                                         </div>
                                     )}
-                                    
-                                    <Button 
-                                        icon={<EyeOutlined />} 
+
+                                    <Button
+                                        icon={<EyeOutlined />}
                                         onClick={handlePreview}
                                         disabled={!document.versionId || deleteLoading}
                                         loading={previewLoading}
@@ -503,18 +517,18 @@ export default function DocumentDetail({ onViewChange, }: any) {
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                         <Text strong>Replacement ID:</Text>
                                         <Text copyable>{document.replacementId}</Text>
-                                        
+
                                         {document.replacementDocumentName && (
                                             <>
                                                 <Text strong style={{ marginTop: 8 }}>Replacement Document:</Text>
                                                 <Text>{document.replacementDocumentName}</Text>
                                             </>
                                         )}
-                                        
+
                                         <Text strong style={{ marginTop: 8 }}>Is Replaced:</Text>
-                                        <Badge 
-                                            status={document.isReplaced ? "error" : "success"} 
-                                            text={document.isReplaced ? "Yes" : "No"} 
+                                        <Badge
+                                            status={document.isReplaced ? "error" : "success"}
+                                            text={document.isReplaced ? "Yes" : "No"}
                                         />
                                     </div>
                                 </Card>
@@ -570,7 +584,7 @@ export default function DocumentDetail({ onViewChange, }: any) {
                             border: 'none'
                         }}
                         title="Document Preview"
-                        // sandbox="allow-scripts allow-same-origin"
+                    // sandbox="allow-scripts allow-same-origin"
                     />
                 )}
             </Modal>
