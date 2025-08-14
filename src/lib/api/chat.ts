@@ -94,6 +94,11 @@ export const sendMessage = async (
   return response.data;
 };
 
+export const deleteChatSession = async (sessionId: string) => {
+  const response = await api.delete(`/chatbox/session/${sessionId}`);
+  return response.data;
+};
+
 export interface StreamingMessageChunk {
   content: string;
   isComplete: boolean;
