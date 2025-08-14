@@ -103,8 +103,7 @@ const ViewDraftTable = () => {
         user.userId,
         page,
         pageSize,
-        undefined, // title parameter (deprecated, using filters instead)
-        apiFilters  // filters object
+        undefined // title parameter (deprecated, using filters instead)
       );
 
       setDataSource(response.items || []);

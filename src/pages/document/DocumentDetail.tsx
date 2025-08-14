@@ -8,6 +8,7 @@ import { Link } from "react-router-dom"
 import { api } from "../../lib/api/api";
 import { getDocumentRecommendations } from "../../lib/api/document";
 import toast from "react-hot-toast"
+import { DocumentChatBox } from "../../components/DocumentChatBox"
 
 export default function DocumentPage() {
   const { id } = useParams()
@@ -872,6 +873,14 @@ export default function DocumentPage() {
           )}
         </div>
       </main>
+
+      {/* Floating Document Chat Box */}
+      {id && mainDoc?.title && (
+        <DocumentChatBox
+          documentId={id}
+          documentTitle={mainDoc.title}
+        />
+      )}
     </div>
   )
 }

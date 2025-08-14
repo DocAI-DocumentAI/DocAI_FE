@@ -51,6 +51,7 @@ export interface SendMessageRequest {
   message: string;
   sessionId: string;
   modelName: string;
+  documentId?: string; // Optional for document-specific chat
 }
 
 export interface SendMessageResponse {
