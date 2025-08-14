@@ -17,7 +17,6 @@ import NewChatPage from "../pages/chat/ChatNew";
 import ChatDetail from "../pages/chat/ChatDetail";
 import UploadDocument from "../pages/editor/UploadDocument";
 import EditDocument from "../components/EditDocument";
-import AdminPage from "../pages/admin/adminPage";
 import DocumentPage from "../pages/document/DocumentDetail";
 import SearchPage from "../pages/search/SearchPage";
 import ApprovalManagerTable from "../pages/editor/ApprovalManagerTable";
@@ -37,6 +36,7 @@ import DocumentChoice from "../pages/editor/DocumentChoice";
 import DocumentReplacement from "../pages/editor/DocumentReplacement";
 import DocumentLibrary from "../pages/document/DocumentLibrary.tsx";
 import Notifications from "../pages/notification/Notifications.tsx";
+import AdminRouteTestPage from "../pages/AdminRouteTestPage";
 
 const PublicRoutes: RouteObject[] = [
   // {
@@ -50,10 +50,6 @@ const PublicRoutes: RouteObject[] = [
   {
     path: "/signup",
     element: <SignUp />,
-  },
-  {
-    path: "/admin",
-    element: <AdminPage />,
   },
   {
     path: "/verify-email",
@@ -111,6 +107,10 @@ const PublicRoutes: RouteObject[] = [
   {
     path: "/notifications",
     element: <Notifications />,
+  },
+  {
+    path: "/admin-test",
+    element: <AdminRouteTestPage />,
   },
   {
     path: "/manager",

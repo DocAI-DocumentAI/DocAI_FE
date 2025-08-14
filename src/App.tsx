@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import PublicRoutes from "./routes/PublicRoutes";
-// import PrivateRoute from "./routes/PrivateRoute";
+import { AdminRoute } from "./routes/PrivateRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ChatProvider } from "./context/chat-context";
@@ -59,9 +59,9 @@ const App: React.FC = () => {
           <Route
             path="/admin"
             element={
-              // <PrivateRoute>
-              <AdminPage />
-              // </PrivateRoute>
+              <AdminRoute>
+                <AdminPage />
+              </AdminRoute>
             }
           >
             <Route path="dashboard" element={<DashboardPage />} />
