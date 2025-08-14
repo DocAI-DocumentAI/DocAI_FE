@@ -455,7 +455,7 @@ function ChatSidebar() {
                 <div className="py-1">
                   <button
                     onClick={() => {
-                      setShowProfileMenu(false);
+                      navigate('/settings/account');
                     }}
                     className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
@@ -468,7 +468,7 @@ function ChatSidebar() {
                     className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     <Settings size={16} />
-                    Tùy chỉnh ChatGPT
+                    Tùy chỉnh chat
                   </button>
 
                   <div className="border-t border-gray-100 my-1"></div>

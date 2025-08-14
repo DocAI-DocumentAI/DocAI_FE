@@ -51,31 +51,83 @@ export const recreateDocument = async (
 export const getDocuments = async (
   pageNumber = 1,
   pageSize = 10,
-  title?: string
+  title?: string,
+  filters?: any
 ) => {
   let url = `/document/documents?pageNumber=${pageNumber}&pageSize=${pageSize}`;
+  
+  // Add title filter (for backward compatibility)
   if (title) {
     url += `&Title=${encodeURIComponent(title)}`;
   }
+  
+  // Add additional filters if provided
+  if (filters) {
+    if (filters.title && !title) { // Don't add twice if title already added
+      url += `&Title=${encodeURIComponent(filters.title)}`;
+    }
+    if (filters.status) {
+      url += `&Status=${encodeURIComponent(filters.status)}`;
+    }
+    if (filters.isPublic !== undefined) {
+      url += `&IsPublic=${filters.isPublic}`;
+    }
+    if (filters.documentTypeId) {
+      url += `&DocumentTypeId=${encodeURIComponent(filters.documentTypeId)}`;
+    }
+  }
+  
+  console.log('Documents API URL:', url);
+  
   const response = await api.get(url);
   return response.data.data;
 };
+
+// Define MyDocumentsFilters interface
+interface MyDocumentsFilters {
+  title?: string;
+  status?: string;
+  isPublic?: boolean;
+  documentTypeId?: string;
+}
 
 export const getMyDocuments = async (
   userId: string,
   pageNumber = 1,
   pageSize = 10,
-  title?: string
+  title?: string,
+  filters?: MyDocumentsFilters
 ) => {
   let url = `/document/my-documents?userId=${userId}&pageNumber=${pageNumber}&pageSize=${pageSize}`;
+  
+  // Add title filter (for backward compatibility)
   if (title) {
     url += `&Title=${encodeURIComponent(title)}`;
   }
+  
+  // Add additional filters if provided
+  if (filters) {
+    if (filters.title && !title) { // Don't add twice if title already added
+      url += `&Title=${encodeURIComponent(filters.title)}`;
+    }
+    if (filters.status) {
+      url += `&Status=${encodeURIComponent(filters.status)}`;
+    }
+    if (filters.isPublic !== undefined) {
+      url += `&IsPublic=${filters.isPublic}`;
+    }
+    if (filters.documentTypeId) {
+      url += `&DocumentTypeId=${encodeURIComponent(filters.documentTypeId)}`;
+    }
+  }
+  
+  console.log('MyDocuments API URL:', url);
+  
   const response = await api.get(url);
   return response.data.data;
 };
 
-// Thêm interface cho filters
+// Thêm interface cho ApprovalQueue filters
 interface ApprovalQueueFilters {
   title?: string;
   documentTypeId?: string;
