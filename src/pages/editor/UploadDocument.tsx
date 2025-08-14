@@ -450,7 +450,7 @@ export default function UploadDocument() {
                       Choose File
                     </Button>
                     <p style={{ color: "#999", fontSize: 12, marginTop: 8 }}>
-                      Supported formats: PDF, DOCX (max 5MB)
+                      Supported formats: PDF, DOCX (max 3MB)
                     </p>
                   </Dragger>
 

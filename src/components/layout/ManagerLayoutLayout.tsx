@@ -3,10 +3,14 @@ import SidebarManager from "../common/SidebarManager";
 import toast from "react-hot-toast";
 
 function ManagerLayoutLayout() {
-    const userStr = localStorage.getItem("user");
+  const userStr = localStorage.getItem("user");
   if (!userStr) {
     toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
     return <Navigate to="/login" replace />;
+  }
+  const user = JSON.parse(userStr);
+  if(user?.role?.roleName!== "Manager") {
+    return <Navigate to="/" replace />;
   }
   return (
     <div className="flex overflow-hidden h-screen text-gray-100 bg-gray-900">

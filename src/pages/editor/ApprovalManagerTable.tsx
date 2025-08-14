@@ -77,17 +77,9 @@ const ApprovalManagerTable = () => {
         <div className="flex items-start space-x-3">
           <div className="flex-1 min-w-0">
             <div className="font-medium text-gray-900 line-clamp-1 break-words">{record.title}</div>
-            <div
-              className="document-summary"
-              style={{
-                fontSize: 14,
-                lineHeight: '1.6',
-                height: '50px',
-                overflowY: 'auto'
-
-              }}
-              dangerouslySetInnerHTML={{ __html: record.summary || record.description || 'No description' }}
-            />
+             <div className="text-sm text-gray-500 line-clamp-2 break-words">
+              {record.description || 'No description'}
+            </div>
             {/* <div className="text-sm text-gray-500 line-clamp-2 break-words">{record.summary || record.description || 'No description'}</div> */}
             <div className="flex flex-wrap items-center gap-2 mt-1">
               <Tag color="blue" className="max-w-[200px] truncate">{record.versionName}</Tag>
