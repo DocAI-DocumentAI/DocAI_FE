@@ -9,6 +9,7 @@ const { Content } = Layout;
 
 interface AnalysisData {
   title: string;
+  versionName: string;
   description: string;
   summary: string;
   tags: string[];
@@ -16,6 +17,7 @@ interface AnalysisData {
   effectiveUntil: string;
   signedBy: string;
   documentTypeId: string;
+  isPublic: boolean;
   file: File;
 }
 

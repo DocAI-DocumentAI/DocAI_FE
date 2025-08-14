@@ -1,17 +1,19 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { ArrowLeft, User, Calendar, FileText, Eye, Download, Bookmark, Building, Shield, CheckCircle, Clock, Users } from "lucide-react"
-import { useParams } from "react-router-dom"
+import { useState, useEffect, useCallback } from "react"
+import { ArrowLeft, User, Calendar, FileText, Eye, Download, Bookmark, Building, Shield, CheckCircle, Clock, Users, ThumbsUp } from "lucide-react"
+import { useParams, useLocation } from "react-router-dom"
 import { Navbar } from "../../components/layout/Navbar"
 import { Link } from "react-router-dom"
 import { api } from "../../lib/api/api";
+import { getDocumentRecommendations } from "../../lib/api/document";
 import toast from "react-hot-toast"
 
 export default function DocumentPage() {
   const { id } = useParams()
+  const location = useLocation()
   const [activeTab, setActiveTab] = useState<
-    "preview" | "information" | "content" | "original" | "version"
+    "preview" | "information" | "content" | "original" | "version" | "recommendations"
   >("preview")
   const [versions, setVersions] = useState<any[]>([]);
   const [isBookmarked, setIsBookmarked] = useState(false);
@@ -19,6 +21,8 @@ export default function DocumentPage() {
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [previewLoading, setPreviewLoading] = useState(false);
   const [canPreview, setCanPreview] = useState(false);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
 
   // Get current user ID (you might need to get this from auth context or localStorage)
 
@@ -192,6 +196,39 @@ export default function DocumentPage() {
       loadPreview(mainDoc.versionId);
     }
   };
+
+  const fetchRecommendations = useCallback(async () => {
+    if (!id) return;
+
+    setLoadingRecommendations(true);
+    try {
+      const response = await getDocumentRecommendations(id, 10, false);
+      console.log("Recommendations API response:", response);
+
+      // The API function now handles response structure normalization
+      setRecommendations(response.data || []);
+    } catch (error) {
+      console.error("Failed to fetch recommendations:", error);
+      toast.error("Failed to load recommendations");
+      setRecommendations([]); // Ensure it's always an array
+    } finally {
+      setLoadingRecommendations(false);
+    }
+  }, [id]);
+
+  // Fetch recommendations when document is loaded
+  useEffect(() => {
+    if (id && mainDoc.documentId) {
+      fetchRecommendations();
+    }
+  }, [id, mainDoc.documentId, fetchRecommendations]);
+
+  // Handle activeTab from navigation state
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+    }
+  }, [location.state]);
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
@@ -381,6 +418,13 @@ export default function DocumentPage() {
               >
                 <Clock className="mr-1 h-4 w-4 inline" />
                 Versions
+              </button>
+              <button
+                className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "recommendations" ? "border-b-2 border-blue-800 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
+                onClick={() => setActiveTab("recommendations")}
+              >
+                <ThumbsUp className="mr-1 h-4 w-4 inline" />
+                Recommendations
               </button>
             </div>
           </div>
@@ -742,6 +786,88 @@ export default function DocumentPage() {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {activeTab === "recommendations" && (
+            <div className="rounded-md border border-gray-200 bg-white p-6">
+              <h2 className="mb-4 text-lg font-semibold text-gray-900">Recommended Documents</h2>
+
+              {loadingRecommendations ? (
+                <div className="flex items-center justify-center p-12">
+                  <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+                    <div className="text-sm text-gray-600">Loading recommendations...</div>
+                  </div>
+                </div>
+              ) : !Array.isArray(recommendations) || recommendations.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">
+                  <ThumbsUp className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>No recommendations found.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {recommendations.map((rec, index) => (
+                    <div key={rec.documentId || index} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <h3 className="text-sm font-medium text-gray-900 mb-1">
+                            <Link
+                              to={`/document/${rec.documentId}`}
+                              state={{ activeTab: "preview" }}
+                              className="hover:text-blue-600 hover:underline"
+                            >
+                              {rec.title || 'Untitled Document'}
+                            </Link>
+                          </h3>
+                          <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                            <span className="flex items-center">
+                              <Building className="mr-1 h-3 w-3" />
+                              {rec.departmentName || 'N/A'}
+                            </span>
+                            <span className="flex items-center">
+                              <FileText className="mr-1 h-3 w-3" />
+                              {rec.documentTypeName || 'N/A'}
+                            </span>
+                            <span className="flex items-center">
+                              <Calendar className="mr-1 h-3 w-3" />
+                              {rec.createdTime ? new Date(rec.createdTime).toLocaleDateString() : 'N/A'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            rec.isPublic ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
+                          }`}>
+                            {rec.isPublic ? 'Public' : 'Private'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {rec.description && (
+                        <div className="text-sm text-gray-700 mb-3 line-clamp-2">
+                          {rec.description}
+                        </div>
+                      )}
+
+                      {Array.isArray(rec.tags) && rec.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {rec.tags.slice(0, 5).map((tag: string, tagIndex: number) => (
+                            <span key={tagIndex} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                              {tag}
+                            </span>
+                          ))}
+                          {rec.tags.length > 5 && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-600">
+                              +{rec.tags.length - 5} more
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
