@@ -17,7 +17,9 @@ import {
   TagsOutlined,
   CalendarOutlined,
   FolderOutlined,
-  UserOutlined
+  UserOutlined,
+  LockOutlined,
+  UnlockOutlined
 } from '@ant-design/icons';
 import type {
   DocumentTypeResponse,
@@ -195,6 +197,42 @@ export const DocumentLibraryFilter: React.FC<DocumentLibraryFilterProps> = ({
             allowClear
             className="border-blue-200 focus:border-blue-500"
           />
+        </div>
+
+        <Divider className="my-3" />
+
+        {/* Access Level */}
+        <div>
+          <div className="flex items-center mb-2">
+            <LockOutlined style={{ color: '#1e40af', marginRight: '6px' }} />
+            <Text type="secondary" className="text-sm font-medium">Access Level</Text>
+          </div>
+          <Select
+            placeholder="Select access level..."
+            onChange={(value) => handleFilterChange('isPublic', value)}
+            allowClear
+            style={{ width: '100%' }}
+            className="[&_.ant-select-selector]:border-blue-200 [&_.ant-select-focused_.ant-select-selector]:border-blue-500"
+          >
+            <Select.Option key="all" value="">
+              <div className="flex items-center">
+                <LockOutlined style={{ color: '#1e40af', marginRight: '8px' }} />
+                <span className="font-medium">All Documents</span>
+              </div>
+            </Select.Option>
+            <Select.Option key="public" value={true}>
+              <div className="flex items-center">
+                <UnlockOutlined style={{ color: '#10b981', marginRight: '8px' }} />
+                <span className="text-green-600 font-medium">Public Only</span>
+              </div>
+            </Select.Option>
+            <Select.Option key="private" value={false}>
+              <div className="flex items-center">
+                <LockOutlined style={{ color: '#ef4444', marginRight: '8px' }} />
+                <span className="text-red-600 font-medium">Private Only</span>
+              </div>
+            </Select.Option>
+          </Select>
         </div>
       </Space>
     </Card>

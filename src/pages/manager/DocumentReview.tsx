@@ -165,6 +165,12 @@ export default function DocumentReview() {
                                             <br />
                                             <Text strong>Loại file:</Text> <Text>{document.fileType}</Text>
                                             <br />
+                                            <Text strong>Loại tài liệu:</Text> <Tag color="purple">{document.documentTypeName}</Tag>
+                                            <br />
+                                            <Text strong>Quyền truy cập:</Text> <Tag color={document.isPublic ? "green" : "red"}>{document.isPublic ? "Công khai" : "Riêng tư"}</Tag>
+                                            <br />
+                                            <Text strong>Người ký:</Text> <Text>{document.signedBy || "Chưa có"}</Text>
+                                            <br />
                                             <Text strong>Hiệu lực:</Text>{" "}
                                             <Text>
                                                 {formatDate(document.effectiveFrom)} - {formatDate(document.effectiveUntil)}
@@ -183,18 +189,39 @@ export default function DocumentReview() {
                                 <Row gutter={16} style={{ marginBottom: 16 }}>
                                     <Col span={12}>
                                         <div>
-                                            <Text strong>Editor</Text>
+                                            <Text strong>Chủ sở hữu</Text>
                                             <div style={{ display: "flex", alignItems: "center", marginTop: 4 }}>
                                                 <UserOutlined style={{ marginRight: 4, color: "#666" }} />
-                                                <Text>{document.editor || document.signedBy || document.ownerId}</Text>
+                                                <Text>{document.ownerName || document.ownerId}</Text>
                                             </div>
                                         </div>
                                     </Col>
                                     <Col span={12}>
                                         <div>
-                                            <Text strong>Department</Text>
+                                            <Text strong>Phòng ban</Text>
                                             <div style={{ marginTop: 4 }}>
                                                 <Tag color="blue">{document.departmentName || document.departmentId}</Tag>
+                                            </div>
+                                        </div>
+                                    </Col>
+                                </Row>
+
+                                <Row gutter={16} style={{ marginBottom: 16 }}>
+                                    <Col span={12}>
+                                        <div>
+                                            <Text strong>Người nộp</Text>
+                                            <div style={{ display: "flex", alignItems: "center", marginTop: 4 }}>
+                                                <UserOutlined style={{ marginRight: 4, color: "#666" }} />
+                                                <Text>{document.submittedByName || document.submittedBy}</Text>
+                                            </div>
+                                        </div>
+                                    </Col>
+                                    <Col span={12}>
+                                        <div>
+                                            <Text strong>Ngày tạo</Text>
+                                            <div style={{ display: "flex", alignItems: "center", marginTop: 4 }}>
+                                                <CalendarOutlined style={{ marginRight: 4, color: "#666" }} />
+                                                <Text>{formatDate(document.createdTime)}</Text>
                                             </div>
                                         </div>
                                     </Col>
@@ -203,7 +230,7 @@ export default function DocumentReview() {
                                 <Row gutter={16}>
                                     <Col span={12}>
                                         <div>
-                                            <Text strong>Submitted</Text>
+                                            <Text strong>Ngày nộp</Text>
                                             <div style={{ display: "flex", alignItems: "center", marginTop: 4 }}>
                                                 <CalendarOutlined style={{ marginRight: 4, color: "#666" }} />
                                                 <Text>{formatDate(document.lastSubmitted)}</Text>
@@ -212,9 +239,9 @@ export default function DocumentReview() {
                                     </Col>
                                     <Col span={12}>
                                         <div>
-                                            <Text strong>Version</Text>
+                                            <Text strong>Phiên bản</Text>
                                             <div style={{ marginTop: 4 }}>
-                                                <Text>{document.versionName}</Text>
+                                                <Tag color="geekblue">{document.versionName}</Tag>
                                             </div>
                                         </div>
                                     </Col>

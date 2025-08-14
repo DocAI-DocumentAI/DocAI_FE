@@ -547,6 +547,8 @@ export const getOfficialDocuments = async (
     // Access Control Filters
     if (cleanedParams.isPublic !== undefined)
       searchParams.append("isPublic", cleanedParams.isPublic.toString());
+    if (cleanedParams.departmentOnly !== undefined)
+      searchParams.append("departmentOnly", cleanedParams.departmentOnly.toString());
 
     // File Property Filters
     if (

@@ -30,7 +30,9 @@ import {
   BankOutlined,
   BookOutlined,
   RobotOutlined,
-  SearchOutlined
+  SearchOutlined,
+  LockOutlined,
+  UnlockOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../../components/layout/Navbar';
@@ -175,6 +177,20 @@ const DocumentCard: React.FC<{ document: DocumentDraftResponse }> = ({ document 
               </span>
             </div>
 
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center space-x-1 text-gray-500">
+                {document.isPublic ? (
+                  <UnlockOutlined style={{ color: '#10b981' }} />
+                ) : (
+                  <LockOutlined style={{ color: '#ef4444' }} />
+                )}
+                <span>Access:</span>
+              </div>
+              <span className={`font-semibold ${document.isPublic ? 'text-green-600' : 'text-red-600'}`}>
+                {document.isPublic ? 'Public' : 'Private'}
+              </span>
+            </div>
+
             {/* <div className="flex items-center justify-between text-xs">
               <div className="flex items-center space-x-1 text-gray-500">
                 <UserOutlined style={{ color: '#6b7280' }} />
@@ -299,7 +315,9 @@ const DocumentLibrary: React.FC = () => {
         pageNumber: currentPage,
         pageSize: pageSize,
         ...(searchTerm && { keyword: searchTerm }),
-        ...(activeTab === 'public' && { isPublic: true }),
+        // Department tab: departmentOnly=true (user's department documents)
+        // Public tab: departmentOnly=false (all departments)
+        departmentOnly: activeTab === 'department',
         ...filters // Include all filters
       };
 
