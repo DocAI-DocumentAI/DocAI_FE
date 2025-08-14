@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
+import { useState, useEffect } from "react" 
 import { updateSettings, changePassword } from "../../lib/api/setting"
 import toast from 'react-hot-toast'
 

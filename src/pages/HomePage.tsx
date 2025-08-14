@@ -50,7 +50,7 @@ export default function HomePage() {
               icon={<UserCircle className="w-8 h-8 text-blue-500" />}
               title="Personal info"
               description="Set your personal details."
-              href="/profile"
+              href="/settings/account"
             />
 
             {/* <FeatureCard

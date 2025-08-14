@@ -30,10 +30,10 @@ const SIDEBAR_ITEMS: {
     href: "/",
   },
   {
-    name: "Settings",
+    name: "Logout",
     icon: Settings,
     color: "#6EE7B7",
-    href: "/manager/settings",
+    href: "/login",
   },
 ];
 
