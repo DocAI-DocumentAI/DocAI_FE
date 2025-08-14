@@ -49,6 +49,7 @@ export interface OfficialDocumentsRequest {
 
   // Access Control Filters
   isPublic?: boolean;         // true for public, false for private
+  departmentOnly?: boolean;   // true to show only user's department documents, false for all departments
 
   // File Property Filters
   minFileSize?: number;       // Bytes, min 0
