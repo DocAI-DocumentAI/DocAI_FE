@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Typography, Card, Button, Input, Select, DatePicker, Form, Row, Col, Space, Spin, Table, Modal, Tag, Alert, Empty } from "antd"
+import { Layout, Typography, Card, Button, Input, Select, DatePicker, Form, Row, Col, Space, Spin, Table, Modal, Tag, Alert, Empty, Switch } from "antd"
 import { UploadOutlined, InboxOutlined, SearchOutlined, SwapOutlined, FileTextOutlined, ArrowLeftOutlined } from "@ant-design/icons"
 import {
   uploadDraftDocument,
@@ -33,6 +33,7 @@ const DocumentReplacement: React.FC = () => {
   const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([]);
   const [loadingDocumentTypes, setLoadingDocumentTypes] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isPublicState, setIsPublicState] = useState(false);
 
   // Replacement document selection
   const [showDocumentModal, setShowDocumentModal] = useState(false);
@@ -70,7 +71,10 @@ const DocumentReplacement: React.FC = () => {
       setSelectedFile(analysisData.file);
       setHtmlDescription(analysisData.description || "");
       setHtmlSummary(analysisData.summary || "");
-      
+
+      const isPublicValue = analysisData.isPublic || false;
+      setIsPublicState(isPublicValue);
+
       form.setFieldsValue({
         title: analysisData.title || "",
         versionName: analysisData.versionName || "",
@@ -79,6 +83,7 @@ const DocumentReplacement: React.FC = () => {
         effectiveTo: analysisData.effectiveUntil ? moment(analysisData.effectiveUntil) : null,
         signedBy: analysisData.signedBy || "",
         type: analysisData.documentTypeId || "",
+        isPublic: isPublicValue,
       });
 
       // Load replacement suggestions automatically
@@ -514,6 +519,28 @@ const DocumentReplacement: React.FC = () => {
                   <Col xs={24} sm={12}>
                     <Form.Item name="effectiveTo" label="Effective Until">
                       <DatePicker style={{ width: "100%" }} />
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      name="isPublic"
+                      label="Document Visibility"
+                      valuePropName="checked"
+                      initialValue={false}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Switch
+                          checked={isPublicState}
+                          onChange={(checked) => {
+                            setIsPublicState(checked);
+                            form.setFieldValue('isPublic', checked);
+                          }}
+                        />
+                        <Text>Make this document public</Text>
+                      </div>
                     </Form.Item>
                   </Col>
                 </Row>

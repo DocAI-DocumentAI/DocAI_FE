@@ -422,6 +422,65 @@ export const submitDocumentForApproval = async (
   return response.data;
 };
 
+// Document recommendation interface
+export interface DocumentRecommendation {
+  documentId: string;
+  title: string;
+  description?: string;
+  documentTypeId?: string;
+  documentTypeName?: string;
+  departmentId?: string;
+  departmentName?: string;
+  isPublic?: boolean;
+  createdTime?: string;
+  tags?: string[];
+  relevanceScore?: number;
+  recommendationReason?: string;
+  sharedTagCount?: number;
+  latestVersionId?: string;
+}
+
+// Recommendation API response interface
+export interface RecommendationResponse {
+  sourceDocumentId: string;
+  sourceDocumentTitle: string;
+  recommendations: DocumentRecommendation[];
+  totalFound: number;
+  requestedCount: number;
+  generatedAt: string;
+  fromCache: boolean;
+}
+
+// Get document recommendations
+export const getDocumentRecommendations = async (
+  documentId: string,
+  count: number = 10,
+  includeSameDepartmentOnly: boolean = false
+): Promise<{ data: DocumentRecommendation[]; meta?: RecommendationResponse }> => {
+  try {
+    const response = await api.get(`/document/documents/${documentId}/recommendations`, {
+      params: {
+        count,
+        includeSameDepartmentOnly
+      }
+    });
+
+    console.log("Raw API response:", response.data);
+
+    // Handle the specific response structure: response.data.data.recommendations
+    const responseData = response.data?.data;
+    const recommendations = responseData?.recommendations || [];
+
+    return {
+      data: Array.isArray(recommendations) ? recommendations : [],
+      meta: responseData // Include full response data for additional info
+    };
+  } catch (error) {
+    console.error('Error fetching recommendations:', error);
+    return { data: [], meta: undefined };
+  }
+};
+
 // Enhanced Document Library API Functions
 import type {
   OfficialDocumentsRequest,
