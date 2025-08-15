@@ -1,6 +1,7 @@
 import { Layout, Typography, Card, Button, Input, Select, DatePicker, Upload, Form, Row, Col, Space, Spin, Switch } from "antd"
 import { UploadOutlined, InboxOutlined, ArrowRightOutlined } from "@ant-design/icons"
 import { analyzeDocument, recreateDocument, regenerateSummary, getDocumentTypes, DocumentType } from "../../lib/api/document";
+import { api } from "../../lib/api/api";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import WysiwygEditor from 'react-simple-wysiwyg';
@@ -82,6 +83,61 @@ export default function RecreateDocument() {
         setLoadingDocumentTypes(true);
         const types = await getDocumentTypes();
         setDocumentTypes(types);
+
+        // Set form values after document types are loaded
+        if (location.state?.analysisData && location.state?.mode === 'recreate') {
+          const analysisData = location.state.analysisData;
+          setMode('recreate');
+          setSelectedFile(analysisData.file);
+          setHtmlDescription(analysisData.description || "");
+          setHtmlSummary(analysisData.summary || "");
+          setIsAnalyzed(true);
+
+          const isPublicValue = analysisData.isPublic || false;
+          setIsPublicState(isPublicValue);
+
+          const formValues = {
+            title: analysisData.title || "",
+            tags: analysisData.tags || [],
+            effectiveFrom: analysisData.effectiveFrom ? moment(analysisData.effectiveFrom) : null,
+            effectiveTo: analysisData.effectiveUntil ? moment(analysisData.effectiveUntil) : null,
+            signedBy: analysisData.signedBy || "",
+            type: analysisData.documentTypeId || "",
+            isPublic: isPublicValue,
+          };
+
+          form.setFieldsValue(formValues);
+        } else if (location.state?.documentData && location.state?.mode === 'recreate') {
+          // Handle document data from DocumentDetail page
+          console.log('🔍 RecreateDocument: Received document data', location.state);
+
+          const documentData = location.state.documentData;
+          // Start in upload mode so user can upload new file, but keep the document data for later
+          setMode('upload');
+          setHtmlDescription(documentData.description || "");
+          setHtmlSummary(documentData.summary || "");
+          setIsAnalyzed(false); // No file uploaded yet, user needs to upload new file
+
+          const isPublicValue = documentData.isPublic || false;
+          setIsPublicState(isPublicValue);
+
+          const formValues = {
+            title: documentData.title || "",
+            versionName: documentData.versionName || "",
+            tags: documentData.tags || [],
+            effectiveFrom: documentData.effectiveFrom ? moment(documentData.effectiveFrom) : null,
+            effectiveTo: documentData.effectiveUntil ? moment(documentData.effectiveUntil) : null,
+            signedBy: documentData.signedBy || "",
+            type: documentData.documentTypeId || "",
+            isPublic: isPublicValue,
+          };
+
+          // Set form values immediately and also with a delay to ensure it sticks
+          form.setFieldsValue(formValues);
+          setTimeout(() => {
+            form.setFieldsValue(formValues);
+          }, 500); // Delay to ensure form is ready
+        }
       } catch (error) {
         console.error("Failed to fetch document types:", error);
         toast.error("Failed to load document types");
@@ -91,87 +147,112 @@ export default function RecreateDocument() {
     };
 
     fetchDocumentTypes();
+  }, [location.state, form]);
 
-    if (location.state?.analysisData && location.state?.mode === 'recreate') {
-      const analysisData = location.state.analysisData;
-      setMode('recreate');
-      setSelectedFile(analysisData.file);
-      setHtmlDescription(analysisData.description || "");
-      setHtmlSummary(analysisData.summary || "");
-      setIsAnalyzed(true);
-      
-      const isPublicValue = analysisData.isPublic || false;
-      setIsPublicState(isPublicValue);
+  // Separate effect to ensure form values are set after document types are loaded
+  useEffect(() => {
+    if (!loadingDocumentTypes && documentTypes.length > 0 && location.state?.documentData && location.state?.mode === 'recreate') {
+      const documentData = location.state.documentData;
 
       const formValues = {
-        title: analysisData.title || "",
-        tags: analysisData.tags || [],
-        effectiveFrom: analysisData.effectiveFrom ? moment(analysisData.effectiveFrom) : null,
-        effectiveTo: analysisData.effectiveUntil ? moment(analysisData.effectiveUntil) : null,
-        signedBy: analysisData.signedBy || "",
-        type: analysisData.documentTypeId || "",
-        isPublic: isPublicValue,
+        title: documentData.title || "",
+        versionName: documentData.versionName || "",
+        tags: documentData.tags || [],
+        effectiveFrom: documentData.effectiveFrom ? moment(documentData.effectiveFrom) : null,
+        effectiveTo: documentData.effectiveUntil ? moment(documentData.effectiveUntil) : null,
+        signedBy: documentData.signedBy || "",
+        type: documentData.documentTypeId || "",
+        isPublic: documentData.isPublic || false,
       };
 
       form.setFieldsValue(formValues);
     }
-  }, [location.state, form]);
+  }, [loadingDocumentTypes, documentTypes, location.state, form]);
 
   const handleSwitchChange = (checked: boolean) => {
     setIsPublicState(checked);
     form.setFieldValue('isPublic', checked);
   };
 
-  const handleSubmit = async () => {
+  const handleDocumentAction = async (values: any, action: 'draft' | 'submit') => {
+    if (!id) {
+      toast.error("Không tìm thấy documentId trên URL!");
+      return;
+    }
+
+    // Only require file if we don't have existing document data (i.e., not recreating from rejected document)
+    if (!selectedFile && !(location.state?.documentData && location.state?.mode === 'recreate')) {
+      toast.error("Please select a file to upload!");
+      return;
+    }
+
+    // Prepare form data for API call
+    const formData = new FormData();
+    formData.append("Title", values.title || "");
+    formData.append("VersionName", values.versionName || "");
+    formData.append("Summary", htmlSummary || "");
+    formData.append("SignedBy", values.signedBy || "");
+    formData.append("Description", htmlDescription || "");
+    formData.append("EffectiveFrom", values.effectiveFrom ? values.effectiveFrom.toISOString() : "");
+    formData.append("EffectiveUntil", values.effectiveTo ? values.effectiveTo.toISOString() : "");
+    formData.append("Tags", Array.isArray(values.tags) ? values.tags.filter(Boolean).join(",") : "");
+    formData.append("ReplacementDocumentId", values.replacementDocumentId || "");
+    formData.append("DocumentTypeId", values.type || "");
+    formData.append("IsPublic", isPublicState ? "true" : "false");
+
+    // Only append file if a new file is selected
+    if (selectedFile) {
+      formData.append("File", selectedFile);
+    }
+
     try {
-      const values = await form.validateFields();
-      
-      if (!id) {
-        toast.error("Không tìm thấy documentId trên URL!");
-        return;
-      }
-
-      if (!selectedFile) {
-        toast.error("Please select a file to upload!");
-        return;
-      }
-
-      const formValues = {
-        versionName: values.versionName || "",
-        summary: htmlSummary || "",
-        replacementDocumentId: values.replacementDocumentId || "",
-        effectiveFrom: values.effectiveFrom ? values.effectiveFrom.toISOString() : "",
-        effectiveUntil:  values.effectiveTo ? values.effectiveTo.toISOString() : "",
-        signedBy: values.signedBy || "",
-        title: values.title || "",
-        tags: Array.isArray(values.tags) ? values.tags.filter(Boolean) : [],
-        description: htmlDescription || "",
-        file: selectedFile,
-        documentTypeId: values.type || "",
-        isPublic: isPublicState,
-      };
-
       setIsUploading(true);
-      await recreateDocument(id, formValues);
-      toast.success("Tạo lại bản nháp thành công!");
-      
+
+      // First, recreate as draft
+      const recreateResponse = await recreateDocument(id, formData);
+
+      if (action === 'submit' && recreateResponse?.versionId) {
+        // If submitting, also call submit API
+        const userStr = localStorage.getItem("user");
+        if (!userStr) {
+          toast.error("User information not found, please login again!");
+          return;
+        }
+        const user = JSON.parse(userStr);
+
+        await api.post(`/document/submit/${recreateResponse.versionId}?userId=${user.userId}`);
+        toast.success("Document recreated and submitted for approval successfully!");
+      } else {
+        toast.success("Document recreated as draft successfully!");
+      }
+
+      // Reset form and navigate back
       form.resetFields();
       setHtmlDescription("");
       setHtmlSummary("");
       setSelectedFile(null);
       setIsPublicState(false);
-      
+
       navigate(-1);
     } catch (error: any) {
       if (error.errorFields) {
         toast.error("Vui lòng kiểm tra lại thông tin form!");
       } else {
-        toast.error(`Tạo lại bản nháp thất bại. Vui lòng thử lại! ${error?.response?.data?.message}`);
+        const errorMessage = error?.response?.data?.message || error.message;
+        toast.error(`${action === 'draft' ? 'Save as draft' : 'Submit'} failed: ${errorMessage}`);
         console.error(error);
       }
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const handleSaveAsDraft = async (values: any) => {
+    await handleDocumentAction(values, 'draft');
+  };
+
+  const handleSubmitForApproval = async (values: any) => {
+    await handleDocumentAction(values, 'submit');
   };
 
   const handleFileUpload = async (info: any) => {
@@ -193,7 +274,12 @@ export default function RecreateDocument() {
       setIsAnalyzed(false);
       setHtmlDescription("");
       setHtmlSummary("");
-      form.resetFields();
+
+      // Only reset fields if not in recreate mode with existing document data
+      if (!(location.state?.documentData && location.state?.mode === 'recreate')) {
+        form.resetFields();
+      }
+
       toast.success("File uploaded successfully! Click 'Analyze' to extract document information.");
     }
   };
@@ -211,7 +297,11 @@ export default function RecreateDocument() {
     // Clear previous analysis data
     setHtmlDescription("");
     setHtmlSummary("");
-    form.resetFields(['title', 'versionName', 'tags', 'effectiveFrom', 'effectiveTo', 'signedBy']);
+
+    // Only reset specific fields if not in recreate mode with existing document data
+    if (!(location.state?.documentData && location.state?.mode === 'recreate')) {
+      form.resetFields(['title', 'versionName', 'tags', 'effectiveFrom', 'effectiveTo', 'signedBy']);
+    }
 
     try {
       // Simulate step progression for better UX - make extracting text longer
@@ -225,14 +315,29 @@ export default function RecreateDocument() {
       setHtmlSummary(analyzedData.summary || "");
       setIsAnalyzed(true);
 
-      form.setFieldsValue({
-        title: analyzedData.title || "",
-        versionName: analyzedData.versionName || "",
-        tags: analyzedData.tags || [],
-        effectiveFrom: analyzedData.effectiveFrom ? moment(analyzedData.effectiveFrom) : null,
-        effectiveTo: analyzedData.effectiveUntil ? moment(analyzedData.effectiveUntil) : null,
-        signedBy: analyzedData.signedBy || "",
-      });
+      // If in recreate mode with existing document data, merge analyzed data with existing data
+      if (location.state?.documentData && location.state?.mode === 'recreate') {
+        const documentData = location.state.documentData;
+        form.setFieldsValue({
+          title: documentData.title || analyzedData.title || "",
+          versionName: documentData.versionName || analyzedData.versionName || "",
+          tags: documentData.tags?.length > 0 ? documentData.tags : (analyzedData.tags || []),
+          effectiveFrom: documentData.effectiveFrom ? moment(documentData.effectiveFrom) : (analyzedData.effectiveFrom ? moment(analyzedData.effectiveFrom) : null),
+          effectiveTo: documentData.effectiveUntil ? moment(documentData.effectiveUntil) : (analyzedData.effectiveUntil ? moment(analyzedData.effectiveUntil) : null),
+          signedBy: documentData.signedBy || analyzedData.signedBy || "",
+          type: documentData.documentTypeId || "",
+          isPublic: documentData.isPublic || false,
+        });
+      } else {
+        form.setFieldsValue({
+          title: analyzedData.title || "",
+          versionName: analyzedData.versionName || "",
+          tags: analyzedData.tags || [],
+          effectiveFrom: analyzedData.effectiveFrom ? moment(analyzedData.effectiveFrom) : null,
+          effectiveTo: analyzedData.effectiveUntil ? moment(analyzedData.effectiveUntil) : null,
+          signedBy: analyzedData.signedBy || "",
+        });
+      }
 
       toast.success("Document analyzed successfully!");
     } catch (error: any) {
@@ -314,11 +419,13 @@ export default function RecreateDocument() {
           {/* Header */}
           <div style={{ marginBottom: 24 }}>
             <Title level={2} style={{ margin: 0 }}>
-              {mode === 'upload' ? 'Recreate Document - Upload File' : 'Recreate Document'}
+              {mode === 'upload' ? 'Recreate Document - Upload New File' : 'Recreate Document'}
             </Title>
             <Text type="secondary">
               {mode === 'upload'
-                ? 'Upload a new file to recreate the document and analyze it with AI to extract metadata'
+                ? (location.state?.documentData
+                    ? 'Review and modify the document information below. Optionally upload a new file to replace the existing one. You can recreate the document without making any changes.'
+                    : 'Upload a new file to recreate the document and analyze it with AI to extract metadata')
                 : 'Complete your document details to recreate the document'
               }
             </Text>
@@ -338,8 +445,30 @@ export default function RecreateDocument() {
                   style={{ marginBottom: 24 }}
                 >
                   <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
-                    Upload a new PDF or DOCX file to recreate the document.
+                    {location.state?.documentData
+                      ? 'Optionally upload a new PDF or DOCX file to replace the rejected document file. If no new file is uploaded, the document will be recreated with the existing file and updated information.'
+                      : 'Upload a new PDF or DOCX file to recreate the document.'
+                    }
                   </Text>
+
+                  {location.state?.documentData && (
+                    <div style={{
+                      backgroundColor: '#f6ffed',
+                      border: '1px solid #b7eb8f',
+                      borderRadius: 6,
+                      padding: 12,
+                      marginBottom: 16
+                    }}>
+                      <Text strong style={{ color: '#52c41a' }}>✓ Document Information Preserved</Text>
+                      <div style={{ marginTop: 4 }}>
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                          Title: {location.state.documentData.title || 'N/A'} |
+                          Type: {location.state.documentData.documentTypeId || 'N/A'} |
+                          Public: {location.state.documentData.isPublic ? 'Yes' : 'No'}
+                        </Text>
+                      </div>
+                    </div>
+                  )}
 
                   <Dragger
                     {...uploadProps}
@@ -690,13 +819,27 @@ export default function RecreateDocument() {
             </Card>
           )}
 
-          {/* Step 3: Document Recreation Form (only show when in recreate mode) */}
-          {mode === 'recreate' && (
+          {/* Step 3: Document Recreation Form (show when in recreate mode OR when in upload mode with existing document data) */}
+          {(mode === 'recreate' || (mode === 'upload' && location.state?.documentData)) && (
             <Card
-              title="Recreate Document"
+              title={mode === 'upload' && location.state?.documentData
+                ? "Step 2: Review Document Information"
+                : "Recreate Document"
+              }
               style={{ marginBottom: 24 }}
             >
-              <Form form={form} layout="vertical">
+              {mode === 'upload' && location.state?.documentData && (
+                <div style={{ marginBottom: 16 }}>
+                  <Text type="secondary">
+                    Review and modify the document information below. This data was preserved from your original document.
+                    Upload a new file above to replace the rejected document.
+                  </Text>
+
+
+                </div>
+              )}
+
+              <Form form={form} layout="vertical" onFinish={handleSaveAsDraft}>
                 <Row gutter={16}>
                   <Col xs={24} sm={12}>
                     <Form.Item
@@ -872,13 +1015,26 @@ export default function RecreateDocument() {
                       {mode === 'recreate' ? 'Back' : 'Cancel'}
                     </Button>
                     <Button
-                      type="primary"
-                      onClick={handleSubmit}
+                      onClick={() => form.submit()}
                       icon={isUploading ? <Spin size="small" /> : <UploadOutlined />}
                       loading={isUploading}
-                      disabled={!selectedFile || isAnyOperationInProgress}
+                      disabled={(!selectedFile && !(location.state?.documentData && location.state?.mode === 'recreate')) || isAnyOperationInProgress}
                     >
-                      {isUploading ? "Recreating..." : "Recreate Document"}
+                      {isUploading ? "Saving..." : "Save as Draft"}
+                    </Button>
+                    <Button
+                      type="primary"
+                      onClick={() => {
+                        form.validateFields().then(values => {
+                          handleSubmitForApproval(values);
+                        }).catch(errorInfo => {
+                          console.log('Form validation failed:', errorInfo);
+                        });
+                      }}
+                      loading={isUploading}
+                      disabled={(!selectedFile && !(location.state?.documentData && location.state?.mode === 'recreate')) || isAnyOperationInProgress}
+                    >
+                      {isUploading ? "Submitting..." : "Submit for Approval"}
                     </Button>
                   </Space>
                 </Form.Item>

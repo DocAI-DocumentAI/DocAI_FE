@@ -168,6 +168,7 @@ interface ApprovalQueueFilters {
   isPublic?: boolean;
   fromDate?: string;
   toDate?: string;
+  status?: string;
 }
 
 // Cập nhật hàm getApprovalQueue
@@ -193,6 +194,9 @@ export const getApprovalQueue = async (
   }
   if (filters.toDate) {
     url += `&ToDate=${encodeURIComponent(filters.toDate)}`;
+  }
+  if (filters.status) {
+    url += `&Status=${encodeURIComponent(filters.status)}`;
   }
   
   const response = await api.get(url);
