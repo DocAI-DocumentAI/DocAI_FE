@@ -53,19 +53,19 @@ const generateSecurePassword = (length: number = 12): string => {
     .join("");
 };
 
-// Function to check password strength
-const checkPasswordStrength = (password: string) => {
-  const checks = {
-    length: password.length >= 8,
-    uppercase: /[A-Z]/.test(password),
-    lowercase: /[a-z]/.test(password),
-    number: /\d/.test(password),
-    special: /[!@#$%^&*()_+=[\]{}|;:,.<>?-]/.test(password),
-  };
+// // Function to check password strength
+// const checkPasswordStrength = (password: string) => {
+//   const checks = {
+//     length: password.length >= 8,
+//     uppercase: /[A-Z]/.test(password),
+//     lowercase: /[a-z]/.test(password),
+//     number: /\d/.test(password),
+//     special: /[!@#$%^&*()_+=[\]{}|;:,.<>?-]/.test(password),
+//   };
 
-  const score = Object.values(checks).filter(Boolean).length;
-  return { checks, score };
-};
+//   const score = Object.values(checks).filter(Boolean).length;
+//   return { checks, score };
+// };
 
 const CreateUserPage = () => {
   const navigate = useNavigate();
