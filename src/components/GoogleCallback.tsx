@@ -90,8 +90,7 @@ const GoogleCallback: React.FC<GoogleCallbackProps> = ({
           if (roleName === "Admin") {
             console.log("Navigating to admin dashboard");
             navigate("/admin/dashboard");
-          }
-          if (roleName === "Manager") {
+          } else if (roleName === "Manager") {
             console.log("Navigating to manager dashboard");
             navigate("/manager/approvalQueue");
           } else {
