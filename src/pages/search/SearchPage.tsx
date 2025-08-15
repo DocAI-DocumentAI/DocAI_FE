@@ -262,7 +262,7 @@ export default function SearchPage() {
                   <div className="flex items-center mb-4">
                     <SearchOutlined className="mr-3 text-xl text-blue-600" />
                     <Title level={4} className="mb-0 text-gray-800">
-                      Search Query
+                      Search
                     </Title>
                   </div>
                   <SearchBox

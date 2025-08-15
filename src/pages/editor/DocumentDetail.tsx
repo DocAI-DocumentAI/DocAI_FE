@@ -452,7 +452,28 @@ export default function DocumentDetail({ onViewChange, }: any) {
                                                 danger
                                                 block
                                                 size="large"
-                                                onClick={() => navigate(`/editor/document/recreate/${document.versionId}`)}
+                                                onClick={() => {
+                                                    // Prepare document data for recreation
+                                                    const documentData = {
+                                                        title: document.title || "",
+                                                        description: document.description || "",
+                                                        summary: document.summary || "",
+                                                        tags: document.tags || [],
+                                                        effectiveFrom: document.effectiveFrom || "",
+                                                        effectiveUntil: document.effectiveUntil || "",
+                                                        signedBy: document.signedBy || "",
+                                                        documentTypeId: document.documentTypeId || "",
+                                                        isPublic: document.isPublic || false,
+                                                        versionName: document.versionName || "",
+                                                    };
+
+                                                    navigate(`/editor/document/recreate/${document.versionId}`, {
+                                                        state: {
+                                                            documentData,
+                                                            mode: 'recreate'
+                                                        }
+                                                    });
+                                                }}
                                                 disabled={submitting || deleteLoading}
                                             >
                                                 Recreate Draft
