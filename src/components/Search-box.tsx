@@ -1,31 +1,41 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef } from "react"
-import { Search } from "lucide-react"
+import { useState, useRef, useEffect } from "react";
+import { Search } from "lucide-react";
 
 interface SearchBoxProps {
-  onSearch: (query: string) => void
-  placeholder?: string
+  onSearch: (query: string) => void;
+  placeholder?: string;
+  initialValue?: string;
 }
 
-export function SearchBox({ onSearch, placeholder = "Prompt to search" }: SearchBoxProps) {
-  const [query, setQuery] = useState("")
-  const searchBoxRef = useRef<HTMLTextAreaElement>(null)
+export function SearchBox({
+  onSearch,
+  placeholder = "Prompt to search",
+  initialValue = "",
+}: SearchBoxProps) {
+  const [query, setQuery] = useState(initialValue);
+  const searchBoxRef = useRef<HTMLTextAreaElement>(null);
+
+  // Update query when initialValue changes
+  useEffect(() => {
+    setQuery(initialValue);
+  }, [initialValue]);
 
   const handleSearch = () => {
     if (query.trim()) {
-      onSearch(query)
+      onSearch(query);
     }
-  }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSearch()
+      e.preventDefault();
+      handleSearch();
     }
-  }
+  };
 
   return (
     <div className="relative h-[140px] rounded-lg border-2 border-blue-200 bg-white shadow-sm hover:border-blue-300 transition-colors">
@@ -59,5 +69,5 @@ export function SearchBox({ onSearch, placeholder = "Prompt to search" }: Search
         </div>
       )}
     </div>
-  )
+  );
 }

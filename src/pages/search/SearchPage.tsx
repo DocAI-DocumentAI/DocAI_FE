@@ -1,22 +1,39 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Navbar } from "../../components/layout/Navbar";
 import { SearchBox } from "../../components/Search-box";
 import { SearchResults } from "../../components/Search-results";
 import { SearchFilter } from "../../components/Search-filter";
-import { semanticSearchDocuments, getDocumentTypes } from "../../lib/api/document";
+import {
+  semanticSearchDocuments,
+  getDocumentTypes,
+} from "../../lib/api/document";
 import { getTags } from "../../lib/api/tag";
-import type { SearchFilterValue, DocumentTypeItem } from "../../components/Search-filter";
+import type {
+  SearchFilterValue,
+  DocumentTypeItem,
+} from "../../components/Search-filter";
 
 import { Card, Spin, Typography, Row, Col } from "antd";
-import { RobotOutlined, SearchOutlined, FilterOutlined, FileTextOutlined } from "@ant-design/icons";
+import {
+  RobotOutlined,
+  SearchOutlined,
+  FilterOutlined,
+  FileTextOutlined,
+} from "@ant-design/icons";
 // Import test utilities for development/testing
-import { testSemanticSearchParams, testDefaultFilterValues } from "../../utils/searchTestUtils";
+import {
+  testSemanticSearchParams,
+  testDefaultFilterValues,
+} from "../../utils/searchTestUtils";
 
 const { Title, Paragraph } = Typography;
 
 export default function SearchPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearched, setIsSearched] = useState(false);
+  const [initialQuery, setInitialQuery] = useState("");
   const [filter, setFilter] = useState<SearchFilterValue>({
     documentTags: [],
     startDate: null,
@@ -28,14 +45,53 @@ export default function SearchPage() {
     boostDepartmentResults: true,
     latestVersionsOnly: true,
     scope: 0,
-    documentTypeId: '',
-    signedBy: '',
+    documentTypeId: "",
+    signedBy: "",
     fromDate: null,
     toDate: null,
   });
   const [loading, setLoading] = useState(false);
   const [tags, setTags] = useState<any[]>([]);
   const [documentTypes, setDocumentTypes] = useState<DocumentTypeItem[]>([]);
+
+  // Restore state from URL parameters on mount
+  const isRestoringFromURL = useRef(false);
+  const hasSearchedInitialQuery = useRef(false);
+
+  useEffect(() => {
+    const query = searchParams.get("q");
+    const tags = searchParams.get("tags");
+    const documentTypeId = searchParams.get("docType");
+    const signedBy = searchParams.get("signedBy");
+
+    if (query || tags || documentTypeId || signedBy) {
+      isRestoringFromURL.current = true;
+    }
+
+    if (query) {
+      setInitialQuery(query);
+      setIsSearched(true);
+      // Set loading immediately when we have a query from URL
+      setLoading(true);
+    }
+
+    if (tags || documentTypeId || signedBy) {
+      setFilter((prev) => ({
+        ...prev,
+        documentTags: tags ? tags.split(",") : prev.documentTags,
+        documentTypeId: documentTypeId || prev.documentTypeId,
+        signedBy: signedBy || prev.signedBy,
+      }));
+    }
+
+    // Reset flags after a short delay
+    setTimeout(() => {
+      isRestoringFromURL.current = false;
+    }, 500);
+
+    // Reset search flag when URL changes
+    hasSearchedInitialQuery.current = false;
+  }, [searchParams]);
 
   // Fetch reference data on mount
   useEffect(() => {
@@ -47,102 +103,139 @@ export default function SearchPage() {
 
         // Fetch document types
         const docTypes = await getDocumentTypes();
-        setDocumentTypes(docTypes.map(type => ({
-          id: type.id,
-          name: type.name,
-          description: type.description
-        })));
+        setDocumentTypes(
+          docTypes.map((type) => ({
+            id: type.id,
+            name: type.name,
+            description: type.description,
+          }))
+        );
 
         // Run tests in development mode
         if (import.meta.env.DEV) {
-          console.log('🧪 Running Enhanced Semantic Search Tests...');
+          console.log("🧪 Running Enhanced Semantic Search Tests...");
           testSemanticSearchParams();
           testDefaultFilterValues();
         }
       } catch (error) {
-        console.error('Error fetching reference data:', error);
+        console.error("Error fetching reference data:", error);
       }
     };
 
     fetchReferenceData();
   }, []);
 
-  // Auto-search when startDate or endDate changes
-  useEffect(() => {
-    if (filter.startDate || filter.endDate) {
-      // Use last query if available, or skip if no query
-      if (lastQueryRef.current) {
-        handleSearch(lastQueryRef.current);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter.startDate, filter.endDate]);
-
   // Keep track of last query for auto-search
   const lastQueryRef = useRef("");
-  const handleSearch = useCallback(async (query: string) => {
-    if (!query.trim()) return;
-    lastQueryRef.current = query;
-    setIsSearched(true);
-    setLoading(true);
-    try {
-      let userId = "";
+  const handleSearch = useCallback(
+    async (query: string) => {
+      if (!query.trim()) return;
+      lastQueryRef.current = query;
+      setIsSearched(true);
+      setLoading(true);
+
+      // Update URL parameters
+      const newSearchParams = new URLSearchParams();
+      newSearchParams.set("q", query);
+      if (filter.documentTags.length > 0) {
+        newSearchParams.set("tags", filter.documentTags.join(","));
+      }
+      if (filter.documentTypeId) {
+        newSearchParams.set("docType", filter.documentTypeId);
+      }
+      if (filter.signedBy) {
+        newSearchParams.set("signedBy", filter.signedBy);
+      }
+      setSearchParams(newSearchParams);
       try {
-        const userStr = localStorage.getItem("user");
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          userId = user.userId || user.id || "";
+        let userId = "";
+        try {
+          const userStr = localStorage.getItem("user");
+          if (userStr) {
+            const user = JSON.parse(userStr);
+            userId = user.userId || user.id || "";
+          }
+        } catch {}
+        const params: any = {
+          Query: query,
+          Tags: filter.documentTags,
+          userId,
+          pageNumber: 1,
+          pageSize: filter.maxResults,
+          // Enhanced filter parameters
+          minRelevance: filter.minRelevance,
+          maxResults: filter.maxResults,
+          enableHybridScoring: filter.enableHybridScoring,
+          boostDepartmentResults: filter.boostDepartmentResults,
+          latestVersionsOnly: filter.latestVersionsOnly,
+          scope: filter.scope,
+          documentTypeId: filter.documentTypeId || undefined,
+          signedBy: filter.signedBy || undefined,
+        };
+
+        // Date parameters
+        if (filter.startDate) {
+          params.EffectiveFrom = filter.startDate.toISOString();
         }
-      } catch {}
-      const params: any = {
-        Query: query,
-        Tags: filter.documentTags,
-        userId,
-        pageNumber: 1,
-        pageSize: filter.maxResults,
-        // Enhanced filter parameters
-        minRelevance: filter.minRelevance,
-        maxResults: filter.maxResults,
-        enableHybridScoring: filter.enableHybridScoring,
-        boostDepartmentResults: filter.boostDepartmentResults,
-        latestVersionsOnly: filter.latestVersionsOnly,
-        scope: filter.scope,
-        documentTypeId: filter.documentTypeId || undefined,
-        signedBy: filter.signedBy || undefined,
-      };
+        if (filter.endDate) {
+          params.EffectiveUntil = filter.endDate.toISOString();
+        }
+        if (filter.fromDate) {
+          params.fromDate = filter.fromDate.toISOString();
+        }
+        if (filter.toDate) {
+          params.toDate = filter.toDate.toISOString();
+        }
 
-      // Date parameters
-      if (filter.startDate) {
-        params.EffectiveFrom = filter.startDate.toISOString();
+        console.log("Enhanced search params:", params);
+        const res = await semanticSearchDocuments(params);
+        setSearchResults(res?.data?.items || []);
+      } catch (e) {
+        setSearchResults([]);
+      } finally {
+        setLoading(false);
       }
-      if (filter.endDate) {
-        params.EffectiveUntil = filter.endDate.toISOString();
-      }
-      if (filter.fromDate) {
-        params.fromDate = filter.fromDate.toISOString();
-      }
-      if (filter.toDate) {
-        params.toDate = filter.toDate.toISOString();
-      }
+    },
+    [filter, setSearchParams]
+  );
 
-      console.log('Enhanced search params:', params);
-      const res = await semanticSearchDocuments(params);
-      setSearchResults(res?.data?.items || []);
-    } catch (e) {
-      setSearchResults([]);
-    } finally {
-      setLoading(false);
+  // Auto-search when initialQuery is set and reference data is loaded
+  useEffect(() => {
+    if (
+      initialQuery &&
+      tags.length > 0 &&
+      documentTypes.length > 0 &&
+      !hasSearchedInitialQuery.current
+    ) {
+      hasSearchedInitialQuery.current = true;
+      handleSearch(initialQuery);
     }
-  }, [filter]);
+  }, [initialQuery, tags.length, documentTypes.length, handleSearch]);
+
+  // Auto-search when filters change (but not when restoring from URL)
+  useEffect(() => {
+    if (isSearched && lastQueryRef.current && !isRestoringFromURL.current) {
+      // Set loading state before search
+      setLoading(true);
+      handleSearch(lastQueryRef.current);
+    }
+  }, [
+    filter.startDate,
+    filter.endDate,
+    filter.documentTags,
+    filter.documentTypeId,
+    filter.signedBy,
+    isSearched,
+    handleSearch,
+  ]);
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       <Navbar />
       <main className="flex-1 p-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="mx-auto max-w-7xl">
           {/* Header Section */}
-          <div className="mb-8">
-          </div>
+          <div className="mb-8"></div>
 
           {/* Main Content */}
           <Row gutter={[24, 24]}>
@@ -164,10 +257,10 @@ export default function SearchPage() {
                 {/* Search Box Section */}
                 <Card
                   className="border border-blue-100"
-                  styles={{ body: { padding: '24px' } }}
+                  styles={{ body: { padding: "24px" } }}
                 >
                   <div className="flex items-center mb-4">
-                    <SearchOutlined className="text-blue-600 text-xl mr-3" />
+                    <SearchOutlined className="mr-3 text-xl text-blue-600" />
                     <Title level={4} className="mb-0 text-gray-800">
                       Search Query
                     </Title>
@@ -175,15 +268,15 @@ export default function SearchPage() {
                   <SearchBox
                     onSearch={handleSearch}
                     placeholder="Describe what you're looking for using natural language..."
+                    initialValue={initialQuery}
                   />
                 </Card>
 
                 {/* Loading State */}
                 {loading && (
-                    <div className="flex items-center justify-center py-12">
-                      <Spin size="large" />
-                    </div>
-
+                  <div className="flex items-center justify-center py-12">
+                    <Spin size="large" />
+                  </div>
                 )}
 
                 {/* Results Section */}
@@ -191,9 +284,11 @@ export default function SearchPage() {
                   <div>
                     {searchResults.length > 0 && (
                       <div className="flex items-center mb-6">
-                        <FileTextOutlined className="text-blue-600 mr-2" />
-                        <span className="text-lg font-medium text-gray-800">Search Results</span>
-                        <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                        <FileTextOutlined className="mr-2 text-blue-600" />
+                        <span className="text-lg font-medium text-gray-800">
+                          Search Results
+                        </span>
+                        <span className="px-2 py-1 ml-2 text-sm text-blue-800 bg-blue-100 rounded-full">
                           {searchResults.length} found
                         </span>
                       </div>
@@ -204,32 +299,47 @@ export default function SearchPage() {
 
                 {/* Welcome State */}
                 {!isSearched && !loading && (
-                  <Card className="shadow-md border border-blue-100">
-                    <div className="text-center py-12">
+                  <Card className="border border-blue-100 shadow-md">
+                    <div className="py-12 text-center">
                       <div className="mb-4">
-                        <SearchOutlined style={{ fontSize: '48px', color: '#3b82f6' }} />
+                        <SearchOutlined
+                          style={{ fontSize: "48px", color: "#3b82f6" }}
+                        />
                       </div>
-                      <Title level={3} className="text-gray-700 mb-2">
+                      <Title level={3} className="mb-2 text-gray-700">
                         Ready to Search
                       </Title>
-                      <Paragraph className="text-gray-500 text-lg mb-4">
-                        Enter your search query above and use the filters to find relevant documents
+                      <Paragraph className="mb-4 text-lg text-gray-500">
+                        Enter your search query above and use the filters to
+                        find relevant documents
                       </Paragraph>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                        <div className="p-4 bg-blue-50 rounded-lg">
-                          <RobotOutlined className="text-blue-600 text-2xl mb-2" />
-                          <div className="font-medium text-gray-800">AI-Powered</div>
-                          <div className="text-sm text-gray-600">Semantic search understands context</div>
+                      <div className="grid grid-cols-1 gap-4 mt-6 md:grid-cols-3">
+                        <div className="p-4 rounded-lg bg-blue-50">
+                          <RobotOutlined className="mb-2 text-2xl text-blue-600" />
+                          <div className="font-medium text-gray-800">
+                            AI-Powered
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            Semantic search understands context
+                          </div>
                         </div>
-                        <div className="p-4 bg-purple-50 rounded-lg">
-                          <FilterOutlined className="text-purple-600 text-2xl mb-2" />
-                          <div className="font-medium text-gray-800">Advanced Filters</div>
-                          <div className="text-sm text-gray-600">Refine results with multiple criteria</div>
+                        <div className="p-4 rounded-lg bg-purple-50">
+                          <FilterOutlined className="mb-2 text-2xl text-purple-600" />
+                          <div className="font-medium text-gray-800">
+                            Advanced Filters
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            Refine results with multiple criteria
+                          </div>
                         </div>
-                        <div className="p-4 bg-green-50 rounded-lg">
-                          <FileTextOutlined className="text-green-600 text-2xl mb-2" />
-                          <div className="font-medium text-gray-800">Comprehensive</div>
-                          <div className="text-sm text-gray-600">Search across all document types</div>
+                        <div className="p-4 rounded-lg bg-green-50">
+                          <FileTextOutlined className="mb-2 text-2xl text-green-600" />
+                          <div className="font-medium text-gray-800">
+                            Comprehensive
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            Search across all document types
+                          </div>
                         </div>
                       </div>
                     </div>
