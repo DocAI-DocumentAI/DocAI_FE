@@ -37,6 +37,7 @@ import DocumentReplacement from "../pages/editor/DocumentReplacement";
 import DocumentLibrary from "../pages/document/DocumentLibrary.tsx";
 import Notifications from "../pages/notification/Notifications.tsx";
 import AdminRouteTestPage from "../pages/AdminRouteTestPage";
+import DocumentVersionDetail from "../pages/document/DocumentVersionDetail.tsx";
 
 const PublicRoutes: RouteObject[] = [
   // {
@@ -46,6 +47,10 @@ const PublicRoutes: RouteObject[] = [
   {
     path: "/",
     element: <HomePage />,
+  },
+  {
+    path: "/document/:documentId/version/:versionId",
+    element: <DocumentVersionDetail />,
   },
   {
     path: "/signup",

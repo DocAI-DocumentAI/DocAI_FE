@@ -279,20 +279,18 @@ export default function DocumentPage() {
             </button>
             <div className="flex gap-2">
               <button
-                className={`rounded-md border p-2 ${
-                  isBookmarked
+                className={`rounded-md border p-2 ${isBookmarked
                     ? "border-blue-800 bg-blue-50"
                     : "border-gray-300"
-                }`}
+                  }`}
                 onClick={toggleBookmark}
                 title={isBookmarked ? "Remove bookmark" : "Add bookmark"}
               >
                 <Bookmark
-                  className={`h-5 w-5 ${
-                    isBookmarked
+                  className={`h-5 w-5 ${isBookmarked
                       ? "text-blue-800 fill-blue-800"
                       : "text-gray-700"
-                  }`}
+                    }`}
                 />
               </button>
               <button
@@ -336,11 +334,10 @@ export default function DocumentPage() {
               </span>
 
               <span
-                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                  mainDoc.isPublic
+                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${mainDoc.isPublic
                     ? "bg-green-100 text-green-800"
                     : "bg-orange-100 text-orange-800"
-                }`}
+                  }`}
               >
                 {mainDoc.isPublic ? (
                   <>
@@ -406,42 +403,42 @@ export default function DocumentPage() {
             {(mainDoc.effectiveFrom ||
               mainDoc.effectiveUntil ||
               mainDoc.signedBy) && (
-              <div className="p-4 mt-4 rounded-lg bg-blue-50">
-                <h3 className="mb-2 text-sm font-medium text-blue-900">
-                  Document Validity
-                </h3>
-                <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-3">
-                  {mainDoc.effectiveFrom && (
-                    <div>
-                      <span className="font-medium text-blue-800">
-                        Effective From:
-                      </span>
-                      <div className="text-blue-700">
-                        {new Date(mainDoc.effectiveFrom).toLocaleDateString()}
+                <div className="p-4 mt-4 rounded-lg bg-blue-50">
+                  <h3 className="mb-2 text-sm font-medium text-blue-900">
+                    Document Validity
+                  </h3>
+                  <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-3">
+                    {mainDoc.effectiveFrom && (
+                      <div>
+                        <span className="font-medium text-blue-800">
+                          Effective From:
+                        </span>
+                        <div className="text-blue-700">
+                          {new Date(mainDoc.effectiveFrom).toLocaleDateString()}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  {mainDoc.effectiveUntil && (
-                    <div>
-                      <span className="font-medium text-blue-800">
-                        Effective Until:
-                      </span>
-                      <div className="text-blue-700">
-                        {new Date(mainDoc.effectiveUntil).toLocaleDateString()}
+                    )}
+                    {mainDoc.effectiveUntil && (
+                      <div>
+                        <span className="font-medium text-blue-800">
+                          Effective Until:
+                        </span>
+                        <div className="text-blue-700">
+                          {new Date(mainDoc.effectiveUntil).toLocaleDateString()}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  {mainDoc.signedBy && (
-                    <div>
-                      <span className="font-medium text-blue-800">
-                        Signed By:
-                      </span>
-                      <div className="text-blue-700">{mainDoc.signedBy}</div>
-                    </div>
-                  )}
+                    )}
+                    {mainDoc.signedBy && (
+                      <div>
+                        <span className="font-medium text-blue-800">
+                          Signed By:
+                        </span>
+                        <div className="text-blue-700">{mainDoc.signedBy}</div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Tags */}
             {Array.isArray(mainDoc.tags) && mainDoc.tags.length > 0 && (
@@ -467,66 +464,60 @@ export default function DocumentPage() {
           <div className="mb-6 border-b border-gray-200">
             <div className="flex overflow-x-auto">
               <button
-                className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${
-                  activeTab === "preview"
+                className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "preview"
                     ? "border-b-2 border-blue-800 text-blue-800"
                     : "text-gray-600 hover:text-gray-900"
-                }`}
+                  }`}
                 onClick={handlePreviewClick}
               >
                 <Eye className="inline w-4 h-4 mr-1" />
                 Preview
               </button>
               <button
-                className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${
-                  activeTab === "content"
+                className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "content"
                     ? "border-b-2 border-blue-800 text-blue-800"
                     : "text-gray-600 hover:text-gray-900"
-                }`}
+                  }`}
                 onClick={() => setActiveTab("content")}
               >
                 <FileText className="inline w-4 h-4 mr-1" />
                 Content & Summary
               </button>
               <button
-                className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${
-                  activeTab === "information"
+                className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "information"
                     ? "border-b-2 border-blue-800 text-blue-800"
                     : "text-gray-600 hover:text-gray-900"
-                }`}
+                  }`}
                 onClick={() => setActiveTab("information")}
               >
                 <Users className="inline w-4 h-4 mr-1" />
                 Information
               </button>
               <button
-                className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${
-                  activeTab === "original"
+                className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "original"
                     ? "border-b-2 border-blue-800 text-blue-800"
                     : "text-gray-600 hover:text-gray-900"
-                }`}
+                  }`}
                 onClick={() => setActiveTab("original")}
               >
                 <FileText className="inline w-4 h-4 mr-1" />
                 Original Document
               </button>
               <button
-                className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${
-                  activeTab === "version"
+                className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "version"
                     ? "border-b-2 border-blue-800 text-blue-800"
                     : "text-gray-600 hover:text-gray-900"
-                }`}
+                  }`}
                 onClick={() => setActiveTab("version")}
               >
                 <Clock className="inline w-4 h-4 mr-1" />
                 Versions
               </button>
               <button
-                className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${
-                  activeTab === "recommendations"
+                className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "recommendations"
                     ? "border-b-2 border-blue-800 text-blue-800"
                     : "text-gray-600 hover:text-gray-900"
-                }`}
+                  }`}
                 onClick={() => setActiveTab("recommendations")}
               >
                 <ThumbsUp className="inline w-4 h-4 mr-1" />
@@ -846,11 +837,10 @@ export default function DocumentPage() {
                         Visibility:
                       </span>
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          mainDoc.isPublic
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${mainDoc.isPublic
                             ? "bg-green-100 text-green-800"
                             : "bg-orange-100 text-orange-800"
-                        }`}
+                          }`}
                       >
                         {mainDoc.isPublic ? "Public" : "Private"}
                       </span>
@@ -860,11 +850,10 @@ export default function DocumentPage() {
                         Is Replaced:
                       </span>
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          mainDoc.isReplaced
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${mainDoc.isReplaced
                             ? "bg-red-100 text-red-800"
                             : "bg-green-100 text-green-800"
-                        }`}
+                          }`}
                       >
                         {mainDoc.isReplaced ? "Yes" : "No"}
                       </span>
@@ -942,6 +931,7 @@ export default function DocumentPage() {
                 {versions.map((ver, index) => (
                   <div
                     key={ver.versionId}
+                  
                     className="p-4 border rounded-lg hover:bg-gray-50"
                   >
                     <div className="flex items-start justify-between mb-3">
@@ -968,7 +958,7 @@ export default function DocumentPage() {
                       <div className="flex gap-2">
                         <button
                           className="flex items-center px-2 py-1 text-xs text-blue-600 border border-blue-200 rounded hover:text-blue-800 hover:bg-blue-50"
-                          onClick={() => loadPreview(ver.versionId)}
+                          onClick={() => { navigate(`/document/${id}/version/${ver.versionId}`) }}
                           disabled={previewLoading}
                         >
                           <Eye className="w-3 h-3 mr-1" />
@@ -1088,11 +1078,10 @@ export default function DocumentPage() {
                         </div>
                         <div className="flex items-center gap-2 ml-4">
                           <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              rec.isPublic
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${rec.isPublic
                                 ? "bg-green-100 text-green-800"
                                 : "bg-orange-100 text-orange-800"
-                            }`}
+                              }`}
                           >
                             {rec.isPublic ? "Public" : "Private"}
                           </span>
