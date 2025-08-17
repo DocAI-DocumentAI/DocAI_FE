@@ -249,11 +249,7 @@ export default function EditDocument() {
   const handleSaveAsDraft = async (values: any) => {
     await handleDocumentAction(values, 'draft');
   };
-
-  const handleSubmitForApproval = async (values: any) => {
-    await handleDocumentAction(values, 'submit');
-  };
-
+ 
 
 
   const handleRegenerateSummary = async () => {
@@ -694,21 +690,7 @@ export default function EditDocument() {
                       disabled={(!selectedFile && !(location.state?.documentData && location.state?.mode === 'edit')) || isAnyOperationInProgress}
                     >
                       {isUploading ? "Saving..." : "Save as Draft"}
-                    </Button>
-                    <Button
-                      type="primary"
-                      onClick={() => {
-                        form.validateFields().then(values => {
-                          handleSubmitForApproval(values);
-                        }).catch(errorInfo => {
-                          console.log('Form validation failed:', errorInfo);
-                        });
-                      }}
-                      loading={isUploading}
-                      disabled={(!selectedFile && !(location.state?.documentData && location.state?.mode === 'edit')) || isAnyOperationInProgress}
-                    >
-                      {isUploading ? "Submitting..." : "Submit for Approval"}
-                    </Button>
+                    </Button> 
                   </Space>
                 </Form.Item>
               </Form>
