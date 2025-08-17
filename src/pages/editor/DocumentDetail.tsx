@@ -427,7 +427,37 @@ export default function DocumentDetail({ onViewChange, }: any) {
                                                 Submit for Approval
                                             </Button>
 
+                                            <Button
+                                                type="default"
+                                                 
+                                                block
+                                                size="large"
+                                                onClick={() => {
+                                                    // Prepare document data for recreation
+                                                    const documentData = {
+                                                        title: document.title || "",
+                                                        description: document.description || "",
+                                                        summary: document.summary || "",
+                                                        tags: document.tags || [],
+                                                        effectiveFrom: document.effectiveFrom || "",
+                                                        effectiveUntil: document.effectiveUntil || "",
+                                                        signedBy: document.signedBy || "",
+                                                        documentTypeId: document.documentTypeId || "",
+                                                        isPublic: document.isPublic || false,
+                                                        versionName: document.versionName || "",
+                                                    };
 
+                                                    navigate(`/editor/document/editDocument/${document.versionId}`, {
+                                                        state: {
+                                                            documentData,
+                                                            mode: 'edit'
+                                                        }
+                                                    });
+                                                }}
+                                                disabled={submitting || deleteLoading}
+                                            >
+                                                Edit Draft
+                                            </Button>
 
                                             {/* Alternative Delete Button */}
                                             <Button
@@ -488,7 +518,7 @@ export default function DocumentDetail({ onViewChange, }: any) {
                                                 disabled={submitting || deleteLoading}
                                                 size="large"
                                             >
-                                                Delete 
+                                                Delete
                                             </Button>
                                         </>
                                     )}

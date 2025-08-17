@@ -15,8 +15,7 @@ import PersonalizationSettings from "../pages/settings/Personalization";
 import NotificationsSettings from "../pages/settings/Notification";
 import NewChatPage from "../pages/chat/ChatNew";
 import ChatDetail from "../pages/chat/ChatDetail";
-import UploadDocument from "../pages/editor/UploadDocument";
-import EditDocument from "../components/EditDocument";
+import UploadDocument from "../pages/editor/UploadDocument"; 
 import DocumentPage from "../pages/document/DocumentDetail";
 import SearchPage from "../pages/search/SearchPage";
 import ApprovalManagerTable from "../pages/editor/ApprovalManagerTable";
@@ -38,6 +37,7 @@ import DocumentLibrary from "../pages/document/DocumentLibrary.tsx";
 import Notifications from "../pages/notification/Notifications.tsx";
 import AdminRouteTestPage from "../pages/AdminRouteTestPage";
 import DocumentVersionDetail from "../pages/document/DocumentVersionDetail.tsx";
+import EditDocument from "../pages/editor/EditDocument.tsx";
 
 const PublicRoutes: RouteObject[] = [
   // {
@@ -87,12 +87,7 @@ const PublicRoutes: RouteObject[] = [
   {
     path: "/chat/:id",
     element: <ChatDetail />,
-  },
-  {
-    path: "/document/edit",
-    element: <EditDocument />,
-  },
-
+  },  
   {
     path: "/search",
     element: <SearchPage />,
@@ -163,11 +158,7 @@ const PublicRoutes: RouteObject[] = [
       {
         path: "document/new-version/:id",
         element: <NewVersionDocument />,
-      },
-      {
-        path: "edit-document",
-        element: <EditDocument />,
-      },
+      }, 
       {
         path: "my-document",
         element: <ViewDraftTable />,
@@ -187,6 +178,10 @@ const PublicRoutes: RouteObject[] = [
       {
         path: "document/recreate/:id",
         element: <RecreateDocument />,
+      },
+      {
+        path: "document/editDocument/:id",
+        element: <EditDocument />,
       },
     ],
   },
