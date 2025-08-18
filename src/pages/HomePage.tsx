@@ -1,9 +1,4 @@
-import {
-  MessageSquare,
-  Search,
-  Library,
-  UserCircle,
-} from "lucide-react";
+import { MessageSquare, Search, Library, UserCircle } from "lucide-react";
 import { FeatureCard } from "../components/FeatureCard";
 import { Navbar } from "../components/layout/Navbar";
 
@@ -50,7 +45,7 @@ export default function HomePage() {
               icon={<UserCircle className="w-8 h-8 text-blue-500" />}
               title="Personal info"
               description="Set your personal details."
-              href="/profile"
+              href="/settings/account"
             />
 
             {/* <FeatureCard

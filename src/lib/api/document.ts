@@ -97,6 +97,72 @@ export const getDocuments = async (
   return response.data.data;
 };
 
+// Updated interface for My Documents filters
+export interface MyDocumentsFilters {
+  title?: string;
+  isPublic?: boolean;
+  from?: string; // datetime
+  to?: string; // datetime
+  status?: string;
+  documentTypeId?: string;
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+// Updated interface for My Documents response
+export interface MyDocumentsResponse {
+  statusCode: number;
+  message: string;
+  data: {
+    documents: {
+      size: number;
+      page: number;
+      total: number;
+      totalPages: number;
+      items: MyDocumentItem[];
+    };
+    statistics: {
+      totalDrafts: number;
+      totalPending: number;
+      totalApproved: number;
+      totalRejected: number;
+      totalArchived: number;
+      totalDocuments: number;
+    };
+  };
+}
+
+export interface MyDocumentItem {
+  documentId: string;
+  versionId: string;
+  title: string;
+  description: string;
+  summary: string;
+  filePath: string;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  status: string;
+  versionName: string;
+  departmentId: string;
+  departmentName: string;
+  ownerId: string;
+  ownerName: string;
+  tags: string[];
+  createdTime: string;
+  documentTypeId: string;
+  documentTypeName: string;
+  replacementId: string;
+  replacementDocument: any;
+  replacementDocumentName: string;
+  isReplaced: boolean;
+  lastSubmitted: string;
+  submittedBy: string;
+  submittedByName: string;
+  isPublic: boolean;
+  signedBy: string;
+}
+
 export const getMyDocuments = async (
   userId: string,
   pageNumber = 1,
@@ -113,6 +179,26 @@ export const getMyDocuments = async (
   }
   const response = await api.get(url);
   return response.data.data;
+};
+
+// New function for the enhanced API endpoint
+export const getMyDocumentsWithStats = async (
+  filters: MyDocumentsFilters = {}
+): Promise<MyDocumentsResponse> => {
+  const params = new URLSearchParams();
+
+  if (filters.title) params.append('title', filters.title);
+  if (filters.isPublic !== undefined) params.append('isPublic', filters.isPublic.toString());
+  if (filters.from) params.append('from', filters.from);
+  if (filters.to) params.append('to', filters.to);
+  if (filters.status) params.append('status', filters.status);
+  if (filters.documentTypeId) params.append('documentTypeId', filters.documentTypeId);
+
+  params.append('pageNumber', (filters.pageNumber || 1).toString());
+  params.append('pageSize', (filters.pageSize || 10).toString());
+
+  const response = await api.get(`/document/my-documents/with-stats?${params.toString()}`);
+  return response.data;
 };
 
 // Thêm interface cho filters
@@ -469,6 +555,65 @@ export const submitDocumentForApproval = async (
   return response.data;
 };
 
+// Document recommendation interface
+export interface DocumentRecommendation {
+  documentId: string;
+  title: string;
+  description?: string;
+  documentTypeId?: string;
+  documentTypeName?: string;
+  departmentId?: string;
+  departmentName?: string;
+  isPublic?: boolean;
+  createdTime?: string;
+  tags?: string[];
+  relevanceScore?: number;
+  recommendationReason?: string;
+  sharedTagCount?: number;
+  latestVersionId?: string;
+}
+
+// Recommendation API response interface
+export interface RecommendationResponse {
+  sourceDocumentId: string;
+  sourceDocumentTitle: string;
+  recommendations: DocumentRecommendation[];
+  totalFound: number;
+  requestedCount: number;
+  generatedAt: string;
+  fromCache: boolean;
+}
+
+// Get document recommendations
+export const getDocumentRecommendations = async (
+  documentId: string,
+  count: number = 10,
+  includeSameDepartmentOnly: boolean = false
+): Promise<{ data: DocumentRecommendation[]; meta?: RecommendationResponse }> => {
+  try {
+    const response = await api.get(`/document/documents/${documentId}/recommendations`, {
+      params: {
+        count,
+        includeSameDepartmentOnly
+      }
+    });
+
+    console.log("Raw API response:", response.data);
+
+    // Handle the specific response structure: response.data.data.recommendations
+    const responseData = response.data?.data;
+    const recommendations = responseData?.recommendations || [];
+
+    return {
+      data: Array.isArray(recommendations) ? recommendations : [],
+      meta: responseData // Include full response data for additional info
+    };
+  } catch (error) {
+    console.error('Error fetching recommendations:', error);
+    return { data: [], meta: undefined };
+  }
+};
+
 // Enhanced Document Library API Functions
 import type {
   OfficialDocumentsRequest,
@@ -535,6 +680,8 @@ export const getOfficialDocuments = async (
     // Access Control Filters
     if (cleanedParams.isPublic !== undefined)
       searchParams.append("isPublic", cleanedParams.isPublic.toString());
+    if (cleanedParams.departmentOnly !== undefined)
+      searchParams.append("departmentOnly", cleanedParams.departmentOnly.toString());
 
     // Folder Organization Filters
     if (cleanedParams.folderId)
@@ -737,6 +884,98 @@ export const downloadDocument = async (
     console.error("Error downloading document:", error);
     throw new Error(getErrorMessage(error));
   }
+};
+
+// Approval history (Editor)
+export interface ApprovalHistoryRequest {
+  title?: string;
+  keyword?: string;
+  status?: string; // Approved, Rejected, Archived
+  fromDate?: string;
+  toDate?: string;
+  isPublic?: boolean;
+  effectiveFrom?: string;
+  effectiveUntil?: string;
+  documentTypeId?: string;
+  tags?: string[];
+  signedBy?: string;
+  reviewedBy?: string;
+  pageNumber?: number; // default 1
+  pageSize?: number;   // default 10
+}
+
+export interface ApprovalHistoryItem {
+  documentId: string;
+  versionId: string;
+  title: string;
+  description: string;
+  summary: string;
+  versionName: string;
+  status: string;
+  ownerId: string;
+  ownerName: string;
+  departmentId: string;
+  departmentName: string;
+  documentTypeId: string;
+  documentTypeName: string;
+  tags: string[];
+  createdTime: string;
+  lastUpdatedTime: string;
+  lastSubmitted: string;
+  submittedBy: string;
+  submittedByName: string;
+  reviewedBy: string;
+  reviewedByName: string;
+  reviewedAt: string;
+  reviewComments: string;
+  signedBy: string;
+  effectiveFrom: string;
+  effectiveUntil: string;
+  isPublic: boolean;
+  isOfficial: boolean;
+  totalDownloads: number;
+}
+
+export interface ApprovalHistoryResponse {
+  statusCode: number;
+  message: string;
+  data: {
+    size: number;
+    page: number;
+    total: number;
+    totalPages: number;
+    items: ApprovalHistoryItem[];
+  };
+}
+
+export const getMyApprovalHistory = async (
+  request: ApprovalHistoryRequest = {}
+): Promise<ApprovalHistoryResponse> => {
+  const params = new URLSearchParams();
+  if (request.title) params.append('title', request.title);
+  if (request.keyword) params.append('keyword', request.keyword);
+  if (request.status) params.append('status', request.status);
+  if (request.fromDate) params.append('fromDate', request.fromDate);
+  if (request.toDate) params.append('toDate', request.toDate);
+  if (request.isPublic !== undefined) params.append('isPublic', String(request.isPublic));
+  if (request.effectiveFrom) params.append('effectiveFrom', request.effectiveFrom);
+  if (request.effectiveUntil) params.append('effectiveUntil', request.effectiveUntil);
+  if (request.documentTypeId) params.append('documentTypeId', request.documentTypeId);
+  if (request.tags && request.tags.length > 0) request.tags.forEach(t => params.append('tags', t));
+  if (request.signedBy) params.append('signedBy', request.signedBy);
+  if (request.reviewedBy) params.append('reviewedBy', request.reviewedBy);
+  params.append('pageNumber', String(request.pageNumber ?? 1));
+  params.append('pageSize', String(request.pageSize ?? 10));
+
+  const response = await api.get(`/document/my-documents/approval-history?${params.toString()}`);
+  return response.data as ApprovalHistoryResponse;
+};
+
+export const getApprovalHistoryItemById = async (
+  id: string
+): Promise<ApprovalHistoryItem> => {
+  const response = await api.get(`/documents/my-documents/approval-history/${id}`);
+  return response.data.data as ApprovalHistoryItem;
 };
 
 /**

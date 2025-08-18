@@ -61,6 +61,10 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.loading = false;
       state.error = null;
+
+      // Save to localStorage for persistence
+      localStorage.setItem("user", JSON.stringify(action.payload));
+      localStorage.setItem("token", action.payload.docaiToken);
     },
     loginFailure(state, action: PayloadAction<string>) {
       state.loading = false;
@@ -85,6 +89,10 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.loading = false;
       state.error = null;
+
+      // Save to localStorage for persistence
+      localStorage.setItem("user", JSON.stringify(action.payload));
+      localStorage.setItem("token", action.payload.docaiToken);
     },
     googleAuthFailure(state, action: PayloadAction<string>) {
       state.loading = false;
@@ -96,19 +104,36 @@ const authSlice = createSlice({
     },
     // Initialize auth state from localStorage
     initializeAuth(state) {
+      console.log("Initializing auth from localStorage...");
       const token = localStorage.getItem("token");
       const userStr = localStorage.getItem("user");
+
+      console.log("Token exists:", !!token);
+      console.log("User data exists:", !!userStr);
 
       if (token && userStr) {
         try {
           const user = JSON.parse(userStr);
-          state.user = user;
-          state.isAuthenticated = true;
+          console.log("Parsed user data:", user);
+
+          // Validate user data structure
+          if (user && user.userId && user.role) {
+            state.user = user;
+            state.isAuthenticated = true;
+            console.log("Auth initialized successfully");
+          } else {
+            console.log("Invalid user data structure, clearing localStorage");
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+          }
         } catch (error) {
+          console.error("Error parsing user data:", error);
           // If parsing fails, clear localStorage
           localStorage.removeItem("token");
           localStorage.removeItem("user");
         }
+      } else {
+        console.log("No token or user data found in localStorage");
       }
       state.loading = false;
     },

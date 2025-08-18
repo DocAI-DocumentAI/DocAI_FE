@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Save, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Save, Eye, EyeOff, RefreshCw, Copy } from "lucide-react";
 import Select from "react-select";
 import toast from "react-hot-toast";
 
@@ -26,10 +26,52 @@ const DEFAULT_COLORS = [
   "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
 ];
 
+// Function to generate secure password
+const generateSecurePassword = (length: number = 12): string => {
+  const lowercase = "abcdefghijklmnopqrstuvwxyz";
+  const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const numbers = "0123456789";
+  const specialChars = "!@#$%^&*()_+-=[]{}|;:,.<>?";
+
+  // Ensure at least one character from each category
+  let password = "";
+  password += lowercase[Math.floor(Math.random() * lowercase.length)];
+  password += uppercase[Math.floor(Math.random() * uppercase.length)];
+  password += numbers[Math.floor(Math.random() * numbers.length)];
+  password += specialChars[Math.floor(Math.random() * specialChars.length)];
+
+  // Fill the rest with random characters from all categories
+  const allChars = lowercase + uppercase + numbers + specialChars;
+  for (let i = password.length; i < length; i++) {
+    password += allChars[Math.floor(Math.random() * allChars.length)];
+  }
+
+  // Shuffle the password to avoid predictable patterns
+  return password
+    .split("")
+    .sort(() => Math.random() - 0.5)
+    .join("");
+};
+
+// // Function to check password strength
+// const checkPasswordStrength = (password: string) => {
+//   const checks = {
+//     length: password.length >= 8,
+//     uppercase: /[A-Z]/.test(password),
+//     lowercase: /[a-z]/.test(password),
+//     number: /\d/.test(password),
+//     special: /[!@#$%^&*()_+=[\]{}|;:,.<>?-]/.test(password),
+//   };
+
+//   const score = Object.values(checks).filter(Boolean).length;
+//   return { checks, score };
+// };
+
 const CreateUserPage = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [selectedPermissions, setSelectedPermissions] = useState<Option[]>([]);
+  const [generatedPassword, setGeneratedPassword] = useState<string>("");
 
   const {
     register,
@@ -69,6 +111,31 @@ const CreateUserPage = () => {
       color: DEFAULT_COLORS[index % DEFAULT_COLORS.length], // Thêm màu
     })) || [];
 
+  // Generate password on component mount
+  useEffect(() => {
+    const newPassword = generateSecurePassword(12);
+    setGeneratedPassword(newPassword);
+    setValue("password", newPassword);
+  }, [setValue]);
+
+  // Function to regenerate password
+  const handleRegeneratePassword = () => {
+    const newPassword = generateSecurePassword(12);
+    setGeneratedPassword(newPassword);
+    setValue("password", newPassword);
+    toast.success("New password generated!");
+  };
+
+  // Function to copy password to clipboard
+  const handleCopyPassword = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedPassword);
+      toast.success("Password copied to clipboard!");
+    } catch (error) {
+      toast.error("Failed to copy password");
+    }
+  };
+
   const onSubmit = (data: CreateUserData) => {
     const submitData = {
       ...data,
@@ -77,7 +144,12 @@ const CreateUserPage = () => {
 
     createUserMutation.mutate(submitData, {
       onSuccess: () => {
-        toast.success("User created successfully!");
+        toast.success(
+          `User created successfully! Password: ${generatedPassword}`,
+          {
+            duration: 10000, // Show for 10 seconds
+          }
+        );
         navigate("/admin/users");
       },
       onError: (error: any) => {
@@ -210,9 +282,29 @@ const CreateUserPage = () => {
               </div>
 
               <div>
-                <label className="block mb-2 text-sm font-medium text-gray-300">
-                  Password *
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-gray-300">
+                    Password * (Auto-generated)
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCopyPassword}
+                      className="flex items-center gap-1 px-2 py-1 text-xs text-green-400 rounded hover:text-green-300 hover:bg-gray-700"
+                    >
+                      <Copy size={14} />
+                      Copy
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRegeneratePassword}
+                      className="flex items-center gap-1 px-2 py-1 text-xs text-blue-400 rounded hover:text-blue-300 hover:bg-gray-700"
+                    >
+                      <RefreshCw size={14} />
+                      Generate New
+                    </button>
+                  </div>
+                </div>
                 <div className="relative">
                   <input
                     {...register("password", {
@@ -221,10 +313,18 @@ const CreateUserPage = () => {
                         value: 8,
                         message: "Password must be at least 8 characters",
                       },
+                      pattern: {
+                        value:
+                          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+=[\]{}|;:,.<>?-])[A-Za-z\d!@#$%^&*()_+=[\]{}|;:,.<>?-]{8,}$/,
+                        message:
+                          "Password must contain at least 8 characters with uppercase, lowercase, number and special character",
+                      },
                     })}
                     type={showPassword ? "text" : "password"}
-                    className="w-full px-4 py-3 pr-12 text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter password"
+                    value={generatedPassword}
+                    readOnly
+                    className="w-full px-4 py-3 pr-20 text-white bg-gray-700 border border-gray-600 rounded-lg cursor-default focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Auto-generated password"
                   />
                   <button
                     type="button"
@@ -233,6 +333,42 @@ const CreateUserPage = () => {
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
+                </div>
+                <div className="mt-2 text-xs text-gray-400">
+                  <div className="flex items-center justify-between mb-2">
+                    <p>Password Strength:</p>
+                    <span className="px-2 py-1 text-xs font-medium text-green-400 bg-green-900 rounded">
+                      Strong
+                    </span>
+                  </div>
+                  <div className="mb-2">
+                    <div className="w-full h-2 bg-gray-700 rounded-full">
+                      <div className="w-full h-2 bg-green-500 rounded-full"></div>
+                    </div>
+                  </div>
+                  <p>Password requirements (all met):</p>
+                  <ul className="ml-4 space-y-1 list-none">
+                    <li className="flex items-center">
+                      <span className="mr-2 text-green-400">✓</span>
+                      Minimum 8 characters
+                    </li>
+                    <li className="flex items-center">
+                      <span className="mr-2 text-green-400">✓</span>
+                      At least one uppercase letter
+                    </li>
+                    <li className="flex items-center">
+                      <span className="mr-2 text-green-400">✓</span>
+                      At least one lowercase letter
+                    </li>
+                    <li className="flex items-center">
+                      <span className="mr-2 text-green-400">✓</span>
+                      At least one number
+                    </li>
+                    <li className="flex items-center">
+                      <span className="mr-2 text-green-400">✓</span>
+                      At least one special character
+                    </li>
+                  </ul>
                 </div>
                 {errors.password && (
                   <p className="mt-1 text-sm text-red-400">

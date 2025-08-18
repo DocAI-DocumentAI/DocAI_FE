@@ -17,6 +17,7 @@ interface AnalysisData {
   effectiveUntil: string;
   signedBy: string;
   documentTypeId: string;
+  isPublic: boolean;
   file: File;
 }
 

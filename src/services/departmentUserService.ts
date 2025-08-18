@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query"; 
+import { useQuery } from "@tanstack/react-query";
 
 export interface DepartmentUserData {
   departmentId: string;
@@ -17,7 +17,9 @@ const getAuthToken = () => {
 };
 
 // Fetch users count by department ID
-const fetchUsersByDepartment = async (departmentId: string): Promise<number> => {
+const fetchUsersByDepartment = async (
+  departmentId: string
+): Promise<number> => {
   const token = getAuthToken();
   if (!token) {
     throw new Error("No authentication token found");
@@ -50,7 +52,9 @@ const fetchUsersByDepartment = async (departmentId: string): Promise<number> => 
 };
 
 // Fetch department user distribution
-const fetchDepartmentUserDistribution = async (): Promise<DepartmentUserData[]> => {
+const fetchDepartmentUserDistribution = async (): Promise<
+  DepartmentUserData[]
+> => {
   const token = getAuthToken();
   if (!token) {
     throw new Error("No authentication token found");
@@ -91,7 +95,7 @@ const fetchDepartmentUserDistribution = async (): Promise<DepartmentUserData[]> 
 
   // Fetch user count for each department
   const departmentUserData: DepartmentUserData[] = [];
-  
+
   for (let i = 0; i < departments.length; i++) {
     const department = departments[i];
     try {
@@ -103,7 +107,10 @@ const fetchDepartmentUserDistribution = async (): Promise<DepartmentUserData[]> 
         color: colors[i % colors.length],
       });
     } catch (error) {
-      console.error(`Error fetching users for department ${department.name}:`, error);
+      console.error(
+        `Error fetching users for department ${department.name}:`,
+        error
+      );
       // Add department with 0 users if API fails
       departmentUserData.push({
         departmentId: department.id,
@@ -116,7 +123,7 @@ const fetchDepartmentUserDistribution = async (): Promise<DepartmentUserData[]> 
 
   // Filter out departments with 0 users and sort by user count
   return departmentUserData
-    .filter(dept => dept.userCount > 0)
+    .filter((dept) => dept.userCount > 0)
     .sort((a, b) => b.userCount - a.userCount);
 };
 

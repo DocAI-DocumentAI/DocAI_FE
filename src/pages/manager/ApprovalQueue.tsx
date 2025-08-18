@@ -19,7 +19,15 @@ import toast from 'react-hot-toast'
 import moment from 'moment'
 
 const { Title, Text } = Typography
-const { Content } = Layout 
+const { Content } = Layout
+
+const statusOptions = [
+  { value: "", label: "All Status" },
+  { value: "Pending", label: "Pending" },
+  { value: "Approved", label: "Approved" },
+  { value: "Rejected", label: "Rejected" },
+  { value: "Archived", label: "Archived" },
+];
 
 interface ApprovalQueueFilters {
   title?: string;
@@ -27,6 +35,7 @@ interface ApprovalQueueFilters {
   isPublic?: boolean;
   fromDate?: string;
   toDate?: string;
+  status?: string;
 }
 
 interface ApprovalQueueItem {
@@ -135,6 +144,16 @@ export default function ApprovalQueue() {
 
 
 
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'pending': return 'orange';
+      case 'approved': return 'green';
+      case 'rejected': return 'red';
+      case 'archived': return 'gray';
+      default: return 'default';
+    }
+  };
+
   const columns = [
     {
       title: "Document",
@@ -205,7 +224,10 @@ export default function ApprovalQueue() {
       key: "status",
       render: (status: string) => (
         <div>
-          <Tag color={status === 'Pending' ? 'orange' : 'default'}>{status}</Tag>
+          <Tag color={getStatusColor(status)}>{status}</Tag>
+          {record.isBeingReviewed && (
+            <Tag color="blue">Being Reviewed</Tag>
+          )}
         </div>
       ),
     },
@@ -320,7 +342,7 @@ export default function ApprovalQueue() {
             </div>
             
             <Row gutter={16}>
-              <Col xs={24} sm={8}>
+              <Col xs={24} sm={6}>
                 <Input
                   placeholder="Search by title..."
                   prefix={<SearchOutlined />}
@@ -329,7 +351,17 @@ export default function ApprovalQueue() {
                   allowClear
                 />
               </Col>
-              <Col xs={24} sm={6}>
+              <Col xs={24} sm={5}>
+                <Select
+                  placeholder="Status"
+                  style={{ width: '100%' }}
+                  value={filters.status}
+                  onChange={(value) => handleFilterChange('status', value)}
+                  allowClear
+                  options={statusOptions}
+                />
+              </Col>
+              <Col xs={24} sm={5}>
                 <Select
                   placeholder="Document Type"
                   style={{ width: '100%' }}
@@ -345,7 +377,7 @@ export default function ApprovalQueue() {
                   ))}
                 </Select>
               </Col>
-              <Col xs={24} sm={6}>
+              <Col xs={24} sm={4}>
                 <Select
                   placeholder="Visibility"
                   style={{ width: '100%' }}
@@ -359,8 +391,8 @@ export default function ApprovalQueue() {
               </Col>
               <Col xs={24} sm={4}>
                 <Space>
-                  <Button 
-                    icon={<ReloadOutlined />} 
+                  <Button
+                    icon={<ReloadOutlined />}
                     onClick={fetchData}
                     loading={loading}
                   >

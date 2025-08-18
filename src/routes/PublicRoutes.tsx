@@ -15,9 +15,7 @@ import PersonalizationSettings from "../pages/settings/Personalization";
 import NotificationsSettings from "../pages/settings/Notification";
 import NewChatPage from "../pages/chat/ChatNew";
 import ChatDetail from "../pages/chat/ChatDetail";
-import UploadDocument from "../pages/editor/UploadDocument";
-import EditDocument from "../components/EditDocument";
-import AdminPage from "../pages/admin/adminPage";
+import UploadDocument from "../pages/editor/UploadDocument"; 
 import DocumentPage from "../pages/document/DocumentDetail";
 import SearchPage from "../pages/search/SearchPage";
 import ApprovalManagerTable from "../pages/editor/ApprovalManagerTable";
@@ -39,6 +37,10 @@ import EditorFolderManagement from "../pages/editor/FolderManagement";
 import ManagerFolderManagement from "../pages/manager/FolderManagement";
 import GoogleDriveFolderManagement from "../pages/manager/GoogleDriveFolderManagement";
 import DocumentLibrary from "../pages/document/DocumentLibrary.tsx";
+import Notifications from "../pages/notification/Notifications.tsx";
+import AdminRouteTestPage from "../pages/AdminRouteTestPage";
+import DocumentVersionDetail from "../pages/document/DocumentVersionDetail.tsx";
+import EditDocument from "../pages/editor/EditDocument.tsx";
 
 const PublicRoutes: RouteObject[] = [
   // {
@@ -50,12 +52,12 @@ const PublicRoutes: RouteObject[] = [
     element: <HomePage />,
   },
   {
-    path: "/signup",
-    element: <SignUp />,
+    path: "/document/:documentId/version/:versionId",
+    element: <DocumentVersionDetail />,
   },
   {
-    path: "/admin",
-    element: <AdminPage />,
+    path: "/signup",
+    element: <SignUp />,
   },
   {
     path: "/verify-email",
@@ -88,12 +90,7 @@ const PublicRoutes: RouteObject[] = [
   {
     path: "/chat/:id",
     element: <ChatDetail />,
-  },
-  {
-    path: "/document/edit",
-    element: <EditDocument />,
-  },
-
+  },  
   {
     path: "/search",
     element: <SearchPage />,
@@ -109,6 +106,14 @@ const PublicRoutes: RouteObject[] = [
   {
     path: "/document-library",
     element: <DocumentLibrary />,
+  },
+  {
+    path: "/notifications",
+    element: <Notifications />,
+  },
+  {
+    path: "/admin-test",
+    element: <AdminRouteTestPage />,
   },
   {
     path: "/manager",
@@ -164,11 +169,7 @@ const PublicRoutes: RouteObject[] = [
       {
         path: "document/new-version/:id",
         element: <NewVersionDocument />,
-      },
-      {
-        path: "edit-document",
-        element: <EditDocument />,
-      },
+      }, 
       {
         path: "my-document",
         element: <ViewDraftTable />,
@@ -192,6 +193,10 @@ const PublicRoutes: RouteObject[] = [
       {
         path: "folder-management",
         element: <EditorFolderManagement />,
+      },
+      {
+        path: "document/editDocument/:id",
+        element: <EditDocument />,
       },
     ],
   },

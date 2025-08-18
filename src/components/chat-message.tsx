@@ -63,7 +63,7 @@ const StreamingIndicator: React.FC = () => (
       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
     </div>
-    <span className="text-xs text-gray-500 ml-2">AI is typing...</span>
+    <span className="text-xs text-gray-500 ml-2">AI is responding...</span>
   </div>
 );
 

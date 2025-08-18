@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, Plus, MessageSquare, MoreHorizontal, Home, Library, PanelLeftClose, PanelLeftOpen, Settings, User, LogOut, X, HelpCircle } from "lucide-react";
-import { getChatSessions, ChatSession } from "../lib/api/chat";
+import { Menu, Plus, MessageSquare, MoreHorizontal, Home, Library, PanelLeftClose, PanelLeftOpen, Settings, User, LogOut, X, HelpCircle, Trash2 } from "lucide-react";
+import { getChatSessions, ChatSession, deleteChatSession } from "../lib/api/chat";
 import { useChat } from "../context/chat-context"; 
 import { toast } from "react-toastify";
 import { api } from "../lib/api/api";
@@ -36,6 +36,8 @@ function ChatSidebar() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showCustomizeModal, setShowCustomizeModal] = useState(false);
   const [customizeLoading, setCustomizeLoading] = useState(false);
+  const [showChatMenu, setShowChatMenu] = useState<string | null>(null);
+  const [deletingChatId, setDeletingChatId] = useState<string | null>(null);
   const [customizeSettings, setCustomizeSettings] = useState({
     userName: "",
     chatbotCharacteristics: [] as string[],
@@ -78,6 +80,18 @@ function ChatSidebar() {
     }
   }, [location.pathname]);
 
+  // Close chat menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowChatMenu(null);
+    };
+
+    if (showChatMenu) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showChatMenu]);
+
   const fetchChatSessions = async () => {
     try {
       setLoading(true);
@@ -88,6 +102,54 @@ function ChatSidebar() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handle delete chat session
+  const handleDeleteChat = async (sessionId: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const chatToDelete = chatSessions.find(chat => chat.id === sessionId);
+    if (!chatToDelete) return;
+
+    // Confirm deletion
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa cuộc trò chuyện "${chatToDelete.title}"?`)) {
+      return;
+    }
+
+    try {
+      setDeletingChatId(sessionId);
+      
+      // Call delete API
+      await deleteChatSession(sessionId);
+      
+      // Remove from local state
+      setChatSessions(prev => prev.filter(chat => chat.id !== sessionId));
+      
+      // Close menu
+      setShowChatMenu(null);
+      
+      // If currently viewing this chat, navigate to new chat
+      const currentChatId = getCurrentChatId();
+      if (currentChatId === sessionId) {
+        clearCurrentChat();
+        navigate('/chat/new');
+      }
+      
+      toast.success('Đã xóa cuộc trò chuyện thành công');
+    } catch (error: any) {
+      console.error("Failed to delete chat session:", error);
+      toast.error(`Xóa cuộc trò chuyện thất bại: ${error?.response?.data?.message || error.message}`);
+    } finally {
+      setDeletingChatId(null);
+    }
+  };
+
+  // Handle chat menu toggle
+  const handleChatMenuToggle = (chatId: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setShowChatMenu(showChatMenu === chatId ? null : chatId);
   };
 
   // Fetch user preferences
@@ -130,6 +192,10 @@ function ChatSidebar() {
   };
 
   const handleNewChatClick = () => {
+    // nếu đang ở chat new thì ko làm gì cả
+    if (location.pathname === '/chat/new') {
+      return;
+    }
     clearCurrentChat();
     navigate('/chat/new');
   };
@@ -385,29 +451,45 @@ function ChatSidebar() {
                     </h3>
                     <div className="space-y-1">
                       {chats.map((chat) => (
-                        <Link
-                          key={chat.id}
-                          to={`/chat/${chat.id}`}
-                          className={classNames(
-                            "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                            currentChatId === chat.id
-                              ? "bg-blue-800 text-white"
-                              : "text-blue-100 hover:bg-blue-800 hover:text-white"
-                          )}
-                        >
-                          <MessageSquare size={16} className="flex-shrink-0" />
-                          <span className="flex-1 truncate">{chat.title}</span>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              // Handle chat options
-                            }}
-                            className="p-1 rounded hover:bg-blue-700"
+                        <div key={chat.id} className="relative">
+                          <Link
+                            to={`/chat/${chat.id}`}
+                            className={classNames(
+                              "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors group",
+                              currentChatId === chat.id
+                                ? "bg-blue-800 text-white"
+                                : "text-blue-100 hover:bg-blue-800 hover:text-white"
+                            )}
                           >
-                            <MoreHorizontal size={14} />
-                          </button>
-                        </Link>
+                            <MessageSquare size={16} className="flex-shrink-0" />
+                            <span className="flex-1 truncate">{chat.title}</span>
+                            <button
+                              onClick={(e) => handleChatMenuToggle(chat.id, e)}
+                              className="p-1 rounded hover:bg-blue-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                              disabled={deletingChatId === chat.id}
+                            >
+                              {deletingChatId === chat.id ? (
+                                <div className="w-3.5 h-3.5 border border-white border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <MoreHorizontal size={14} />
+                              )}
+                            </button>
+                          </Link>
+
+                          {/* Chat Options Menu */}
+                          {showChatMenu === chat.id && (
+                            <div className="absolute right-0 top-full mt-1 z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-32">
+                              <button
+                                onClick={(e) => handleDeleteChat(chat.id, e)}
+                                className="flex w-full  items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                disabled={deletingChatId === chat.id}
+                              >
+                                <Trash2 size={14} />
+                                Xóa
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -455,7 +537,7 @@ function ChatSidebar() {
                 <div className="py-1">
                   <button
                     onClick={() => {
-                      setShowProfileMenu(false);
+                      navigate('/settings/account');
                     }}
                     className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
@@ -468,7 +550,7 @@ function ChatSidebar() {
                     className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     <Settings size={16} />
-                    Tùy chỉnh ChatGPT
+                    Tùy chỉnh chat
                   </button>
 
                   <div className="border-t border-gray-100 my-1"></div>

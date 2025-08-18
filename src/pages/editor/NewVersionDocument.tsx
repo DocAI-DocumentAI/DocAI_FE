@@ -65,6 +65,7 @@ export default function NewVersionDocument() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisStep, setAnalysisStep] = useState<'idle' | 'extracting' | 'analyzing' | 'generating'>('idle');
   const [isUploading, setIsUploading] = useState(false);
   const [isRegeneratingSummary, setIsRegeneratingSummary] = useState(false);
   const [htmlDescription, setHtmlDescription] = useState("");
@@ -107,6 +108,7 @@ export default function NewVersionDocument() {
 
       const formValues = {
         title: analysisData.title || "",
+        versionName: analysisData.versionName || "",
         tags: analysisData.tags || [],
         effectiveFrom: analysisData.effectiveFrom ? moment(analysisData.effectiveFrom) : null,
         effectiveTo: analysisData.effectiveUntil ? moment(analysisData.effectiveUntil) : null,
@@ -223,7 +225,19 @@ export default function NewVersionDocument() {
     }
 
     setIsAnalyzing(true);
+    setAnalysisStep('extracting');
+    setIsAnalyzed(false); // Reset analyzed state when starting new analysis
+
+    // Clear previous analysis data
+    setHtmlDescription("");
+    setHtmlSummary("");
+    form.resetFields(['title', 'versionName', 'tags', 'effectiveFrom', 'effectiveTo', 'signedBy']);
+
     try {
+      // Simulate step progression for better UX - make extracting text longer
+      setTimeout(() => setAnalysisStep('analyzing'), 2500);
+      setTimeout(() => setAnalysisStep('generating'), 4000);
+
       const analyzeResult = await analyzeDocument(selectedFile);
       const analyzedData = analyzeResult.data;
 
@@ -241,11 +255,24 @@ export default function NewVersionDocument() {
       });
 
       toast.success("Document analyzed successfully!");
-    } catch (error) {
-      toast.error("Failed to analyze document. Please try again!");
+    } catch (error: any) {
       console.error("Analysis error:", error);
+
+      // Handle specific error cases
+      const errorResponse = error?.response?.data;
+      if (errorResponse?.errorCode === "CONFLICT") {
+        toast.error(`File already exists: ${errorResponse.message}`, {
+          duration: 6000,
+          style: {
+            maxWidth: '500px',
+          }
+        });
+      } else {
+        toast.error("Failed to analyze document. Please try again!");
+      }
     } finally {
       setIsAnalyzing(false);
+      setAnalysisStep('idle');
     }
   };
 
@@ -351,7 +378,7 @@ export default function NewVersionDocument() {
                       Choose File
                     </Button>
                     <p style={{ color: "#999", fontSize: 12, marginTop: 8 }}>
-                      Supported formats: PDF, DOCX (max 5MB)
+                      Supported formats: PDF, DOCX (max 3MB)
                     </p>
                   </Dragger>
 
@@ -373,7 +400,12 @@ export default function NewVersionDocument() {
                           loading={isAnalyzing}
                           disabled={isAnyOperationInProgress}
                         >
-                          {isAnalyzing ? 'Analyzing...' : 'Analyze Document'}
+                          {isAnalyzing ? (
+                            analysisStep === 'extracting' ? 'Extracting text...' :
+                            analysisStep === 'analyzing' ? 'Analyzing document...' :
+                            analysisStep === 'generating' ? 'Generating response...' :
+                            'Processing...'
+                          ) : 'Analyze Document'}
                         </Button>
                       </div>
                     </Card>
@@ -445,7 +477,14 @@ export default function NewVersionDocument() {
                         </Text>
                       </div>
                       <Text type="secondary" style={{ marginLeft: 32, fontSize: 12 }}>
-                        {isAnalyzed ? "✓ Analysis complete" : (isAnalyzing ? "Analyzing..." : "Extract document metadata")}
+                        {isAnalyzed ? "✓ Analysis complete" : (
+                          isAnalyzing ? (
+                            analysisStep === 'extracting' ? "📄 Extracting text..." :
+                            analysisStep === 'analyzing' ? "🔍 Analyzing document..." :
+                            analysisStep === 'generating' ? "✨ Generating response..." :
+                            "Processing..."
+                          ) : "Extract document metadata"
+                        )}
                       </Text>
                     </div>
 

@@ -1,6 +1,6 @@
-import { Layout, Typography, Card, Button, Input, Select, DatePicker, Upload, Form, Row, Col, Space, Spin, Switch } from "antd"
-import { UploadOutlined, InboxOutlined, ArrowRightOutlined } from "@ant-design/icons"
-import { analyzeDocument, recreateDocument, regenerateSummary, getDocumentTypes, DocumentType } from "../../lib/api/document";
+import { Layout, Typography, Card, Button, Input, Select, DatePicker, Form, Row, Col, Space, Spin, Switch } from "antd"
+import { UploadOutlined, ArrowRightOutlined } from "@ant-design/icons"
+import { recreateDocument, regenerateSummary, getDocumentTypes, DocumentType } from "../../lib/api/document";
 import { api } from "../../lib/api/api";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
@@ -10,7 +10,6 @@ import moment from "moment";
 
 const { Title, Text } = Typography
 const { Content } = Layout
-const { Dragger } = Upload
 
 // Custom CSS for Wysiwyg editor
 const editorStyles = `
@@ -59,13 +58,13 @@ if (typeof document !== 'undefined') {
   document.head.appendChild(style);
 }
 
-export default function RecreateDocument() {
+export default function EditDocument() {
   const [form] = Form.useForm()
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisStep, setAnalysisStep] = useState<'idle' | 'extracting' | 'analyzing' | 'generating'>('idle');
+  const [isAnalyzing] = useState(false);
+
   const [isUploading, setIsUploading] = useState(false);
   const [isRegeneratingSummary, setIsRegeneratingSummary] = useState(false);
   const [htmlDescription, setHtmlDescription] = useState("");
@@ -74,7 +73,7 @@ export default function RecreateDocument() {
   const [loadingDocumentTypes, setLoadingDocumentTypes] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isAnalyzed, setIsAnalyzed] = useState(false);
-  const [mode, setMode] = useState<'upload' | 'recreate'>('upload');
+  const [mode, setMode] = useState<'upload' | 'edit'>('upload');
   const [isPublicState, setIsPublicState] = useState(false);
 
   useEffect(() => {
@@ -85,9 +84,9 @@ export default function RecreateDocument() {
         setDocumentTypes(types);
 
         // Set form values after document types are loaded
-        if (location.state?.analysisData && location.state?.mode === 'recreate') {
+        if (location.state?.analysisData && location.state?.mode === 'edit') {
           const analysisData = location.state.analysisData;
-          setMode('recreate');
+          setMode('edit');
           setSelectedFile(analysisData.file);
           setHtmlDescription(analysisData.description || "");
           setHtmlSummary(analysisData.summary || "");
@@ -107,9 +106,9 @@ export default function RecreateDocument() {
           };
 
           form.setFieldsValue(formValues);
-        } else if (location.state?.documentData && location.state?.mode === 'recreate') {
+        } else if (location.state?.documentData && location.state?.mode === 'edit') {
           // Handle document data from DocumentDetail page
-          console.log('🔍 RecreateDocument: Received document data', location.state);
+          console.log('🔍 EditDocument: Received document data', location.state);
 
           const documentData = location.state.documentData;
           // Start in upload mode so user can upload new file, but keep the document data for later
@@ -151,7 +150,7 @@ export default function RecreateDocument() {
 
   // Separate effect to ensure form values are set after document types are loaded
   useEffect(() => {
-    if (!loadingDocumentTypes && documentTypes.length > 0 && location.state?.documentData && location.state?.mode === 'recreate') {
+    if (!loadingDocumentTypes && documentTypes.length > 0 && location.state?.documentData && location.state?.mode === 'edit') {
       const documentData = location.state.documentData;
 
       const formValues = {
@@ -180,8 +179,8 @@ export default function RecreateDocument() {
       return;
     }
 
-    // Only require file if we don't have existing document data (i.e., not recreating from rejected document)
-    if (!selectedFile && !(location.state?.documentData && location.state?.mode === 'recreate')) {
+    // Only require file if we don't have existing document data (i.e., not editing from rejected document)
+    if (!selectedFile && !(location.state?.documentData && location.state?.mode === 'edit')) {
       toast.error("Please select a file to upload!");
       return;
     }
@@ -221,9 +220,9 @@ export default function RecreateDocument() {
         const user = JSON.parse(userStr);
 
         await api.post(`/document/submit/${recreateResponse.versionId}?userId=${user.userId}`);
-        toast.success("Document recreated and submitted for approval successfully!");
+        toast.success("Document updated and submitted for approval successfully!");
       } else {
-        toast.success("Document recreated as draft successfully!");
+        toast.success("Document updated as draft successfully!");
       }
 
       // Reset form and navigate back
@@ -250,116 +249,8 @@ export default function RecreateDocument() {
   const handleSaveAsDraft = async (values: any) => {
     await handleDocumentAction(values, 'draft');
   };
+ 
 
-  const handleSubmitForApproval = async (values: any) => {
-    await handleDocumentAction(values, 'submit');
-  };
-
-  const handleFileUpload = async (info: any) => {
-    const { file } = info;
-
-    if (file.status === 'removed') {
-      setSelectedFile(null);
-      setHtmlDescription("");
-      setHtmlSummary("");
-      setIsAnalyzed(false);
-      form.resetFields();
-      return;
-    }
-
-    const fileObj = file.originFileObj || file;
-
-    if (fileObj && fileObj instanceof File) {
-      setSelectedFile(fileObj);
-      setIsAnalyzed(false);
-      setHtmlDescription("");
-      setHtmlSummary("");
-
-      // Only reset fields if not in recreate mode with existing document data
-      if (!(location.state?.documentData && location.state?.mode === 'recreate')) {
-        form.resetFields();
-      }
-
-      toast.success("File uploaded successfully! Click 'Analyze' to extract document information.");
-    }
-  };
-
-  const handleAnalyzeDocument = async () => {
-    if (!selectedFile) {
-      toast.error("Please upload a file first!");
-      return;
-    }
-
-    setIsAnalyzing(true);
-    setAnalysisStep('extracting');
-    setIsAnalyzed(false); // Reset analyzed state when starting new analysis
-
-    // Clear previous analysis data
-    setHtmlDescription("");
-    setHtmlSummary("");
-
-    // Only reset specific fields if not in recreate mode with existing document data
-    if (!(location.state?.documentData && location.state?.mode === 'recreate')) {
-      form.resetFields(['title', 'versionName', 'tags', 'effectiveFrom', 'effectiveTo', 'signedBy']);
-    }
-
-    try {
-      // Simulate step progression for better UX - make extracting text longer
-      setTimeout(() => setAnalysisStep('analyzing'), 2500);
-      setTimeout(() => setAnalysisStep('generating'), 4000);
-
-      const analyzeResult = await analyzeDocument(selectedFile);
-      const analyzedData = analyzeResult.data;
-
-      setHtmlDescription(analyzedData.description || "");
-      setHtmlSummary(analyzedData.summary || "");
-      setIsAnalyzed(true);
-
-      // If in recreate mode with existing document data, merge analyzed data with existing data
-      if (location.state?.documentData && location.state?.mode === 'recreate') {
-        const documentData = location.state.documentData;
-        form.setFieldsValue({
-          title: documentData.title || analyzedData.title || "",
-          versionName: documentData.versionName || analyzedData.versionName || "",
-          tags: documentData.tags?.length > 0 ? documentData.tags : (analyzedData.tags || []),
-          effectiveFrom: documentData.effectiveFrom ? moment(documentData.effectiveFrom) : (analyzedData.effectiveFrom ? moment(analyzedData.effectiveFrom) : null),
-          effectiveTo: documentData.effectiveUntil ? moment(documentData.effectiveUntil) : (analyzedData.effectiveUntil ? moment(analyzedData.effectiveUntil) : null),
-          signedBy: documentData.signedBy || analyzedData.signedBy || "",
-          type: documentData.documentTypeId || "",
-          isPublic: documentData.isPublic || false,
-        });
-      } else {
-        form.setFieldsValue({
-          title: analyzedData.title || "",
-          versionName: analyzedData.versionName || "",
-          tags: analyzedData.tags || [],
-          effectiveFrom: analyzedData.effectiveFrom ? moment(analyzedData.effectiveFrom) : null,
-          effectiveTo: analyzedData.effectiveUntil ? moment(analyzedData.effectiveUntil) : null,
-          signedBy: analyzedData.signedBy || "",
-        });
-      }
-
-      toast.success("Document analyzed successfully!");
-    } catch (error: any) {
-      console.error("Analysis error:", error);
-
-      // Handle specific error cases
-      const errorResponse = error?.response?.data;
-      if (errorResponse?.errorCode === "CONFLICT") {
-        toast.error(`File already exists: ${errorResponse.message}`, {
-          duration: 6000,
-          style: {
-            maxWidth: '500px',
-          }
-        });
-      } else {
-        toast.error("Failed to analyze document. Please try again!");
-      }
-    } finally {
-      setIsAnalyzing(false);
-      setAnalysisStep('idle');
-    }
-  };
 
   const handleRegenerateSummary = async () => {
     if (!selectedFile) {
@@ -392,23 +283,10 @@ export default function RecreateDocument() {
       return;
     }
 
-    setMode('recreate');
+    setMode('edit');
   };
 
-  const uploadProps = {
-    name: "file",
-    multiple: false,
-    accept: ".pdf,.docx",
-    beforeUpload: () => false,
-    onChange: handleFileUpload,
-    disabled: isUploading || isAnalyzing || isRegeneratingSummary,
-    showUploadList: {
-      showPreviewIcon: true,
-      showRemoveIcon: !isUploading && !isRegeneratingSummary,
-      showDownloadIcon: false,
-    },
-    maxCount: 1,
-  }
+
 
   const isAnyOperationInProgress = isUploading || isAnalyzing || isRegeneratingSummary;
 
@@ -419,215 +297,19 @@ export default function RecreateDocument() {
           {/* Header */}
           <div style={{ marginBottom: 24 }}>
             <Title level={2} style={{ margin: 0 }}>
-              {mode === 'upload' ? 'Recreate Document - Upload New File' : 'Recreate Document'}
+              {mode === 'upload' ? 'Edit Document - Upload New File' : 'Edit Document'}
             </Title>
             <Text type="secondary">
               {mode === 'upload'
                 ? (location.state?.documentData
-                    ? 'Review and modify the document information below. Optionally upload a new file to replace the existing one. You can recreate the document without making any changes.'
-                    : 'Upload a new file to recreate the document and analyze it with AI to extract metadata')
-                : 'Complete your document details to recreate the document'
+                  ? 'Review and modify the document information below. Optionally upload a new file to replace the existing one. You can edit the document without making any changes.'
+                  : 'Upload a new file to edit the document and analyze it with AI to extract metadata')
+                : 'Complete your document details to save the edited document'
               }
             </Text>
           </div>
 
-          {/* Step 1: Document Upload */}
-          {mode === 'upload' && (
-            <Row gutter={[24, 24]}>
-              <Col xs={24} lg={16}>
-                <Card
-                  title={
-                    <div style={{ display: "flex", alignItems: "center" }}>
-                      <UploadOutlined style={{ marginRight: 8, color: "#1890ff" }} />
-                      Step 1: Upload New Document File
-                    </div>
-                  }
-                  style={{ marginBottom: 24 }}
-                >
-                  <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
-                    {location.state?.documentData
-                      ? 'Optionally upload a new PDF or DOCX file to replace the rejected document file. If no new file is uploaded, the document will be recreated with the existing file and updated information.'
-                      : 'Upload a new PDF or DOCX file to recreate the document.'
-                    }
-                  </Text>
 
-                  {location.state?.documentData && (
-                    <div style={{
-                      backgroundColor: '#f6ffed',
-                      border: '1px solid #b7eb8f',
-                      borderRadius: 6,
-                      padding: 12,
-                      marginBottom: 16
-                    }}>
-                      <Text strong style={{ color: '#52c41a' }}>✓ Document Information Preserved</Text>
-                      <div style={{ marginTop: 4 }}>
-                        <Text type="secondary" style={{ fontSize: 12 }}>
-                          Title: {location.state.documentData.title || 'N/A'} |
-                          Type: {location.state.documentData.documentTypeId || 'N/A'} |
-                          Public: {location.state.documentData.isPublic ? 'Yes' : 'No'}
-                        </Text>
-                      </div>
-                    </div>
-                  )}
-
-                  <Dragger
-                    {...uploadProps}
-                    style={{
-                      padding: "40px 20px",
-                      marginBottom: 16
-                    }}
-                  >
-                    <p className="ant-upload-drag-icon">
-                      <InboxOutlined style={{ fontSize: 48, color: "#d9d9d9" }} />
-                    </p>
-                    <p style={{ fontSize: 16, marginBottom: 8 }}>
-                      Drag and drop your file here, or click to browse
-                    </p>
-                    <Button type="default">
-                      Choose File
-                    </Button>
-                    <p style={{ color: "#999", fontSize: 12, marginTop: 8 }}>
-                      Supported formats: PDF, DOCX (max 3MB)
-                    </p>
-                  </Dragger>
-
-                  {/* Show uploaded file info */}
-                  {selectedFile && (
-                    <Card size="small" style={{ backgroundColor: '#f6ffed', borderColor: '#b7eb8f', marginBottom: 16 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                          <Text strong>Uploaded File:</Text>
-                          <div style={{ marginTop: 4 }}>
-                            <Text>{selectedFile.name}</Text>
-                            <Text type="secondary" style={{ marginLeft: 8 }}>
-                              ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
-                            </Text>
-                          </div>
-                        </div>
-                        <Button
-                          type="primary"
-                          onClick={handleAnalyzeDocument}
-                          loading={isAnalyzing}
-                          disabled={isAnyOperationInProgress}
-                        >
-                          {isAnalyzing ? (
-                            analysisStep === 'extracting' ? 'Extracting text...' :
-                            analysisStep === 'analyzing' ? 'Analyzing document...' :
-                            analysisStep === 'generating' ? 'Generating response...' :
-                            'Processing...'
-                          ) : 'Analyze Document'}
-                        </Button>
-                      </div>
-                    </Card>
-                  )}
-
-                  {/* Analysis Results */}
-                  {isAnalyzed && (
-                    <Card
-                      size="small"
-                      title="Analysis Complete"
-                      style={{ backgroundColor: '#e6f7ff', borderColor: '#91d5ff', marginBottom: 16 }}
-                    >
-                      <Text type="secondary">
-                        Document analyzed successfully! Review the extracted information below and click "Next" to proceed.
-                      </Text>
-                    </Card>
-                  )}
-                </Card>
-              </Col>
-
-              <Col xs={24} lg={8}>
-                <Card
-                  title="Recreation Progress"
-                  style={{ height: "fit-content" }}
-                >
-                  <div style={{ padding: "20px 0" }}>
-                    <div style={{ marginBottom: 16 }}>
-                      <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
-                        <div style={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: "50%",
-                          backgroundColor: selectedFile ? "#52c41a" : "#d9d9d9",
-                          color: "white",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 12,
-                          marginRight: 8
-                        }}>
-                          1
-                        </div>
-                        <Text strong style={{ color: selectedFile ? "#52c41a" : "#999" }}>
-                          Upload File
-                        </Text>
-                      </div>
-                      <Text type="secondary" style={{ marginLeft: 32, fontSize: 12 }}>
-                        {selectedFile ? "✓ File uploaded" : "Upload a new document file"}
-                      </Text>
-                    </div>
-
-                    <div style={{ marginBottom: 16 }}>
-                      <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
-                        <div style={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: "50%",
-                          backgroundColor: isAnalyzed ? "#52c41a" : (isAnalyzing ? "#1890ff" : "#d9d9d9"),
-                          color: "white",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 12,
-                          marginRight: 8
-                        }}>
-                          {isAnalyzing ? <Spin size="small" /> : "2"}
-                        </div>
-                        <Text strong style={{ color: isAnalyzed ? "#52c41a" : (isAnalyzing ? "#1890ff" : "#999") }}>
-                          Analyze Document
-                        </Text>
-                      </div>
-                      <Text type="secondary" style={{ marginLeft: 32, fontSize: 12 }}>
-                        {isAnalyzed ? "✓ Analysis complete" : (
-                          isAnalyzing ? (
-                            analysisStep === 'extracting' ? "📄 Extracting text..." :
-                            analysisStep === 'analyzing' ? "🔍 Analyzing document..." :
-                            analysisStep === 'generating' ? "✨ Generating response..." :
-                            "Processing..."
-                          ) : "Extract document metadata"
-                        )}
-                      </Text>
-                    </div>
-
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
-                        <div style={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: "50%",
-                          backgroundColor: mode !== "upload" ? "#52c41a" : "#d9d9d9",
-                          color: "white",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 12,
-                          marginRight: 8
-                        }}>
-                          3
-                        </div>
-                        <Text strong style={{ color: mode !== 'upload' ? "#52c41a" : "#999" }}>
-                          Recreate Document
-                        </Text>
-                      </div>
-                      <Text type="secondary" style={{ marginLeft: 32, fontSize: 12 }}>
-                        {mode !== 'upload' ? "✓ Ready to recreate" : "Complete document recreation"}
-                      </Text>
-                    </div>
-                  </div>
-                </Card>
-              </Col>
-            </Row>
-          )}
 
           {/* Document Analysis Results (show when analyzed) */}
           {isAnalyzed && mode === 'upload' && (
@@ -703,12 +385,12 @@ export default function RecreateDocument() {
 
                 <Row gutter={16}>
                   <Col xs={24} sm={12}>
-                    <Form.Item 
-                      name="isPublic" 
+                    <Form.Item
+                      name="isPublic"
                       label="Document Visibility"
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Switch 
+                        <Switch
                           checked={isPublicState}
                           onChange={handleSwitchChange}
                           disabled={isAnyOperationInProgress}
@@ -773,9 +455,9 @@ export default function RecreateDocument() {
                               <Input placeholder={`Tag ${index + 1}`} disabled={isAnyOperationInProgress} />
                             </Form.Item>
                             {fields.length > 1 && (
-                              <Button 
-                                type="link" 
-                                danger 
+                              <Button
+                                type="link"
+                                danger
                                 onClick={() => remove(field.name)}
                                 disabled={isAnyOperationInProgress}
                               >
@@ -784,9 +466,9 @@ export default function RecreateDocument() {
                             )}
                           </Space>
                         ))}
-                        <Button 
-                          type="dashed" 
-                          onClick={() => add()} 
+                        <Button
+                          type="dashed"
+                          onClick={() => add()}
                           style={{ marginTop: 8 }}
                           disabled={isAnyOperationInProgress}
                         >
@@ -812,32 +494,19 @@ export default function RecreateDocument() {
                       paddingRight: "32px"
                     }}
                   >
-                    Next: Recreate Document
+                    Next: Edit Document
                   </Button>
                 </Form.Item>
               </Form>
             </Card>
           )}
 
-          {/* Step 3: Document Recreation Form (show when in recreate mode OR when in upload mode with existing document data) */}
-          {(mode === 'recreate' || (mode === 'upload' && location.state?.documentData)) && (
+          {/* Step 3: Document Form (show when in edit mode OR when in upload mode with existing document data) */}
+          {(mode === 'edit' || (mode === 'upload' && location.state?.documentData)) && (
             <Card
-              title={mode === 'upload' && location.state?.documentData
-                ? "Step 2: Review Document Information"
-                : "Recreate Document"
-              }
+              title={"Edit Document"}
               style={{ marginBottom: 24 }}
             >
-              {mode === 'upload' && location.state?.documentData && (
-                <div style={{ marginBottom: 16 }}>
-                  <Text type="secondary">
-                    Review and modify the document information below. This data was preserved from your original document.
-                    Upload a new file above to replace the rejected document.
-                  </Text>
-
-
-                </div>
-              )}
 
               <Form form={form} layout="vertical" onFinish={handleSaveAsDraft}>
                 <Row gutter={16}>
@@ -903,12 +572,12 @@ export default function RecreateDocument() {
 
                 <Row gutter={16}>
                   <Col xs={24} sm={12}>
-                    <Form.Item 
-                      name="isPublic" 
+                    <Form.Item
+                      name="isPublic"
                       label="Document Visibility"
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Switch 
+                        <Switch
                           checked={isPublicState}
                           onChange={handleSwitchChange}
                           disabled={isAnyOperationInProgress}
@@ -975,9 +644,9 @@ export default function RecreateDocument() {
                               <Input placeholder={`Tag ${index + 1}`} disabled={isAnyOperationInProgress} />
                             </Form.Item>
                             {fields.length > 1 && (
-                              <Button 
-                                type="link" 
-                                danger 
+                              <Button
+                                type="link"
+                                danger
                                 onClick={() => remove(field.name)}
                                 disabled={isAnyOperationInProgress}
                               >
@@ -986,9 +655,9 @@ export default function RecreateDocument() {
                             )}
                           </Space>
                         ))}
-                        <Button 
-                          type="dashed" 
-                          onClick={() => add()} 
+                        <Button
+                          type="dashed"
+                          onClick={() => add()}
                           style={{ marginTop: 8 }}
                           disabled={isAnyOperationInProgress}
                         >
@@ -1005,37 +674,23 @@ export default function RecreateDocument() {
                     <Button
                       disabled={isAnyOperationInProgress}
                       onClick={() => {
-                        if (mode === 'recreate') {
+                        if (mode === 'edit') {
                           setMode('upload');
                         } else {
                           navigate(-1);
                         }
                       }}
                     >
-                      {mode === 'recreate' ? 'Back' : 'Cancel'}
+                      {mode === 'edit' ? 'Back' : 'Cancel'}
                     </Button>
                     <Button
                       onClick={() => form.submit()}
                       icon={isUploading ? <Spin size="small" /> : <UploadOutlined />}
                       loading={isUploading}
-                      disabled={(!selectedFile && !(location.state?.documentData && location.state?.mode === 'recreate')) || isAnyOperationInProgress}
+                      disabled={(!selectedFile && !(location.state?.documentData && location.state?.mode === 'edit')) || isAnyOperationInProgress}
                     >
                       {isUploading ? "Saving..." : "Save as Draft"}
-                    </Button>
-                    <Button
-                      type="primary"
-                      onClick={() => {
-                        form.validateFields().then(values => {
-                          handleSubmitForApproval(values);
-                        }).catch(errorInfo => {
-                          console.log('Form validation failed:', errorInfo);
-                        });
-                      }}
-                      loading={isUploading}
-                      disabled={(!selectedFile && !(location.state?.documentData && location.state?.mode === 'recreate')) || isAnyOperationInProgress}
-                    >
-                      {isUploading ? "Submitting..." : "Submit for Approval"}
-                    </Button>
+                    </Button> 
                   </Space>
                 </Form.Item>
               </Form>
@@ -1059,7 +714,7 @@ export default function RecreateDocument() {
               <Card style={{ textAlign: "center", minWidth: 300 }}>
                 <Spin size="large" />
                 <div style={{ marginTop: 16 }}>
-                  <Title level={4} style={{ margin: 0 }}>Recreating Document</Title>
+                  <Title level={4} style={{ margin: 0 }}>Editing Document</Title>
                   <Text type="secondary">Please wait while we process your document...</Text>
                 </div>
               </Card>

@@ -81,7 +81,7 @@ export default function Login() {
             <div className="w-full border-t border-gray-300" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">
+            <span className="px-2 text-gray-500 bg-white">
               Or continue with email
             </span>
           </div>
@@ -157,12 +157,12 @@ export default function Login() {
               : "Login"}
           </button>
         </form>
-        <p className="mt-6 text-sm text-center">
+        {/* <p className="mt-6 text-sm text-center">
           Don&apos;t have an Account?{" "}
           <Link to="/signup" className="text-blue-600 hover:underline">
             Sign up here
           </Link>
-        </p>
+        </p> */}
       </AuthContainer>
     </LayoutAuth>
   );

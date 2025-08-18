@@ -66,6 +66,7 @@ export default function UploadDocument() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisStep, setAnalysisStep] = useState<'idle' | 'extracting' | 'analyzing' | 'generating'>('idle');
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [htmlDescription, setHtmlDescription] = useState("");
@@ -107,6 +108,9 @@ export default function UploadDocument() {
       setHtmlSummary(analysisData.summary || "");
       setIsAnalyzed(true);
 
+      const isPublicValue = analysisData.isPublic || false;
+      setIsPublicState(isPublicValue);
+
       form.setFieldsValue({
         title: analysisData.title || "",
         versionName: analysisData.versionName || "",
@@ -115,6 +119,7 @@ export default function UploadDocument() {
         effectiveTo: analysisData.effectiveUntil ? moment(analysisData.effectiveUntil) : null,
         signedBy: analysisData.signedBy || "",
         type: analysisData.documentTypeId || "",
+        isPublic: isPublicValue,
       });
     }
   }, [location.state, form]);
@@ -263,8 +268,20 @@ export default function UploadDocument() {
     }
 
     setIsAnalyzing(true);
+    setAnalysisStep('extracting');
+    setIsAnalyzed(false); // Reset analyzed state when starting new analysis
+
+    // Clear previous analysis data
+    setHtmlDescription("");
+    setHtmlSummary("");
+    form.resetFields(['title', 'versionName', 'tags', 'effectiveFrom', 'effectiveTo', 'signedBy']);
+
     try {
       console.log("Analyzing document...");
+
+      // Simulate step progression for better UX - make extracting text longer
+      setTimeout(() => setAnalysisStep('analyzing'), 2500);
+      setTimeout(() => setAnalysisStep('generating'), 4000);
 
       // Only call analyze API, not regenerate summary
       const analyzeResult = await analyzeDocument(selectedFile);
@@ -288,11 +305,24 @@ export default function UploadDocument() {
       });
 
       toast.success("Document analyzed successfully!");
-    } catch (error) {
-      toast.error("Failed to analyze document. Please try again!");
+    } catch (error: any) {
       console.error("Analysis error:", error);
+
+      // Handle specific error cases
+      const errorResponse = error?.response?.data;
+      if (errorResponse?.errorCode === "CONFLICT") {
+        toast.error(`File already exists: ${errorResponse.message}`, {
+          duration: 6000,
+          style: {
+            maxWidth: '500px',
+          }
+        });
+      } else {
+        toast.error("Failed to analyze document. Please try again!");
+      }
     } finally {
       setIsAnalyzing(false);
+      setAnalysisStep('idle');
     }
   };
 
@@ -347,6 +377,7 @@ export default function UploadDocument() {
       effectiveUntil: form.getFieldValue('effectiveTo')?.toISOString() || "",
       signedBy: form.getFieldValue('signedBy') || "",
       documentTypeId: form.getFieldValue('type') || "",
+      isPublic: form.getFieldValue('isPublic') || false,
       file: selectedFile
     };
 
@@ -424,7 +455,7 @@ export default function UploadDocument() {
                       Choose File
                     </Button>
                     <p style={{ color: "#999", fontSize: 12, marginTop: 8 }}>
-                      Supported formats: PDF, DOCX (max 5MB)
+                      Supported formats: PDF, DOCX (max 3MB)
                     </p>
                   </Dragger>
 
@@ -447,7 +478,12 @@ export default function UploadDocument() {
                           loading={isAnalyzing}
                           disabled={isAnalyzing}
                         >
-                          {isAnalyzing ? 'Analyzing...' : 'Analyze Document'}
+                          {isAnalyzing ? (
+                            analysisStep === 'extracting' ? 'Extracting text...' :
+                            analysisStep === 'analyzing' ? 'Analyzing document...' :
+                            analysisStep === 'generating' ? 'Generating response...' :
+                            'Processing...'
+                          ) : 'Analyze Document'}
                         </Button>
                       </div>
                     </Card>
@@ -520,7 +556,14 @@ export default function UploadDocument() {
                         </Text>
                       </div>
                       <Text type="secondary" style={{ marginLeft: 32, fontSize: 12 }}>
-                        {isAnalyzed ? "✓ Analysis complete" : (isAnalyzing ? "Analyzing..." : "Extract document metadata")}
+                        {isAnalyzed ? "✓ Analysis complete" : (
+                          isAnalyzing ? (
+                            analysisStep === 'extracting' ? "📄 Extracting text..." :
+                            analysisStep === 'analyzing' ? "🔍 Analyzing document..." :
+                            analysisStep === 'generating' ? "✨ Generating response..." :
+                            "Processing..."
+                          ) : "Extract document metadata"
+                        )}
                       </Text>
                     </div>
 

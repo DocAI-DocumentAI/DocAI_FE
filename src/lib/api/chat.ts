@@ -51,6 +51,7 @@ export interface SendMessageRequest {
   message: string;
   sessionId: string;
   modelName: string;
+  documentId?: string; // Optional for document-specific chat
 }
 
 export interface SendMessageResponse {
@@ -90,6 +91,11 @@ export const sendMessage = async (
   data: SendMessageRequest
 ): Promise<SendMessageResponse> => {
   const response = await api.post("/chatbox/send", data);
+  return response.data;
+};
+
+export const deleteChatSession = async (sessionId: string) => {
+  const response = await api.delete(`/chatbox/session/${sessionId}`);
   return response.data;
 };
 
