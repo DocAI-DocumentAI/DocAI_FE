@@ -1,4 +1,4 @@
-import { Outlet, RouteObject } from "react-router-dom";
+import { RouteObject } from "react-router-dom";
 // import Login from "../pages/Login";
 import SignUp from "../pages/auth/Signup";
 import VerifyEmail from "../pages/auth/VerifyEmail";
@@ -15,22 +15,19 @@ import PersonalizationSettings from "../pages/settings/Personalization";
 import NotificationsSettings from "../pages/settings/Notification";
 import NewChatPage from "../pages/chat/ChatNew";
 import ChatDetail from "../pages/chat/ChatDetail";
-import UploadDocument from "../pages/editor/UploadDocument"; 
+import UploadDocument from "../pages/editor/UploadDocument";
 import DocumentPage from "../pages/document/DocumentDetail";
 import SearchPage from "../pages/search/SearchPage";
 import ApprovalManagerTable from "../pages/editor/ApprovalManagerTable";
 import ViewDraftTable from "../pages/editor/ViewDraftTable";
 import EditedLayout from "../components/layout/EditedLayoutLayout";
-import ManagerLayoutLayout from "../components/layout/ManagerLayoutLayout";
-import ApprovalQueue from "../pages/manager/ApprovalQueue";
-import DocumentReview from "../pages/manager/DocumentReview";
-import DocumentManagement from "../pages/manager/DocumentManagement";
+
 import DocumentDetail from "../pages/editor/DocumentDetail";
 import RecreateDocument from "../pages/editor/RecreateDocument";
 import BookmarksPage from "../pages/bookmarks/BookmarksPage";
 import NewVersionDocument from "../pages/editor/NewVersionDocument";
 import ChatIndexPage from "../pages/chat/ChatIndex";
-import Tags from "../pages/manager/Tags";
+
 import DocumentChoice from "../pages/editor/DocumentChoice";
 import DocumentReplacement from "../pages/editor/DocumentReplacement";
 import DocumentLibrary from "../pages/document/DocumentLibrary.tsx";
@@ -74,7 +71,12 @@ const PublicRoutes: RouteObject[] = [
   },
   {
     path: "/auth/google/callback",
-    element: <GoogleCallbackPage />,
+    element: (() => {
+      console.log("PublicRoutes: Google callback route matched!");
+      console.log("PublicRoutes: Current URL:", window.location.href);
+      console.log("PublicRoutes: URL search params:", window.location.search);
+      return <GoogleCallbackPage />;
+    })(),
   },
   {
     path: "/chat",
@@ -87,7 +89,7 @@ const PublicRoutes: RouteObject[] = [
   {
     path: "/chat/:id",
     element: <ChatDetail />,
-  },  
+  },
   {
     path: "/search",
     element: <SearchPage />,
@@ -112,28 +114,7 @@ const PublicRoutes: RouteObject[] = [
     path: "/admin-test",
     element: <AdminRouteTestPage />,
   },
-  {
-    path: "/manager",
-    element: <ManagerLayoutLayout />,
-    children: [
-      {
-        path: "document-management",
-        element: <DocumentManagement />,
-      },
-      {
-        path: "approvalQueue",
-        element: <ApprovalQueue />,
-      },
-      {
-        path: "tags",
-        element: <Tags />,
-      },
-      {
-        path: "document-review/:id/:versionId",
-        element: <DocumentReview />,
-      },
-    ],
-  },
+
   {
     path: "/editor",
     element: <EditedLayout />,
@@ -158,7 +139,7 @@ const PublicRoutes: RouteObject[] = [
       {
         path: "document/new-version/:id",
         element: <NewVersionDocument />,
-      }, 
+      },
       {
         path: "my-document",
         element: <ViewDraftTable />,
@@ -187,11 +168,7 @@ const PublicRoutes: RouteObject[] = [
   },
   {
     path: "/settings",
-    element: (
-      <SettingsLayout>
-        <Outlet />
-      </SettingsLayout>
-    ),
+    element: <SettingsLayout />,
     children: [
       {
         index: true,

@@ -37,5 +37,29 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <>{children}</>;
 };
 
+// Component riêng để bảo vệ các route Manager
+const ManagerRoute: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  // Lấy trạng thái đăng nhập và thông tin user từ Redux
+  const { isAuthenticated, user } = useSelector(
+    (state: RootState) => state.auth
+  );
+
+  // Kiểm tra authentication trước
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Kiểm tra role Manager
+  if (!user || user.role.roleName !== "Manager") {
+    // Nếu đã đăng nhập nhưng không phải Manager, chuyển về trang chủ
+    return <Navigate to="/" replace />;
+  }
+
+  // Nếu đã đăng nhập và là Manager, render children
+  return <>{children}</>;
+};
+
 export default PrivateRoute;
-export { AdminRoute };
+export { AdminRoute, ManagerRoute };
