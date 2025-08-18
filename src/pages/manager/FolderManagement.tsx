@@ -50,8 +50,7 @@ import {
   getFolderPermissions,
   grantUserPermission,
   grantDepartmentPermission,
-  updateUserPermission,
-  updateDepartmentPermission,
+
   revokeUserPermission,
   revokeDepartmentPermission,
   canUserPerformAction
@@ -86,8 +85,10 @@ const FolderManagement: React.FC = () => {
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [permissionsModalVisible, setPermissionsModalVisible] = useState(false);
+
   const [grantPermissionModalVisible, setGrantPermissionModalVisible] = useState(false);
+  const [permissionsModalVisible, setPermissionsModalVisible] = useState(false);
+  void permissionsModalVisible;
   
   // Forms
   const [createForm] = Form.useForm();
@@ -110,7 +111,7 @@ const FolderManagement: React.FC = () => {
   const loadFolders = async () => {
     try {
       setLoading(true);
-      const response = await getFolderTree(undefined, true);
+      const response = await getFolderTree({ includeSystemFolders: true });
       setFolders(response.data.rootNodes);
     } catch (error: any) {
       console.error('Failed to load folders:', error);
@@ -138,9 +139,10 @@ const FolderManagement: React.FC = () => {
     try {
       setPermissionsLoading(true);
       const response = await getFolderPermissions(selectedFolder.id);
+      const allPermissions = response.data;
       setPermissions({
-        userPermissions: response.data.userPermissions,
-        departmentPermissions: response.data.departmentPermissions
+        userPermissions: allPermissions.filter(p => p.userId),
+        departmentPermissions: allPermissions.filter(p => p.departmentId)
       });
     } catch (error: any) {
       console.error('Failed to load permissions:', error);

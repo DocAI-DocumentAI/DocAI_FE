@@ -9,7 +9,7 @@ import {
   Form,
   Input,
   Switch,
-  message,
+
   Spin,
   Row,
   Col,
@@ -73,7 +73,7 @@ const FolderManagement: React.FC = () => {
   const loadFolders = async () => {
     try {
       setLoading(true);
-      const response = await getFolderTree(undefined, true);
+      const response = await getFolderTree({ includeSystemFolders: true });
       setFolders(response.data.rootNodes);
     } catch (error: any) {
       console.error('Failed to load folders:', error);
@@ -363,7 +363,7 @@ const FolderManagement: React.FC = () => {
                       <Tooltip title={canEdit ? "Edit folder" : "No permission to edit"}>
                         <Button
                           icon={<EditOutlined />}
-                          onClick={openEditModal}
+                          onClick={() => openEditModal()}
                           disabled={!canEdit}
                           loading={editLoading}
                         />

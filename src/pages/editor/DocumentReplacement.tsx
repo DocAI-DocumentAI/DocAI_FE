@@ -226,9 +226,9 @@ const DocumentReplacement: React.FC = () => {
       console.log("Draft upload response:", uploadResponse);
 
       if (action === 'submit' && uploadResponse?.versionId) {
-        // If submitting, also call submit API with the versionId from draft response
-        console.log("Submitting for approval with versionId:", uploadResponse.versionId);
-        await submitDocumentForApproval(uploadResponse.versionId);
+        // If submitting, also call submit API with the versionId from draft response (folder-aware)
+        console.log("Submitting for approval with versionId:", uploadResponse.versionId, "targetFolderId:", formValues.folderId);
+        await submitDocumentForApproval(uploadResponse.versionId, formValues.folderId || undefined);
         toast.success("Replacement document submitted for approval successfully!");
       } else {
         toast.success("Replacement document saved as draft successfully!");

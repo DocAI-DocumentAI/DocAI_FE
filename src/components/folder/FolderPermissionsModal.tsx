@@ -24,12 +24,10 @@ import {
   EditOutlined,
   LockOutlined
 } from '@ant-design/icons';
-import type { 
-  FolderNode, 
-  FolderPermission, 
-  FolderPermissionLevel,
-  GrantUserPermissionRequest,
-  GrantDepartmentPermissionRequest 
+import type {
+  FolderNode,
+  FolderPermission,
+  FolderPermissionLevel
 } from '../../types/folder';
 import {
   getFolderPermissions,
@@ -41,7 +39,7 @@ import {
   revokeDepartmentPermission
 } from '../../lib/api/folder';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { Option } = Select;
 const { TabPane } = Tabs;
 
@@ -65,14 +63,17 @@ const FolderPermissionsModal: React.FC<FolderPermissionsModalProps> = ({
   onClose,
   onPermissionsUpdated
 }) => {
-  const [userPermissions, setUserPermissions] = useState<FolderPermission[]>([]);
-  const [departmentPermissions, setDepartmentPermissions] = useState<FolderPermission[]>([]);
+  const [permissions, setPermissions] = useState<FolderPermission[]>([]);
   const [loading, setLoading] = useState(false);
   const [grantModalVisible, setGrantModalVisible] = useState(false);
   const [editingPermission, setEditingPermission] = useState<FolderPermission | null>(null);
-  
+
   const [grantForm] = Form.useForm();
   const [editForm] = Form.useForm();
+
+  // Separate permissions by type for display
+  const userPermissions = permissions.filter(p => p.userId);
+  const departmentPermissions = permissions.filter(p => p.departmentId);
 
   // Load permissions when folder changes
   useEffect(() => {
@@ -87,8 +88,7 @@ const FolderPermissionsModal: React.FC<FolderPermissionsModalProps> = ({
     setLoading(true);
     try {
       const response = await getFolderPermissions(folder.id);
-      setUserPermissions(response.data.userPermissions);
-      setDepartmentPermissions(response.data.departmentPermissions);
+      setPermissions(response.data); // New API returns flat array
     } catch (error: any) {
       console.error('Failed to load permissions:', error);
       message.error('Failed to load permissions');
@@ -181,12 +181,12 @@ const FolderPermissionsModal: React.FC<FolderPermissionsModalProps> = ({
   const userColumns = [
     {
       title: 'User',
-      dataIndex: 'userName',
-      key: 'userName',
-      render: (text: string) => (
+      dataIndex: 'userFullName',
+      key: 'userFullName',
+      render: (text: string, record: FolderPermission) => (
         <span>
           <UserOutlined style={{ marginRight: 8, color: '#1890ff' }} />
-          {text}
+          {text || record.userEmail || 'Unknown User'}
         </span>
       )
     },
@@ -194,60 +194,102 @@ const FolderPermissionsModal: React.FC<FolderPermissionsModalProps> = ({
       title: 'Permission',
       dataIndex: 'permission',
       key: 'permission',
-      render: (permission: FolderPermissionLevel) => (
-        <Tag color={getPermissionColor(permission)}>
-          {permission.toUpperCase()}
+      render: (permission: FolderPermissionLevel, record: FolderPermission) => (
+        <Space>
+          <Tag color={getPermissionColor(permission)}>
+            {permission.toUpperCase()}
+          </Tag>
+          {record.isInherited && (
+            <Tag color="blue">
+              Inherited
+            </Tag>
+          )}
+          {record.isDenied && (
+            <Tag color="red">
+              Denied
+            </Tag>
+          )}
+          {record.expiresAt && (
+            <Tag color="orange">
+              Expires
+            </Tag>
+          )}
+        </Space>
+      )
+    },
+    {
+      title: 'Source',
+      dataIndex: 'permissionSource',
+      key: 'permissionSource',
+      render: (source: string) => (
+        <Tag color="default">
+          {source}
         </Tag>
       )
     },
     {
       title: 'Granted By',
-      dataIndex: 'grantedBy',
-      key: 'grantedBy'
+      dataIndex: 'createdBy',
+      key: 'createdBy'
     },
     {
       title: 'Granted At',
-      dataIndex: 'grantedAt',
-      key: 'grantedAt',
-      render: (date: string) => new Date(date).toLocaleDateString()
+      dataIndex: 'createdTime',
+      key: 'createdTime',
+      render: (date: string) => date ? new Date(date).toLocaleDateString() : '-'
+    },
+    {
+      title: 'Expires At',
+      dataIndex: 'expiresAt',
+      key: 'expiresAt',
+      render: (date: string | null) => date ? new Date(date).toLocaleDateString() : 'Never'
     },
     {
       title: 'Actions',
       key: 'actions',
       render: (record: FolderPermission) => (
         <Space>
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            size="small"
-            onClick={() => {
-              setEditingPermission(record);
-              editForm.setFieldsValue({ permission: record.permission });
-            }}
-          >
-            Edit
-          </Button>
-          <Popconfirm
-            title="Are you sure you want to revoke this permission?"
-            onConfirm={() => handleRevokePermission(record)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button
-              type="text"
-              icon={<DeleteOutlined />}
-              size="small"
-              danger
-            >
-              Revoke
-            </Button>
-          </Popconfirm>
+          {!record.isInherited && (
+            <>
+              <Button
+                type="text"
+                icon={<EditOutlined />}
+                size="small"
+                onClick={() => {
+                  setEditingPermission(record);
+                  editForm.setFieldsValue({ permission: record.permission });
+                }}
+              >
+                Edit
+              </Button>
+              <Popconfirm
+                title="Are you sure you want to revoke this permission?"
+                onConfirm={() => handleRevokePermission(record)}
+                okText="Yes"
+                cancelText="No"
+              >
+                <Button
+                  type="text"
+                  icon={<DeleteOutlined />}
+                  size="small"
+                  danger
+                >
+                  Revoke
+                </Button>
+              </Popconfirm>
+            </>
+          )}
+          {record.isInherited && (
+            <Tag color="blue">
+              Inherited - Cannot Edit
+            </Tag>
+          )}
         </Space>
       )
     }
   ];
 
-  // Department permissions table columns
+  // Department permissions table columns (same structure as user columns)
   const departmentColumns = [
     {
       title: 'Department',
@@ -256,7 +298,7 @@ const FolderPermissionsModal: React.FC<FolderPermissionsModalProps> = ({
       render: (text: string) => (
         <span>
           <TeamOutlined style={{ marginRight: 8, color: '#52c41a' }} />
-          {text}
+          {text || 'Unknown Department'}
         </span>
       )
     },
@@ -264,54 +306,96 @@ const FolderPermissionsModal: React.FC<FolderPermissionsModalProps> = ({
       title: 'Permission',
       dataIndex: 'permission',
       key: 'permission',
-      render: (permission: FolderPermissionLevel) => (
-        <Tag color={getPermissionColor(permission)}>
-          {permission.toUpperCase()}
+      render: (permission: FolderPermissionLevel, record: FolderPermission) => (
+        <Space>
+          <Tag color={getPermissionColor(permission)}>
+            {permission.toUpperCase()}
+          </Tag>
+          {record.isInherited && (
+            <Tag color="blue">
+              Inherited
+            </Tag>
+          )}
+          {record.isDenied && (
+            <Tag color="red">
+              Denied
+            </Tag>
+          )}
+          {record.expiresAt && (
+            <Tag color="orange">
+              Expires
+            </Tag>
+          )}
+        </Space>
+      )
+    },
+    {
+      title: 'Source',
+      dataIndex: 'permissionSource',
+      key: 'permissionSource',
+      render: (source: string) => (
+        <Tag color="default">
+          {source}
         </Tag>
       )
     },
     {
       title: 'Granted By',
-      dataIndex: 'grantedBy',
-      key: 'grantedBy'
+      dataIndex: 'createdBy',
+      key: 'createdBy'
     },
     {
       title: 'Granted At',
-      dataIndex: 'grantedAt',
-      key: 'grantedAt',
-      render: (date: string) => new Date(date).toLocaleDateString()
+      dataIndex: 'createdTime',
+      key: 'createdTime',
+      render: (date: string) => date ? new Date(date).toLocaleDateString() : '-'
+    },
+    {
+      title: 'Expires At',
+      dataIndex: 'expiresAt',
+      key: 'expiresAt',
+      render: (date: string | null) => date ? new Date(date).toLocaleDateString() : 'Never'
     },
     {
       title: 'Actions',
       key: 'actions',
       render: (record: FolderPermission) => (
         <Space>
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            size="small"
-            onClick={() => {
-              setEditingPermission(record);
-              editForm.setFieldsValue({ permission: record.permission });
-            }}
-          >
-            Edit
-          </Button>
-          <Popconfirm
-            title="Are you sure you want to revoke this permission?"
-            onConfirm={() => handleRevokePermission(record)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button
-              type="text"
-              icon={<DeleteOutlined />}
-              size="small"
-              danger
-            >
-              Revoke
-            </Button>
-          </Popconfirm>
+          {!record.isInherited && (
+            <>
+              <Button
+                type="text"
+                icon={<EditOutlined />}
+                size="small"
+                onClick={() => {
+                  setEditingPermission(record);
+                  editForm.setFieldsValue({ permission: record.permission });
+                }}
+              >
+                Edit
+              </Button>
+              <Popconfirm
+                title="Are you sure you want to revoke this permission?"
+                onConfirm={() => handleRevokePermission(record)}
+                okText="Yes"
+                cancelText="No"
+              >
+                <Button
+                  type="text"
+                  icon={<DeleteOutlined />}
+                  size="small"
+                  danger
+                >
+                  Revoke
+                </Button>
+              </Popconfirm>
+            </>
+          )}
+          {record.isInherited && (
+            <Tag color="blue">
+              Inherited - Cannot Edit
+            </Tag>
+          )}
         </Space>
       )
     }

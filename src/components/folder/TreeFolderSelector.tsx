@@ -11,9 +11,9 @@ const { Text } = Typography;
 export interface TreeFolderSelectorProps {
   selectedFolderId?: string;
   onFolderSelect: (folderId: string | undefined) => void;
-  placeholder?: string;
+  placeholder?: string; // eslint-disable-line @typescript-eslint/no-unused-vars
   disabled?: boolean;
-  filterPermission?: FolderPermissionLevel;
+  filterPermission?: FolderPermissionLevel; // eslint-disable-line @typescript-eslint/no-unused-vars
   excludeFolderIds?: string[];
   className?: string;
   height?: number;
@@ -34,6 +34,8 @@ const TreeFolderSelector: React.FC<TreeFolderSelectorProps> = ({
   title = "Select Folder"
 }) => {
   const [loading, setLoading] = useState(true);
+  // mark unused props as intentionally unused to satisfy TS6133
+  void placeholder; void filterPermission;
   const [error, setError] = useState<string | null>(null);
   const [folders, setFolders] = useState<FolderNode[]>([]);
   const [searchValue, setSearchValue] = useState('');
@@ -141,6 +143,7 @@ const TreeFolderSelector: React.FC<TreeFolderSelectorProps> = ({
 
   // Event handlers
   const handleSelect: TreeProps['onSelect'] = (selectedKeys, info) => {
+    void info;
     const folderId = selectedKeys[0] as string;
     setSelectedKeys(selectedKeys as string[]);
     onFolderSelect(folderId || undefined);

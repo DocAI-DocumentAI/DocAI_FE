@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Input, Typography } from 'antd';
-import { FolderOutlined, FolderOpenOutlined } from '@ant-design/icons';
+import { Modal, Button, Typography } from 'antd';
 import TreeFolderSelector from './TreeFolderSelector';
 import type { FolderPermissionLevel } from '../../types/folder';
 

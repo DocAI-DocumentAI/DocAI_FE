@@ -249,7 +249,7 @@ const DocumentLibrary: React.FC = () => {
   const [folders, setFolders] = useState<FolderNode[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(undefined);
   const [showFolderTree, setShowFolderTree] = useState(false);
-  const [foldersLoading, setFoldersLoading] = useState(false);
+
 
   // Check authentication
   useEffect(() => {
@@ -302,7 +302,7 @@ const DocumentLibrary: React.FC = () => {
   const loadFolders = useCallback(async () => {
     if (!isAuthenticated) return;
 
-    setFoldersLoading(true);
+    setLoading(true);
     try {
       const response = await getFolderTree(undefined, true);
       if (response.success) {
@@ -311,7 +311,7 @@ const DocumentLibrary: React.FC = () => {
     } catch (error) {
       console.error('Error loading folders:', error);
     } finally {
-      setFoldersLoading(false);
+      setLoading(false);
     }
   }, [isAuthenticated]);
 
@@ -401,8 +401,8 @@ const DocumentLibrary: React.FC = () => {
   };
 
   // Handle folder navigation
-  const handleFolderNavigation = (folderId?: string) => {
-    setSelectedFolderId(folderId);
+  const handleFolderNavigation = (folderId: string | null) => {
+    setSelectedFolderId(folderId || undefined);
     setCurrentPage(1);
   };
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Select, Spin, Empty, Typography } from 'antd';
 import { FolderOutlined, GlobalOutlined, LockOutlined, TeamOutlined } from '@ant-design/icons';
-import type { FolderSelectorProps, FolderNode, FolderPermissionLevel } from '../../types/folder';
+import type { FolderSelectorProps, FolderNode } from '../../types/folder';
 import { getFolderTree, canUserPerformAction } from '../../lib/api/folder';
 
 const { Text } = Typography;

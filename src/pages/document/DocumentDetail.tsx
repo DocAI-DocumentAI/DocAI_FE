@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { ArrowLeft, User, Calendar, FileText, Eye, Download, Bookmark, Building, Shield, CheckCircle, Clock, Users } from "lucide-react"
-import { useParams } from "react-router-dom"
+import { useParams, useLocation } from "react-router-dom"
 import { Navbar } from "../../components/layout/Navbar"
 import { Link } from "react-router-dom"
 import { api } from "../../lib/api/api";
@@ -10,6 +10,9 @@ import toast from "react-hot-toast"
 
 export default function DocumentPage() {
   const { id } = useParams()
+  const location = useLocation()
+  const urlParams = new URLSearchParams(location.search)
+  const versionIdFromQuery = urlParams.get('versionId') || undefined
   const [activeTab, setActiveTab] = useState<
     "preview" | "information" | "content" | "original" | "version"
   >("preview")
@@ -171,10 +174,19 @@ export default function DocumentPage() {
   useEffect(() => {
     if (!id) return;
     api.get(`/document/documents/${id}/versions`).then(res => {
-      setVersions(res.data.data || []);
+      const list = res.data.data || [];
+      // If versionId provided via query, move that version to the front for mainDoc
+      if (versionIdFromQuery) {
+        const idx = list.findIndex((v: any) => v.versionId === versionIdFromQuery);
+        if (idx > 0) {
+          const [found] = list.splice(idx, 1);
+          list.unshift(found);
+        }
+      }
+      setVersions(list);
     });
     checkBookmarkStatus();
-  }, [id]);
+  }, [id, versionIdFromQuery]);
 
   // Use the first version as the main document for all tabs except Version
   const mainDoc = versions[0] || {};

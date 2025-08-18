@@ -116,6 +116,7 @@ const FolderTree: React.FC<FolderTreeProps> = ({
 
   // Handle folder selection
   const handleSelect: TreeProps['onSelect'] = (selectedKeys, info) => {
+    void info;
     if (!allowSelection) return;
     
     const folderId = selectedKeys[0] as string;
@@ -326,7 +327,7 @@ const FolderTreeItem: React.FC<FolderTreeItemProps> = ({
   };
 
   return (
-    <div className="flex items-center justify-between w-full group">
+    <div className="flex items-center justify-between w-full group" onContextMenu={onContextMenu}>
       <div className="flex items-center space-x-2 flex-1 min-w-0">
         <span className="font-medium text-gray-800 truncate">{folder.name}</span>
         <Tooltip title={folder.isPublic ? 'Public' : folder.folderType === 'system' ? 'System' : 'Department'}>
@@ -342,7 +343,7 @@ const FolderTreeItem: React.FC<FolderTreeItemProps> = ({
         )}
       </div>
 
-      {showContextMenu && getContextMenuItems().length > 0 && (
+      {showContextMenu && (getContextMenuItems() || []).length > 0 && (
         <Dropdown
           menu={{ items: getContextMenuItems() }}
           trigger={['click']}

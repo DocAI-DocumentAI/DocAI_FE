@@ -1,5 +1,14 @@
 import { api } from "./api";
 
+
+// Move a document (by document version) to another folder
+export const moveDocument = async (documentVersionId: string, targetFolderId: string) => {
+  const params = new URLSearchParams();
+  params.append('targetFolderId', targetFolderId);
+  const response = await api.put(`/document/${documentVersionId}/move?${params.toString()}`);
+  return response.data;
+};
+
 export const uploadDraftDocument = async (data: any) => {
   const formData = new FormData();
   formData.append("Title", data.title || "");
@@ -114,34 +123,33 @@ interface ApprovalQueueFilters {
   fromDate?: string;
   toDate?: string;
   folderId?: string;
+  departmentId?: string;
+  includeSubfolders?: boolean;
+  submittedBy?: string;
+  urgentOnly?: boolean;
 }
 
-// Cập nhật hàm getApprovalQueue
+// Updated getApprovalQueue to use folder-approval base
 export const getApprovalQueue = async (
-  pageNumber = 1,
+  page = 1,
   pageSize = 10,
   filters: ApprovalQueueFilters = {}
 ) => {
-  let url = `/document/approval-queue?pageNumber=${pageNumber}&pageSize=${pageSize}`;
-  
-  // Thêm filters vào URL
-  if (filters.title) {
-    url += `&Title=${encodeURIComponent(filters.title)}`;
-  }
-  if (filters.documentTypeId) {
-    url += `&DocumentTypeId=${encodeURIComponent(filters.documentTypeId)}`;
-  }
-  if (filters.isPublic !== undefined) {
-    url += `&IsPublic=${filters.isPublic}`;
-  }
-  if (filters.fromDate) {
-    url += `&FromDate=${encodeURIComponent(filters.fromDate)}`;
-  }
-  if (filters.toDate) {
-    url += `&ToDate=${encodeURIComponent(filters.toDate)}`;
-  }
-  
-  const response = await api.get(url);
+  const params = new URLSearchParams();
+  params.append('page', String(page));
+  params.append('pageSize', String(pageSize));
+  if (filters.title) params.append('title', filters.title);
+  if (filters.documentTypeId) params.append('documentTypeId', filters.documentTypeId);
+  if (filters.isPublic !== undefined) params.append('isPublic', String(filters.isPublic));
+  if (filters.fromDate) params.append('fromDate', filters.fromDate);
+  if (filters.toDate) params.append('toDate', filters.toDate);
+  if (filters.folderId) params.append('folderId', filters.folderId);
+  if (filters.departmentId) params.append('departmentId', filters.departmentId);
+  if (filters.includeSubfolders !== undefined) params.append('includeSubfolders', String(filters.includeSubfolders));
+  if (filters.submittedBy) params.append('submittedBy', filters.submittedBy);
+  if (filters.urgentOnly !== undefined) params.append('urgentOnly', String(filters.urgentOnly));
+
+  const response = await api.get(`/document/folder-approval/queue?${params.toString()}`);
   return response.data.data;
 };
 
@@ -449,11 +457,15 @@ export const getReplacementSuggestionsForDocument = async (
   return response.data.data;
 };
 
-// Submit document for approval (separate from draft upload)
+// Submit document for approval (folder-approval; optional targetFolderId)
 export const submitDocumentForApproval = async (
-  versionId: string
+  versionId: string,
+  targetFolderId?: string
 ): Promise<any> => {
-  const response = await api.post(`/document/submit/${versionId}`);
+  const url = targetFolderId
+    ? `/document/folder-approval/${versionId}/submit?targetFolderId=${encodeURIComponent(targetFolderId)}`
+    : `/document/folder-approval/${versionId}/submit`;
+  const response = await api.post(url);
   return response.data;
 };
 

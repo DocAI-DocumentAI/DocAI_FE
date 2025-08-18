@@ -70,7 +70,9 @@ export default function DocumentManagement() {
   const [folders, setFolders] = useState<FolderNode[]>([])
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(undefined)
   const [showFolderTree, setShowFolderTree] = useState(false)
-  const [foldersLoading, setFoldersLoading] = useState(false)
+  const [loading, setLoading] = useState(false)
+  void loading;
+
 
   // Load folders on component mount
   useEffect(() => {
@@ -79,7 +81,7 @@ export default function DocumentManagement() {
 
   const loadFolders = async () => {
     try {
-      setFoldersLoading(true)
+      setLoading(true)
       const response = await getFolderTree(undefined, true)
       if (response.success) {
         setFolders(response.data.rootNodes)
@@ -87,7 +89,7 @@ export default function DocumentManagement() {
     } catch (error) {
       console.error('Failed to load folders:', error)
     } finally {
-      setFoldersLoading(false)
+      setLoading(false)
     }
   }
 
@@ -97,8 +99,8 @@ export default function DocumentManagement() {
   }
 
   // Handle folder navigation
-  const handleFolderNavigation = (folderId?: string) => {
-    setSelectedFolderId(folderId)
+  const handleFolderNavigation = (folderId: string | null) => {
+    setSelectedFolderId(folderId || undefined)
   }
 
   const columns = [

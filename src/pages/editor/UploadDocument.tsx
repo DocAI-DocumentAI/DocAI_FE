@@ -1,6 +1,6 @@
 import { Layout, Typography, Card, Button, Input, Select, DatePicker, Upload, Form, Row, Col, Space, Spin, Switch } from "antd"
 import {  UploadOutlined, InboxOutlined, ArrowRightOutlined, FolderOutlined } from "@ant-design/icons"
-import { uploadDraftDocument, analyzeDocument, regenerateSummary, getDocumentTypes, submitDocumentForApproval, DocumentType } from "../../lib/api/document";
+import { uploadDraftDocument, analyzeDocument, regenerateSummary, getDocumentTypes, submitDocumentForApproval, DocumentType } from "../../lib/api/document"; // submitDocumentForApproval supports targetFolderId
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import WysiwygEditor from 'react-simple-wysiwyg';
@@ -153,6 +153,7 @@ export default function UploadDocument() {
       file: selectedFile,
       documentTypeId: values.type || "",
       isPublic: values.isPublic === true, // Đảm bảo là boolean
+      folderId: values.folderId || selectedFolderId || "",
     };
 
     console.log('=== FINAL PAYLOAD DEBUG ===');
@@ -171,8 +172,8 @@ export default function UploadDocument() {
       const uploadResponse = await uploadDraftDocument(formValues);
 
       if (action === 'submit' && uploadResponse?.versionId) {
-        // If submitting, also call submit API
-        await submitDocumentForApproval(uploadResponse.versionId);
+        // If submitting, also call submit API (folder-aware)
+        await submitDocumentForApproval(uploadResponse.versionId, formValues.folderId || undefined);
         toast.success("Document submitted for approval successfully!");
       } else {
         toast.success("Document saved as draft successfully!");

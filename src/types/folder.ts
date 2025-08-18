@@ -42,12 +42,24 @@ export interface FolderPermission {
   id: string;
   folderId: string;
   userId?: string;
-  userName?: string;
+  userEmail?: string;
+  userFullName?: string;
   departmentId?: string;
   departmentName?: string;
-  permission: FolderPermissionLevel;
-  grantedBy: string;
-  grantedAt: string;
+  permissionType: number; // Backend uses numeric: 1=View, 2=Edit, 3=Delete, 4=Manage
+  permissionDescription: string; // Backend provides human-readable description
+  permission: FolderPermissionLevel; // Frontend convenience field (mapped from permissionType)
+  isInherited: boolean;
+  isDenied: boolean;
+  expiresAt?: string | null;
+  isActive: boolean;
+  isValid: boolean;
+  permissionSource: string; // "Direct", "Inherited", "Department", etc.
+  createdTime: string;
+  createdBy: string;
+  // Legacy fields for backward compatibility
+  grantedBy?: string;
+  grantedAt?: string;
   updatedBy?: string;
   updatedAt?: string;
 }
@@ -62,7 +74,31 @@ export interface FolderPermissionsData {
 export interface FolderPermissionsResponse {
   success: boolean;
   message: string;
-  data: FolderPermissionsData;
+  data: FolderPermission[]; // New API returns flat array, not separated by user/department
+}
+
+// New API request/response types
+export interface SetFolderPermissionRequest {
+  userId?: string;
+  departmentId?: string;
+  permissionType: APIPermissionType;
+  expiresAt?: string | null;
+  applyToSubfolders?: boolean;
+}
+
+export interface CheckUserPermissionRequest {
+  requiredPermission: APIPermissionType;
+}
+
+export interface CheckUserPermissionResponse {
+  success: boolean;
+  message: string;
+  data: {
+    folderId: string;
+    userId: string;
+    requiredPermission: APIPermissionType;
+    hasPermission: boolean;
+  };
 }
 
 export interface FolderStatistics {
@@ -82,11 +118,23 @@ export interface FolderStatisticsResponse {
 }
 
 // Request interfaces
+// API-level permission types as defined by backend spec
+export type APIPermissionType = "View" | "Edit" | "Delete" | "Manage";
+
+export interface InitialPermission {
+  userId?: string;
+  departmentId?: string;
+  permissionType: APIPermissionType;
+  expiresAt?: string | null;
+}
+
 export interface CreateFolderRequest {
   name: string;
   description?: string;
   parentFolderId?: string;
+  departmentId?: string | null;
   isPublic?: boolean;
+  initialPermissions?: InitialPermission[];
 }
 
 export interface UpdateFolderRequest {
@@ -96,6 +144,7 @@ export interface UpdateFolderRequest {
 
 export interface MoveFolderRequest {
   newParentFolderId?: string;
+  preservePermissions?: boolean;
 }
 
 export interface GrantUserPermissionRequest {
@@ -175,7 +224,7 @@ export interface FolderSelectorProps {
 export interface FolderBreadcrumbProps {
   folderId?: string;
   folders: FolderNode[];
-  onFolderClick?: (folderId: string) => void;
+  onFolderClick?: (folderId: string | null) => void;
   separator?: string;
   maxItems?: number;
   className?: string;

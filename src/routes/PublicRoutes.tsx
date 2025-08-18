@@ -37,6 +37,7 @@ import DocumentChoice from "../pages/editor/DocumentChoice";
 import DocumentReplacement from "../pages/editor/DocumentReplacement";
 import EditorFolderManagement from "../pages/editor/FolderManagement";
 import ManagerFolderManagement from "../pages/manager/FolderManagement";
+import GoogleDriveFolderManagement from "../pages/manager/GoogleDriveFolderManagement";
 import DocumentLibrary from "../pages/document/DocumentLibrary.tsx";
 
 const PublicRoutes: RouteObject[] = [
@@ -128,6 +129,10 @@ const PublicRoutes: RouteObject[] = [
       {
         path: "folder-management",
         element: <ManagerFolderManagement />,
+      },
+      {
+        path: "google-drive-folders",
+        element: <GoogleDriveFolderManagement />,
       },
       {
         path: "document-review/:id/:versionId",

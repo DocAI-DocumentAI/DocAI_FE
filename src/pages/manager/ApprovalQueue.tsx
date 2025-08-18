@@ -30,76 +30,36 @@ interface ApprovalQueueFilters {
 }
 
 interface ApprovalQueueItem {
-  documentFileId: string;
-  versionId: string;
-  versionName: string;
+  id: string; // version id (same as versionId)
+  versionId?: string;
+  documentFileId?: string;
+  versionName?: string;
   title: string;
-  submittedBy: string;
-  submittedByName: string;
-  lastSubmitted: string;
-  status: string;
-  departmentId: string;
-  departmentName: string;
-  documentTypeId: string;
-  documentTypeName: string;
-  isPublic: boolean;
-  signedBy: string | null;
-  effectiveFrom: string;
-  effectiveUntil: string;
-  isBeingReviewed: boolean;
-  reviewedBy: string | null;
-  claimedAt: string | null;
-  reviewedByName: string | null;
-  description: string;
-  summary: string;
-  fileSize: number;
-  fileType: string;
-  tags: string[];
-  createdTime: string;
-  lastUpdatedTime: string;
-  ownerId: string;
-  ownerName: string | null;
-  priority: string;
+  status: string; // Pending
+  containingFolder?: { fullPath?: string; id: string; name: string };
+  submittedAt: string;
+  submittedBy?: string;
+  submittedByName?: string;
   daysSinceSubmission: number;
-  isApproachingExpiration: boolean;
-  resubmissionCount: number;
-  previousRejectionReason: string | null;
+  approvalDeadline?: string;
+  isUrgent?: boolean;
+  tags?: string[];
+  fileSize?: number;
 }
 
-interface ApprovalQueueStatistics {
-  totalPending: number;
-  totalApproved: number;
-  totalRejected: number;
-  totalArchived: number;
-  totalBeingReviewed: number;
-  recentSubmissions: number;
-  approachingExpiration: number;
-  averageProcessingTimeHours: number;
-}
+
 
 interface ApprovalQueueResponse {
-  documents: {
-    size: number;
-    page: number;
-    total: number;
-    totalPages: number;
-    items: ApprovalQueueItem[];
-  };
-  statistics: ApprovalQueueStatistics;
+  pendingDocuments: ApprovalQueueItem[];
+  totalPending: number;
+  currentPage: number;
+  pageSize: number;
+  totalPages: number;
 }
 
 export default function ApprovalQueue() {
   const [documents, setDocuments] = useState<ApprovalQueueItem[]>([]);
-  const [statistics, setStatistics] = useState<ApprovalQueueStatistics>({
-    totalPending: 0,
-    totalApproved: 0,
-    totalRejected: 0,
-    totalArchived: 0,
-    totalBeingReviewed: 0,
-    recentSubmissions: 0,
-    approachingExpiration: 0,
-    averageProcessingTimeHours: 0,
-  });
+
   const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingDocumentTypes, setLoadingDocumentTypes] = useState(false);
@@ -142,10 +102,9 @@ export default function ApprovalQueue() {
 
       const res = await getApprovalQueue(page, pageSize, filters);
       const data = res as ApprovalQueueResponse;
-      
-      setDocuments(data.documents?.items || []);
-      setTotal(data.documents?.total || 0);
-      setStatistics(data.statistics || statistics);
+      setDocuments(data.pendingDocuments || []);
+      setTotal(data.totalPending || 0);
+
     } catch (error: any) {
       toast.error(`Lỗi khi tải dữ liệu: ${error?.response?.data?.message || error.message}`);
       setDocuments([]);
@@ -174,14 +133,7 @@ export default function ApprovalQueue() {
     return moment(dateString).format('DD/MM/YYYY HH:mm');
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority.toLowerCase()) {
-      case 'high': return 'red';
-      case 'medium': return 'orange';
-      case 'low': return 'green';
-      default: return 'default';
-    }
-  };
+
 
   const columns = [
     {
@@ -192,38 +144,30 @@ export default function ApprovalQueue() {
         <div>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
             <Text strong>{text}</Text>
-            {record.isApproachingExpiration && (
-              <Tag color="red"  style={{ marginLeft: 8 }}>
-                Expiring Soon
-              </Tag>
-            )}
           </div>
           <div style={{ marginBottom: 4 }}>
-            <Tag color="blue">{record.documentTypeName}</Tag>
-            <Tag color={getPriorityColor(record.priority)}>{record.priority}</Tag>
-            {record.isPublic && <Tag color="green">Public</Tag>}
+            {record.tags?.slice(0, 2).map((t) => (
+              <Tag key={t}>{t}</Tag>
+            ))}
           </div>
-          <Text type="secondary" style={{ fontSize: "12px" }}>
-            {record.description?.substring(0, 100)}...
-          </Text>
         </div>
       ),
     },
     {
-      title: "Department",
-      dataIndex: "departmentName",
-      key: "departmentName",
-      render: (dept: string) => <Tag color="blue">{dept}</Tag>,
+      title: "Folder",
+      dataIndex: "containingFolder",
+      key: "containingFolder",
+      render: (folder: any) => <Tag color="blue">{folder?.fullPath || folder?.name || '-'}</Tag>,
     },
     {
       title: "Submitted By",
       dataIndex: "submittedByName",
       key: "submittedByName",
-      render: (name: string, record: ApprovalQueueItem) => (
+      render: (submittedByName: string | undefined, record: ApprovalQueueItem) => (
         <div>
           <div style={{ display: "flex", alignItems: "center" }}>
             <UserOutlined style={{ marginRight: 4, color: "#666" }} />
-            <Text>{name}</Text>
+            <Text>{submittedByName || record.submittedBy || '-'}</Text>
           </div>
           <Text type="secondary" style={{ fontSize: "12px" }}>
             {record.daysSinceSubmission} days ago
@@ -233,8 +177,8 @@ export default function ApprovalQueue() {
     },
     {
       title: "Submitted Date",
-      dataIndex: "lastSubmitted",
-      key: "lastSubmitted",
+      dataIndex: "submittedAt",
+      key: "submittedAt",
       render: (date: string) => (
         <div>
           <div style={{ display: "flex", alignItems: "center" }}>
@@ -244,20 +188,14 @@ export default function ApprovalQueue() {
         </div>
       ),
     },
+
     {
       title: "Version",
       dataIndex: "versionName",
       key: "versionName",
-      render: (version: string, record: ApprovalQueueItem) => (
+      render: (version: string | undefined) => (
         <div>
-          <Text>{version}</Text>
-          {record.resubmissionCount > 0 && (
-            <div>
-              <Tag color="orange"  >
-                Resubmission #{record.resubmissionCount}
-              </Tag>
-            </div>
-          )}
+          <Text>{version || '-'}</Text>
         </div>
       ),
     },
@@ -265,12 +203,9 @@ export default function ApprovalQueue() {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (status: string, record: ApprovalQueueItem) => (
+      render: (status: string) => (
         <div>
           <Tag color={status === 'Pending' ? 'orange' : 'default'}>{status}</Tag>
-          {record.isBeingReviewed && (
-            <Tag color="blue"  >Being Reviewed</Tag>
-          )}
         </div>
       ),
     },
@@ -279,22 +214,13 @@ export default function ApprovalQueue() {
       key: "actions",
       render: (record: ApprovalQueueItem) => (
         <Space>
-          {record.status === 'Pending' && !record.isBeingReviewed && (
-            <Button 
-              type="primary" 
-              size="small" 
-              onClick={() => navigate(`/manager/document-review/${record.documentFileId}/${record.versionId}`)}
+          {record.status === 'Pending' && (
+            <Button
+              type="primary"
+              size="small"
+              onClick={() => navigate(`/manager/document-review/${record.documentFileId ?? record.id}/${record.versionId ?? record.id}`)}
             >
               Review
-            </Button>
-          )}
-          {record.isBeingReviewed && (
-            <Button 
-              type="default" 
-              size="small" 
-              disabled
-            >
-              Being Reviewed
             </Button>
           )}
         </Space>
@@ -324,7 +250,7 @@ export default function ApprovalQueue() {
                   <div>
                     <Text type="secondary">Pending Approval</Text>
                     <div style={{ fontSize: "24px", fontWeight: "bold", margin: "8px 0" }}>
-                      {statistics.totalPending}
+                      {total}
                     </div>
                     <Text type="secondary" style={{ fontSize: "12px" }}>
                       Awaiting your review
@@ -340,7 +266,7 @@ export default function ApprovalQueue() {
                   <div>
                     <Text type="secondary">Approved</Text>
                     <div style={{ fontSize: "24px", fontWeight: "bold", margin: "8px 0" }}>
-                      {statistics.totalApproved}
+                      --
                     </div>
                     <Text type="secondary" style={{ fontSize: "12px" }}>
                       Documents approved
@@ -356,7 +282,7 @@ export default function ApprovalQueue() {
                   <div>
                     <Text type="secondary">Rejected</Text>
                     <div style={{ fontSize: "24px", fontWeight: "bold", margin: "8px 0" }}>
-                      {statistics.totalRejected}
+                      --
                     </div>
                     <Text type="secondary" style={{ fontSize: "12px" }}>
                       Sent back for revision
@@ -372,7 +298,7 @@ export default function ApprovalQueue() {
                   <div>
                     <Text type="secondary">Approaching Expiration</Text>
                     <div style={{ fontSize: "24px", fontWeight: "bold", margin: "8px 0" }}>
-                      {statistics.approachingExpiration}
+                      --
                     </div>
                     <Text type="secondary" style={{ fontSize: "12px" }}>
                       Urgent reviews needed
@@ -458,7 +384,7 @@ export default function ApprovalQueue() {
                 key: "1",
                 label: (
                   <span>
-                    Approval Queue <Badge count={statistics.totalPending} size="small" />
+                    Approval Queue <Badge count={total} size="small" />
                   </span>
                 ),
                 children: (
@@ -466,11 +392,8 @@ export default function ApprovalQueue() {
                     <div style={{ marginBottom: 16 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                         <Title level={4} style={{ margin: 0 }}>
-                          Approval Queue <Badge count={statistics.totalPending} />
+                          Approval Queue <Badge count={total} />
                         </Title>
-                        <Text type="secondary">
-                          Avg processing time: {statistics.averageProcessingTimeHours.toFixed(1)} hours
-                        </Text>
                       </div>
                       <Text type="secondary">Documents awaiting your approval (sorted by priority and submission date)</Text>
                     </div>
@@ -478,7 +401,7 @@ export default function ApprovalQueue() {
                       columns={columns} 
                       dataSource={documents} 
                       loading={loading} 
-                      rowKey="versionId"
+                      rowKey={(r) => r.versionId || r.id}
                       pagination={{
                         total,
                         pageSize,
@@ -507,7 +430,7 @@ export default function ApprovalQueue() {
                         <Card size="small">
                           <Text type="secondary">Recent Submissions (24h)</Text>
                           <div style={{ fontSize: "20px", fontWeight: "bold" }}>
-                            {statistics.recentSubmissions}
+                            --
                           </div>
                         </Card>
                       </Col>
@@ -515,7 +438,7 @@ export default function ApprovalQueue() {
                         <Card size="small">
                           <Text type="secondary">Being Reviewed</Text>
                           <div style={{ fontSize: "20px", fontWeight: "bold" }}>
-                            {statistics.totalBeingReviewed}
+                            --
                           </div>
                         </Card>
                       </Col>

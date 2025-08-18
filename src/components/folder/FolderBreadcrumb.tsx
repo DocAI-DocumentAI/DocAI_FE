@@ -51,7 +51,7 @@ const FolderBreadcrumb: React.FC<FolderBreadcrumbProps> = ({
     items.push({
       key: 'home',
       title: onFolderClick ? (
-        <a onClick={() => onFolderClick(undefined)} className="flex items-center space-x-1">
+        <a onClick={() => onFolderClick(null)} className="flex items-center space-x-1">
           <HomeOutlined />
           <span>Root</span>
         </a>
