@@ -1,6 +1,7 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "./store";
 import PublicRoutes from "./routes/PublicRoutes";
 import { AdminRoute } from "./routes/PrivateRoute";
 import { ToastContainer } from "react-toastify";
@@ -27,14 +28,34 @@ import UpdatePermissionPage from "./pages/admin/UpdatePermissionPage";
 import DocumentTypePage from "./pages/admin/DocumentTypePage";
 import CreateDocumentTypePage from "./pages/admin/CreateDocumentTypePage";
 import UpdateDocumentTypePage from "./pages/admin/UpdateDocumentTypePage";
+import ChatboxDashboardPage from "./pages/admin/ChatboxDashboardPage";
+import ConfigAIPage from "./pages/admin/ConfigAIPage";
+import CreateConfigAI from "./pages/admin/CreateConfigAI";
+import UpdateConfigAI from "./pages/admin/UpdateConfigAI";
 
 const App: React.FC = () => {
   const dispatch = useDispatch();
+  const [isInitialized, setIsInitialized] = useState(false);
+  const { loading } = useSelector((state: RootState) => state.auth);
 
   // Initialize auth state from localStorage on app start
   useEffect(() => {
+    console.log("App: Initializing auth...");
     dispatch(initializeAuth());
+    setIsInitialized(true);
   }, [dispatch]);
+
+  // Show loading screen while initializing
+  if (!isInitialized || loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-900">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-2 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+          <p className="text-gray-300">Initializing application...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ChatProvider>
@@ -65,6 +86,13 @@ const App: React.FC = () => {
             }
           >
             <Route path="dashboard" element={<DashboardPage />} />
+            <Route
+              path="chatbox-dashboard"
+              element={<ChatboxDashboardPage />}
+            />
+            <Route path="config-ai" element={<ConfigAIPage />} />
+            <Route path="config-ai/create" element={<CreateConfigAI />} />
+            <Route path="config-ai/update/:id" element={<UpdateConfigAI />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="departments" element={<DepartmentPage />} />
             <Route path="roles" element={<RolePage />} />

@@ -7,6 +7,8 @@ import {
   Building2,
   FileText,
   LogOut,
+  MessageSquare,
+  Settings,
 } from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -25,6 +27,18 @@ const SIDEBAR_ITEMS: {
     icon: BarChart2,
     color: "#F59E0B", // amber-500
     href: "/admin/dashboard",
+  },
+  {
+    name: "Chatbox Dashboard",
+    icon: MessageSquare,
+    color: "#8B5CF6", // violet-500
+    href: "/admin/chatbox-dashboard",
+  },
+  {
+    name: "AI Configuration",
+    icon: Settings,
+    color: "#06B6D4", // cyan-500
+    href: "/admin/config-ai",
   },
   {
     name: "Users",
