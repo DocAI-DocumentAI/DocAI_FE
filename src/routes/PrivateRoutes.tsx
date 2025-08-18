@@ -1,5 +1,5 @@
-import { RouteObject } from "react-router-dom";
-import PrivateRoute from "./PrivateRoute";
+import { RouteObject, Navigate } from "react-router-dom";
+import PrivateRoute, { EditorRoute } from "./PrivateRoute";
 
 // Layouts
 import SettingsLayout from "../components/layout/SettingsLayout";
@@ -65,14 +65,6 @@ const PrivateRoutes: RouteObject[] = [
     element: (
       <PrivateRoute>
         <ChatDetail />
-      </PrivateRoute>
-    ),
-  },
-  {
-    path: "/upload",
-    element: (
-      <PrivateRoute>
-        <UploadDocument />
       </PrivateRoute>
     ),
   },
@@ -159,11 +151,19 @@ const PrivateRoutes: RouteObject[] = [
   {
     path: "/editor",
     element: (
-      <PrivateRoute>
+      <EditorRoute>
         <EditedLayout />
-      </PrivateRoute>
+      </EditorRoute>
     ),
     children: [
+      {
+        index: true,
+        element: <Navigate to="view-draft" replace />,
+      },
+      {
+        path: "upload-document",
+        element: <UploadDocument />,
+      },
       {
         path: "approval-manager",
         element: <ApprovalManagerTable />,

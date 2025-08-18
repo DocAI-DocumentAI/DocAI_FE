@@ -61,5 +61,27 @@ const ManagerRoute: React.FC<{ children: React.ReactNode }> = ({
   return <>{children}</>;
 };
 
+// Component riêng để bảo vệ các route Editor
+const EditorRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Lấy trạng thái đăng nhập và thông tin user từ Redux
+  const { isAuthenticated, user } = useSelector(
+    (state: RootState) => state.auth
+  );
+
+  // Kiểm tra authentication trước
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Kiểm tra role Editor
+  if (!user || user.role.roleName !== "Editor") {
+    // Nếu đã đăng nhập nhưng không phải Editor, chuyển về trang chủ
+    return <Navigate to="/" replace />;
+  }
+
+  // Nếu đã đăng nhập và là Editor, render children
+  return <>{children}</>;
+};
+
 export default PrivateRoute;
-export { AdminRoute, ManagerRoute };
+export { AdminRoute, ManagerRoute, EditorRoute };

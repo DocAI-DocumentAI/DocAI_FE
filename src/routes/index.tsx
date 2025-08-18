@@ -5,9 +5,9 @@ import AdminRoutes from "./AdminRoutes";
 import ManagerRoutes from "./ManagerRoutes";
 import PrivateRoutes from "./PrivateRoutes";
 import PublicOnlyRoutes from "./PublicOnlyRoutes";
-import NotFoundPage from "../pages/NotFoundPage";
 
 // Error Pages
+import NotFoundPage from "../pages/NotFoundPage";
 
 const routes: RouteObject[] = [
   // Public Only Routes (Auth pages)
