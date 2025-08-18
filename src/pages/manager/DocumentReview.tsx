@@ -67,7 +67,7 @@ export default function DocumentReview() {
         setSubmitting(true);
         try {
             // Folder-approval review endpoint (consolidated): POST /{versionId}/review
-            const url = `/document/folder-approval/${document.versionId}/review`;
+            const url = `/document/review/${document.versionId}`;
             const body = isApproved
               ? { isApproved: true, ...(rejectionComments.trim() ? { comments: rejectionComments } : {}), ...(targetFolderId ? { targetFolderId } : {}) }
               : { isApproved: false, comments: rejectionComments, returnToDrafts: true };

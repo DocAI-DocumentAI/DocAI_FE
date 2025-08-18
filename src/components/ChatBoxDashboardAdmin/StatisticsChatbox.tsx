@@ -190,7 +190,7 @@ const StatisticsChatbox: React.FC = () => {
                 borderColor: "#4B5563",
               }}
               itemStyle={{ color: "#E5E7EB" }}
-              formatter={(value: number, name: string, props: any) => [
+              formatter={(value: number, name: string) => [
                 `${value} sessions`,
                 name,
               ]}

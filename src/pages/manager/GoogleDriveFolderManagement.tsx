@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Layout,
   Typography,
   Button,
   Breadcrumb,
@@ -37,7 +36,8 @@ import {
   LockOutlined,
   FolderOpenOutlined,
   FilePdfOutlined,
-  FileWordOutlined
+  FileWordOutlined,
+  MenuOutlined as Menu
 } from '@ant-design/icons';
 import { FolderTree, FolderSelectorModal } from '../../components/folder';
 import { getFolderDocumentsList } from '../../lib/api/folder';
@@ -55,10 +55,10 @@ import {
   revokeDepartmentPermission
 } from '../../lib/api/folder';
 import toast from 'react-hot-toast';
-// import { moveDocument } from '../../lib/api/document';
+import { moveDocument } from '../../lib/api/document';
 import '../../styles/google-drive-folder.css';
 
-const { Sider, Content } = Layout;
+// const { Sider, Content } = Layout;
 const { Title, Text } = Typography;
 const { Option } = Select;
 
@@ -84,6 +84,7 @@ const GoogleDriveFolderManagement: React.FC = () => {
   const [breadcrumbPath, setBreadcrumbPath] = useState<FolderNode[]>([]);
   const [selectedFolder, setSelectedFolder] = useState<FolderNode | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [rightPanelVisible, setRightPanelVisible] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name');
@@ -113,9 +114,32 @@ const GoogleDriveFolderManagement: React.FC = () => {
   const [renameForm] = Form.useForm();
   const [grantPermissionForm] = Form.useForm();
 
+  // Drag and drop state
+  const [draggedItem, setDraggedItem] = useState<FolderItem | null>(null);
+
+  // Document move state
+  const [movingDocument, setMovingDocument] = useState<FolderItem | null>(null);
+  const [documentMoveModalVisible, setDocumentMoveModalVisible] = useState(false);
+
   // Load folder tree on mount
   useEffect(() => {
     loadFolderTree();
+  }, []);
+
+  // Handle mobile responsiveness
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      if (mobile) {
+        setSidebarCollapsed(true);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Call once on mount
+
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Load folder contents when current folder changes
@@ -177,9 +201,9 @@ const GoogleDriveFolderManagement: React.FC = () => {
           icon = <FileWordOutlined style={{ color }} />;
         }
         return {
-          id: d.id,
-          documentId: d.id,
-          versionId: d.versionId,
+          id: d.id, // This is the version ID
+          documentId: d.documentFileId || d.id, // Use documentFileId if available, fallback to id
+          versionId: d.versionId || d.id, // Use versionId if available, fallback to id
           name: d.title || d.fileName,
           type: 'document' as const,
           size: d.fileSize ? `${Math.round(d.fileSize / 1024)} KB` : undefined,
@@ -202,16 +226,22 @@ const GoogleDriveFolderManagement: React.FC = () => {
   };
 
   const loadRootContents = () => {
-    const contents: FolderItem[] = folders.map(folder => ({
-      id: folder.id,
-      name: folder.name,
-      type: 'folder' as const,
-      modifiedAt: folder.updatedAt || folder.createdAt,
-      modifiedBy: 'System',
-      icon: <FolderOutlined />
-    }));
-    setCurrentFolderContents(contents);
-    setSelectedFolder(null);
+    // Show the root folder's children (subfolders) when no specific folder is selected
+    if (folders.length > 0) {
+      const rootFolder = folders[0]; // The main department folder
+      const contents: FolderItem[] = rootFolder.children.map(folder => ({
+        id: folder.id,
+        name: folder.name,
+        type: 'folder' as const,
+        modifiedAt: folder.updatedAt || folder.createdAt,
+        modifiedBy: folder.folderType === 'system' ? 'System' : 'User',
+        icon: <FolderOutlined />
+      }));
+      setCurrentFolderContents(contents);
+      setSelectedFolder(null);
+    } else {
+      setCurrentFolderContents([]);
+    }
   };
 
   const findFolderById = (folderList: FolderNode[], id: string): FolderNode | null => {
@@ -258,9 +288,15 @@ const GoogleDriveFolderManagement: React.FC = () => {
       // Double click opens the folder (navigates into it)
       setCurrentFolderId(item.id);
     } else if (item.type === 'document') {
-      // Open document detail in a new tab, passing versionId if available
-      const url = item.versionId ? `/document/${item.id}?versionId=${encodeURIComponent(item.versionId)}` : `/document/${item.id}`;
-      window.open(url, '_blank', 'noopener,noreferrer');
+      // Open document version detail in a new tab
+      if (item.versionId && item.documentId) {
+        const url = `/document/${item.documentId}/version/${item.versionId}`;
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } else {
+        // Fallback to general document page if versionId is not available
+        const url = `/document/${item.id}`;
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
     }
   };
 
@@ -302,6 +338,158 @@ const GoogleDriveFolderManagement: React.FC = () => {
       case 'write': return 'orange';
       case 'read': return 'green';
       default: return 'default';
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent, item: FolderItem) => {
+    setDraggedItem(item);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', item.id);
+  };
+
+  const handleDragOver = (e: React.DragEvent, targetItem: FolderItem) => {
+    e.preventDefault();
+
+    // Only allow dropping on folders and not on the dragged item itself
+    if (targetItem.type === 'folder' && draggedItem && targetItem.id !== draggedItem.id) {
+      e.dataTransfer.dropEffect = 'move';
+    } else {
+      e.dataTransfer.dropEffect = 'none';
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetItem: FolderItem) => {
+    e.preventDefault();
+
+    if (!draggedItem || draggedItem.id === targetItem.id) {
+      setDraggedItem(null);
+      return;
+    }
+
+    // Only allow dropping on folders
+    if (targetItem.type !== 'folder') {
+      toast.error('Can only move items into folders');
+      setDraggedItem(null);
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      if (draggedItem.type === 'document') {
+        // Move document to folder
+        if (!draggedItem.versionId) {
+          toast.error('Document version ID not found');
+          return;
+        }
+
+        await moveDocument(draggedItem.versionId, targetItem.id);
+        toast.success(`Document "${draggedItem.name}" moved to "${targetItem.name}"`);
+
+        // Refresh current folder contents
+        if (currentFolderId) {
+          await loadFolderContents(currentFolderId);
+        } else {
+          loadRootContents();
+        }
+      } else if (draggedItem.type === 'folder') {
+        // Move folder
+        await moveFolder(draggedItem.id, { newParentFolderId: targetItem.id });
+        toast.success(`Folder "${draggedItem.name}" moved to "${targetItem.name}"`);
+
+        // Refresh folder tree and contents
+        await loadFolderTree();
+        if (currentFolderId) {
+          await loadFolderContents(currentFolderId);
+        } else {
+          loadRootContents();
+        }
+      }
+    } catch (error: any) {
+      console.error('Failed to move item:', error);
+      toast.error(error?.response?.data?.message || `Failed to move ${draggedItem.type}`);
+    } finally {
+      setLoading(false);
+      setDraggedItem(null);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItem(null);
+  };
+
+  // Generate context menu items based on item type
+  const getContextMenuItems = (item: FolderItem) => {
+    if (item.type === 'folder') {
+      // Folder context menu
+      return [
+        {
+          key: 'rename',
+          icon: <EditOutlined />,
+          label: 'Rename',
+          onClick: () => {
+            const folder = findFolderById(folders, item.id);
+            if (folder) {
+              setSelectedFolder(folder);
+              renameForm.setFieldsValue({ name: folder.name });
+              setRenameModalVisible(true);
+            }
+          }
+        },
+        {
+          type: 'divider' as const
+        },
+        {
+          key: 'move',
+          icon: <FolderOpenOutlined />,
+          label: 'Move',
+          onClick: () => {
+            const folder = findFolderById(folders, item.id);
+            if (folder) {
+              setSelectedFolder(folder);
+              setMovingFolder(folder);
+              setMoveModalVisible(true);
+            }
+          }
+        },
+        {
+          key: 'delete',
+          icon: <DeleteOutlined />,
+          label: 'Delete',
+          danger: true,
+          onClick: () => {
+            const folder = findFolderById(folders, item.id);
+            if (folder) {
+              setSelectedFolder(folder);
+              setDeleteModalVisible(true);
+            }
+          }
+        }
+      ];
+    } else {
+      // Document context menu
+      return [
+        {
+          key: 'move',
+          icon: <FolderOpenOutlined />,
+          label: 'Move',
+          onClick: () => {
+            setMovingDocument(item);
+            setDocumentMoveModalVisible(true);
+          }
+        },
+        {
+          key: 'delete',
+          icon: <DeleteOutlined />,
+          label: 'Delete',
+          danger: true,
+          onClick: () => {
+            // TODO: Implement document delete functionality
+            toast('Document delete functionality not yet implemented');
+          }
+        }
+      ];
     }
   };
 
@@ -381,22 +569,51 @@ const GoogleDriveFolderManagement: React.FC = () => {
 
     if (filteredContents.length === 0) {
       return (
-        <div className="google-drive-empty">
+        <div className="google-drive-empty" style={{
+          textAlign: 'center',
+          padding: '80px 24px',
+          color: '#5f6368',
+          background: '#ffffff',
+          borderRadius: '12px',
+          margin: '20px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        }}>
           <Empty
-            description={searchTerm ? "No items match your search" : "This folder is empty"}
+            description={
+              <span style={{ fontSize: '16px', color: '#5f6368' }}>
+                {searchTerm ? "No items match your search" : "This folder is empty"}
+              </span>
+            }
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           />
+          {!searchTerm && (
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setCreateModalVisible(true)}
+              style={{ marginTop: '16px' }}
+            >
+              Create New Folder
+            </Button>
+          )}
         </div>
       );
     }
 
     return (
-      <Row gutter={[16, 16]}>
+      <Row gutter={[20, 20]} style={{ padding: '8px 0' }}>
         {filteredContents.map((item) => (
           <Col key={item.id} xs={12} sm={8} md={6} lg={4} xl={3}>
             <Card
               hoverable
               className="folder-item-card"
+              draggable
+              data-item-id={item.id}
+              data-item-type={item.type}
+              onDragStart={(e) => handleDragStart(e, item)}
+              onDragOver={(e) => handleDragOver(e, item)}
+              onDrop={(e) => handleDrop(e, item)}
+              onDragEnd={handleDragEnd}
               onClick={() => {
                 // Single click selects and loads details/permissions without opening
                 const folder = findFolderById(folders, item.id);
@@ -406,68 +623,68 @@ const GoogleDriveFolderManagement: React.FC = () => {
                 }
               }}
               onDoubleClick={() => handleFolderDoubleClick(item)}
-              styles={{ body: { padding: '16px', position: 'relative' } }}
+              style={{
+                border: draggedItem?.id === item.id ? '2px dashed #1a73e8' : '1px solid #e8eaed',
+                borderRadius: '12px',
+                transition: 'all 0.3s ease',
+                cursor: 'pointer',
+                background: '#ffffff',
+                boxShadow: draggedItem?.id === item.id ? '0 4px 12px rgba(26, 115, 232, 0.3)' : '0 1px 3px rgba(0,0,0,0.1)',
+                opacity: draggedItem?.id === item.id ? 0.7 : 1
+              }}
+              styles={{
+                body: {
+                  padding: '20px 16px',
+                  position: 'relative',
+                  textAlign: 'center'
+                }
+              }}
             >
-              <div style={{ textAlign: 'center' }}>
-                <div className="folder-icon">
+              <div>
+                <div className="folder-icon" style={{
+                  fontSize: '48px',
+                  color: item.type === 'folder' ? '#4285f4' : '#34a853',
+                  marginBottom: '12px'
+                }}>
                   {item.type === 'folder' ? <FolderOutlined /> : item.icon}
                 </div>
-                <div className="folder-name" title={item.name}>
+                <div className="folder-name" title={item.name} style={{
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#202124',
+                  marginBottom: '6px',
+                  lineHeight: '1.4',
+                  wordBreak: 'break-word',
+                  maxHeight: '40px',
+                  overflow: 'hidden',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical'
+                }}>
                   {item.name}
                 </div>
-                <div className="folder-meta">
+                <div className="folder-meta" style={{
+                  fontSize: '12px',
+                  color: '#5f6368',
+                  lineHeight: '1.3'
+                }}>
                   Modified {new Date(item.modifiedAt).toLocaleDateString()}
                 </div>
               </div>
 
               {/* Hover overlay with actions */}
-              <div className="folder-actions" onClick={(e) => e.stopPropagation()}>
+              <div className="folder-actions" onClick={(e) => e.stopPropagation()} style={{
+                position: 'absolute',
+                top: '8px',
+                right: '8px',
+                opacity: 0,
+                transition: 'opacity 0.2s',
+                zIndex: 5,
+                pointerEvents: 'none'
+              }}>
                 <Dropdown
                   menu={{
-                    items: [
-                      {
-                        key: 'rename',
-                        icon: <EditOutlined />,
-                        label: 'Rename',
-                        onClick: () => {
-                          const folder = findFolderById(folders, item.id);
-                          if (folder) {
-                            setSelectedFolder(folder);
-                            renameForm.setFieldsValue({ name: folder.name });
-                            setRenameModalVisible(true);
-                          }
-                        }
-                      },
-                      {
-                        type: 'divider'
-                      },
-                      {
-                        key: 'move',
-                        icon: <FolderOpenOutlined />,
-                        label: 'Move',
-                        onClick: () => {
-                          const folder = findFolderById(folders, item.id);
-                          if (folder) {
-                            setSelectedFolder(folder);
-                            setMovingFolder(folder);
-                            setMoveModalVisible(true);
-                          }
-                        }
-                      },
-                      {
-                        key: 'delete',
-                        icon: <DeleteOutlined />,
-                        label: 'Delete',
-                        danger: true,
-                        onClick: () => {
-                          const folder = findFolderById(folders, item.id);
-                          if (folder) {
-                            setSelectedFolder(folder);
-                            setDeleteModalVisible(true);
-                          }
-                        }
-                      }
-                    ]
+                    items: getContextMenuItems(item)
                   }}
                   trigger={['click']}
                 >
@@ -486,130 +703,170 @@ const GoogleDriveFolderManagement: React.FC = () => {
     );
   };
 
+  // Handle click outside sidebar on mobile
+  const handleOverlayClick = () => {
+    if (isMobile && !sidebarCollapsed) {
+      setSidebarCollapsed(true);
+    }
+  };
+
   return (
-    <Layout className="google-drive-layout">
+    <div className="google-drive-container">
+      {/* Mobile overlay */}
+      {isMobile && !sidebarCollapsed && (
+        <div
+          className="mobile-overlay"
+          onClick={handleOverlayClick}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 280,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 250
+          }}
+        />
+      )}
+
       {/* Left Sidebar - Folder Tree */}
-      <Sider
-        width={280}
-        collapsed={sidebarCollapsed}
-        onCollapse={setSidebarCollapsed}
-        className="google-drive-sidebar"
-        theme="light"
-        collapsible
-      >
-        <div style={{ padding: '16px' }}>
+      <div className={`google-drive-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
+        <div className="sidebar-header">
           <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            className="google-drive-new-button"
-            block
-            size="large"
-            onClick={() => {
-              setCreateModalVisible(true);
-            }}
-          >
-            New
-          </Button>
+            type="text"
+            icon={<Menu />}
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="sidebar-toggle"
+          />
+          {!sidebarCollapsed && (
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              className="new-folder-btn"
+              onClick={() => setCreateModalVisible(true)}
+            >
+              New
+            </Button>
+          )}
         </div>
 
-        <div className="google-drive-tree">
-          <FolderTree
-            folders={folders}
-            selectedFolderId={currentFolderId || undefined}
-            onFolderSelect={handleFolderSelect}
-            showContextMenu={false}
-            allowSelection={true}
-            allowDragDrop={true}
-            onMoveFolder={async (dragFolder, newParentId) => {
-              try {
-                setLoading(true);
-                await moveFolder(dragFolder.id, { newParentFolderId: newParentId });
-                toast.success('Folder moved');
-                await loadFolderTree();
-                if (currentFolderId) await loadFolderContents(currentFolderId);
-              } catch (e: any) {
-                toast.error(e?.response?.data?.message || 'Failed to move folder');
-              } finally {
-                setLoading(false);
-              }
-            }}
-            loading={loading}
-          />
-        </div>
-      </Sider>
+        {!sidebarCollapsed && (
+          <div className="sidebar-content">
+            <FolderTree
+              folders={folders}
+              selectedFolderId={currentFolderId || undefined}
+              onFolderSelect={handleFolderSelect}
+              showContextMenu={false}
+              allowSelection={true}
+              allowDragDrop={true}
+              onMoveFolder={async (dragFolder, newParentId) => {
+                try {
+                  setLoading(true);
+                  await moveFolder(dragFolder.id, { newParentFolderId: newParentId });
+                  toast.success('Folder moved successfully');
+                  await loadFolderTree();
+                  if (currentFolderId) await loadFolderContents(currentFolderId);
+                } catch (e: any) {
+                  toast.error(e?.response?.data?.message || 'Failed to move folder');
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              loading={loading}
+            />
+          </div>
+        )}
+      </div>
 
       {/* Main Content Area */}
-      <Layout>
-        <Content className="google-drive-content">
+      <div className={`google-drive-main-container ${rightPanelVisible ? 'with-details' : ''} ${isMobile && !sidebarCollapsed ? 'sidebar-expanded' : ''}`}>
+        <div className="google-drive-content">
           {/* Top Bar with Breadcrumb and Controls */}
-          <div className="google-drive-header">
-            <div className="google-drive-breadcrumb">
+          <div className="content-header">
+            <div className="breadcrumb-section">
               {renderBreadcrumb()}
             </div>
 
             {/* Search and Filter Bar */}
-            <div className="google-drive-toolbar">
-              <Input
-                placeholder="Search in folder"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="google-drive-search"
-                style={{ width: 300 }}
-                prefix={<SearchOutlined />}
-                allowClear
-              />
+            <div className="toolbar-section">
+              <div className="search-controls">
+                <Input
+                  placeholder="Search in folder"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="search-input"
+                  prefix={<SearchOutlined />}
+                  allowClear
+                />
 
-              <Select
-                value={sortBy}
-                onChange={setSortBy}
-                style={{ width: 140 }}
-                suffixIcon={<SortAscendingOutlined />}
-              >
-                <Option value="name">Name</Option>
-                <Option value="modified">Modified</Option>
-                <Option value="size">Size</Option>
-              </Select>
+                <Select
+                  value={sortBy}
+                  onChange={setSortBy}
+                  className="sort-select"
+                  suffixIcon={<SortAscendingOutlined />}
+                >
+                  <Option value="name">Name</Option>
+                  <Option value="modified">Modified</Option>
+                  <Option value="size">Size</Option>
+                </Select>
+              </div>
 
-              <Button icon={<FilterOutlined />} type="text">
-                Filter
-              </Button>
+              <div className="action-controls">
+                <Button
+                  icon={<FilterOutlined />}
+                  type="text"
+                  className="control-btn"
+                >
+                  Filter
+                </Button>
 
-              <Button
-                icon={viewMode === 'grid' ? <AppstoreOutlined /> : <UnorderedListOutlined />}
-                type="text"
-                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-              />
+                <Button
+                  icon={viewMode === 'grid' ? <AppstoreOutlined /> : <UnorderedListOutlined />}
+                  type="text"
+                  onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                  className="control-btn"
+                />
 
-              <Button
-                type="text"
-                icon={<InfoCircleOutlined />}
-                onClick={() => setRightPanelVisible(!rightPanelVisible)}
-              >
-                Details
-              </Button>
+                <Button
+                  type="text"
+                  icon={<InfoCircleOutlined />}
+                  onClick={() => setRightPanelVisible(!rightPanelVisible)}
+                  className={`control-btn ${rightPanelVisible ? 'active' : ''}`}
+                >
+                  Details
+                </Button>
+              </div>
             </div>
           </div>
 
           {/* Main Content Grid */}
-          <div className="google-drive-main">
-            {renderFolderGrid()}
+          <div className="content-body">
+            {loading ? (
+              <div className="loading-container">
+                <Spin size="large" />
+              </div>
+            ) : (
+              renderFolderGrid()
+            )}
           </div>
-        </Content>
+        </div>
 
         {/* Right Panel - Folder Information */}
         {rightPanelVisible && (
-          <Sider
-            width={360}
-            className="google-drive-details"
-            theme="light"
-          >
-            <div className="google-drive-details-header">
-              <Title level={4} style={{ margin: 0, fontSize: '16px', fontWeight: 500 }}>
+          <div className="details-panel">
+            <div className="details-header">
+              <Title level={4} className="details-title">
                 {selectedFolder ? selectedFolder.name : currentFolderId ? 'Open Folder' : 'Details'}
               </Title>
+              <Button
+                type="text"
+                icon={<InfoCircleOutlined />}
+                onClick={() => setRightPanelVisible(false)}
+                className="close-details-btn"
+              />
             </div>
 
-            <div className="google-drive-details-content">
+            <div className="details-content">
               {selectedFolder ? (
                 <Tabs
                   activeKey={activeTab}
@@ -770,13 +1027,13 @@ const GoogleDriveFolderManagement: React.FC = () => {
                   ]}
                 />
               ) : (
-                <div className="google-drive-empty">
+                <div className="empty-details">
                   <FolderOutlined style={{ fontSize: '48px', color: '#dadce0', marginBottom: '16px' }} />
                   <div>Select a folder to view details</div>
                 </div>
               )}
             </div>
-          </Sider>
+          </div>
         )}
 
         {/* Create Folder Modal */}
@@ -811,40 +1068,15 @@ const GoogleDriveFolderManagement: React.FC = () => {
                 setCreateModalVisible(false);
                 createForm.resetFields();
 
-                // Refresh tree and current view deterministically using fresh data
-                const treeResp = await getFolderTree({ includeSystemFolders: true });
-                const newRoots = treeResp.data.rootNodes;
-                setFolders(newRoots);
+                // Refresh tree first
+                await loadFolderTree();
 
+                // Then reload the current folder contents properly (including documents)
                 if (parentId) {
-                  const parentNode = findFolderById(newRoots, parentId);
-                  if (parentNode) {
-                    const contents: FolderItem[] = parentNode.children.map(child => ({
-                      id: child.id,
-                      name: child.name,
-                      type: 'folder' as const,
-                      modifiedAt: child.updatedAt || child.createdAt,
-                      modifiedBy: 'System',
-                      icon: <FolderOutlined />
-                    }));
-                    setCurrentFolderId(parentId);
-                    setSelectedFolder(parentNode);
-                    setCurrentFolderContents(contents);
-                    await loadPermissions(parentId);
-                  }
+                  await loadFolderContents(parentId);
                 } else {
-                  // root
-                  const rootContents: FolderItem[] = newRoots.map(folder => ({
-                    id: folder.id,
-                    name: folder.name,
-                    type: 'folder' as const,
-                    modifiedAt: folder.updatedAt || folder.createdAt,
-                    modifiedBy: 'System',
-                    icon: <FolderOutlined />
-                  }));
-                  setCurrentFolderId(null);
-                  setSelectedFolder(null);
-                  setCurrentFolderContents(rootContents);
+                  // If we're at root level, reload root contents
+                  loadRootContents();
                 }
               } catch (e: any) {
                 toast.error(e?.response?.data?.message || 'Failed to create folder');
@@ -889,6 +1121,42 @@ const GoogleDriveFolderManagement: React.FC = () => {
           excludeFolderIds={movingFolder ? [movingFolder.id] : []}
         />
 
+        {/* Move Document Modal */}
+        <FolderSelectorModal
+          visible={documentMoveModalVisible}
+          onCancel={() => setDocumentMoveModalVisible(false)}
+          onConfirm={async (targetFolderId) => {
+            if (!movingDocument || !targetFolderId) return;
+            try {
+              setMoveLoading(true);
+              const versionId = movingDocument.versionId || movingDocument.id;
+              if (!versionId) {
+                toast.error('Document version ID not found');
+                return;
+              }
+              await moveDocument(versionId, targetFolderId);
+              toast.success(`Document "${movingDocument.name}" moved successfully`);
+              setDocumentMoveModalVisible(false);
+              setMovingDocument(null);
+
+              // Refresh current folder contents
+              if (currentFolderId) {
+                await loadFolderContents(currentFolderId);
+              } else {
+                loadRootContents();
+              }
+            } catch (e: any) {
+              toast.error(e?.response?.data?.message || 'Failed to move document');
+            } finally {
+              setMoveLoading(false);
+            }
+          }}
+          selectedFolderId={currentFolderId || undefined}
+          title="Move Document"
+          placeholder="Select a destination folder"
+          filterPermission="write"
+        />
+
         {/* Rename Folder Modal */}
         <Modal
           title="Rename Folder"
@@ -910,6 +1178,14 @@ const GoogleDriveFolderManagement: React.FC = () => {
                 toast.success('Folder renamed');
                 setRenameModalVisible(false);
                 await loadFolderTree();
+
+                // Refresh current folder contents if we're viewing a folder
+                if (currentFolderId) {
+                  await loadFolderContents(currentFolderId);
+                } else {
+                  loadRootContents();
+                }
+
                 // Refresh current selection details
                 const folder = findFolderById(folders, selectedFolder.id);
                 if (folder) {
@@ -943,7 +1219,13 @@ const GoogleDriveFolderManagement: React.FC = () => {
               setDeleteModalVisible(false);
               setSelectedFolder(null);
               await loadFolderTree();
-              loadRootContents();
+
+              // Refresh current folder contents properly
+              if (currentFolderId) {
+                await loadFolderContents(currentFolderId);
+              } else {
+                loadRootContents();
+              }
             } catch (e: any) {
               toast.error(e?.response?.data?.message || 'Failed to delete folder');
             } finally {
@@ -1048,8 +1330,8 @@ const GoogleDriveFolderManagement: React.FC = () => {
             </Form.Item>
           </Form>
         </Modal>
-      </Layout>
-    </Layout>
+      </div>
+    </div>
   );
 };
 

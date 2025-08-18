@@ -1081,6 +1081,22 @@ Get documents pending approval in a specific folder.
 
 ## 🚀 **Recent API Enhancements (2024)**
 
+### **🎯 MAJOR UPDATE: ApprovalService Now Fully Folder-Aware**
+
+The main `ApprovalService` has been enhanced with complete folder-aware functionality while preserving all advanced features:
+
+**✅ Enhanced Features:**
+- **Complete Kernel Memory Integration** - Document indexing with comprehensive metadata including folder information
+- **Folder-Aware Document Movement** - Documents move to target folders on approval via `targetFolderId` parameter
+- **Enhanced Semantic Search** - Folder metadata included in search tags (folderId, folderName, folderPath, etc.)
+- **Three-Scenario Handling** - New document, versioning, replacement with proper archiving
+- **Complete Response** - Returns source and target folder information in `ApprovalReviewResponse`
+
+**✅ API Consolidation:**
+- **Main Approval APIs** (`/api/document/approval`) now handle all folder-aware functionality
+- **Folder-Aware APIs** (`/api/document/folder-approval`) are now legacy - use main APIs instead
+- **Single Service** - No need to maintain duplicate logic across multiple services
+
 ### **✅ Enhanced Document Response Fields**
 All document listing and approval APIs now include comprehensive document information:
 
@@ -1484,7 +1500,8 @@ curl -X GET "/api/document/folders/tree/department/hr-dept-001?includeSystemFold
 | **Folder CRUD** | `/api/document/folders` | Tree navigation, folder management, basic operations |
 | **Folder Permissions** | `/api/document/folder-permissions` | Access control, security management, user permissions |
 | **Folder Documents** | `/api/document/folder-documents` | Document browsing, search, file management |
-| **✅ Folder-Aware Approval** | `/api/document/folder-approval` | ✅ **Corrected URL** - Workflow management, approval processes |
+| **✅ Enhanced Approval** | `/api/document/approval` | ✅ **Now Folder-Aware** - Complete approval workflow with Kernel Memory |
+| **Folder-Aware Approval** | `/api/document/folder-approval` | ✅ **Legacy** - Use main approval APIs instead |
 | **Document Upload** | `/api/document` | File uploads, document lifecycle |
 
 ### **Common Frontend Workflows**
@@ -1513,12 +1530,50 @@ curl -X GET "/api/document/folders/tree/department/hr-dept-001?includeSystemFold
 4. POST /{folderId}/bulk → Bulk permission operations
 ```
 
-#### **4. ✅ Approval Workflow Dashboard**
+#### **4. ✅ Enhanced Approval Workflow (Now Folder-Aware)**
 ```
-1. GET /folder-approval/queue → Get pending approvals (✅ corrected URL)
-2. GET /folder-approval/{folderId}/pending → Get folder-specific pending docs
-3. POST /folder-approval/{versionId}/approve → Approve documents
-4. GET /folder-approval/{folderId}/history → View approval history
+1. GET /approval/queue → Get pending approvals with folder context
+2. POST /approval/{versionId}/review → Approve/reject with folder movement
+3. GET /approval/{versionId}/detail → Get detailed approval information
+4. POST /approval/{versionId}/claim → Claim document for review
+```
+
+**✅ Enhanced Approval Request:**
+```json
+POST /api/document/approval/{versionId}/review
+{
+  "isApproved": true,
+  "comments": "Approved for publication",
+  "targetFolderId": "target-folder-id"  // ✅ NEW: Move to specific folder
+}
+```
+
+**✅ Enhanced Approval Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "documentVersionId": "version-123",
+    "documentTitle": "Company Policy.pdf",
+    "decision": "Approved",
+    "comments": "Approved for publication",
+    "previousStatus": "Pending",
+    "newStatus": "Approved",
+    "sourceFolder": {                    // ✅ NEW: Source folder info
+      "id": "draft-folder-id",
+      "name": "_draft",
+      "fullPath": "Human Resources/_draft"
+    },
+    "targetFolder": {                    // ✅ NEW: Target folder info
+      "id": "target-folder-id",
+      "name": "Policies",
+      "fullPath": "Human Resources/Policies"
+    },
+    "reviewedBy": "manager-123",
+    "reviewedAt": "2024-01-16T14:30:00Z",
+    "approvalLogId": "log-456"
+  }
+}
 ```
 
 #### **5. Advanced Search Interface**
@@ -1631,42 +1686,58 @@ curl -X GET "/api/document/folders/tree/department/hr-dept-001?includeSystemFold
 
 ### **🎯 Key Improvements Made**
 
-1. **✅ Complete Document Information**
+1. **✅ MAJOR: ApprovalService Enhanced with Complete Folder-Aware Functionality**
+   - **Kernel Memory Integration** - Complete document indexing with folder metadata
+   - **Folder-Aware Movement** - Documents move to target folders on approval
+   - **Enhanced Search Tags** - Folder information included in semantic search
+   - **Complete Response** - Returns source and target folder information
+   - **API Consolidation** - Single service handles all approval scenarios
+
+2. **✅ Complete Document Information**
    - Added `documentFileId` and `versionId` to all document responses
    - Added `fileType` extraction from filenames (PDF, DOCX, XLSX, etc.)
    - Added comprehensive document metadata (signedBy, effectiveFrom/Until, etc.)
 
-2. **✅ User Name Enrichment**
+3. **✅ User Name Enrichment**
    - All user IDs now include corresponding full names
    - `submittedByName`, `ownerName`, `reviewedByName`, `departmentName`
    - Automatic enrichment via DocumentEnrichmentService
 
-3. **✅ Fixed Folder-Aware Approval Service**
-   - Resolved NullReferenceException from improper repository usage
-   - Enhanced response structure to match regular ApprovalService
-   - Added priority calculation and comprehensive field coverage
+4. **✅ Enhanced Semantic Search**
+   - **New Kernel Memory Tags** - `folderId`, `folderName`, `folderPath`, `folderDescription`, `folderIsPublic`
+   - **Folder Context** - Documents indexed with complete folder hierarchy
+   - **Enhanced RAG** - Folder information available for AI-powered search and chat
 
-4. **✅ Accurate Document Counts**
+5. **✅ Accurate Document Counts**
    - Folder tree and detail APIs now show real-time document counts
    - Dynamic calculation from actual database records instead of cached fields
    - Automatic cache synchronization when documents are added/moved
 
-5. **✅ No Pagination for Document Lists**
+6. **✅ No Pagination for Document Lists**
    - Folder document listing APIs return ALL documents as requested
    - Simplified frontend integration without pagination complexity
    - Maintains filtering and sorting capabilities
 
 ### **🚀 Frontend Benefits**
 
-- **Complete Data**: All necessary document information in single API calls
-- **User-Friendly**: Human-readable names instead of just IDs
-- **Accurate Counts**: Real-time folder document counts for UI display
-- **Consistent Structure**: All APIs follow same enhanced response format
-- **Better UX**: Priority indicators and status information for better workflow management
+- **✅ Unified Approval API**: Single endpoint handles all approval scenarios with folder awareness
+- **✅ Complete Folder Context**: Source and target folder information in approval responses
+- **✅ Enhanced Search**: Folder metadata available for semantic search and filtering
+- **✅ Complete Data**: All necessary document information in single API calls
+- **✅ User-Friendly**: Human-readable names instead of just IDs
+- **✅ Accurate Counts**: Real-time folder document counts for UI display
+- **✅ Consistent Structure**: All APIs follow same enhanced response format
+- **✅ Better UX**: Priority indicators and status information for better workflow management
+- **✅ Simplified Integration**: No need to choose between regular and folder-aware APIs
 
 ### **🔧 Technical Improvements**
 
-- **Repository Pattern**: Proper UnitOfWork usage throughout all services
-- **Performance**: Optimized queries with proper includes and predicates
-- **Error Handling**: Robust error handling with meaningful error messages
-- **Code Quality**: Consistent patterns across all folder-related services
+- **✅ Service Consolidation**: Single ApprovalService handles all scenarios (regular + folder-aware)
+- **✅ Complete Kernel Memory**: Full document indexing with folder metadata for enhanced RAG
+- **✅ Three-Scenario Support**: New document, versioning, replacement with proper archiving
+- **✅ Enhanced Search Tags**: Comprehensive folder metadata in semantic search index
+- **✅ Repository Pattern**: Proper UnitOfWork usage throughout all services
+- **✅ Performance**: Optimized queries with proper includes and predicates
+- **✅ Error Handling**: Robust error handling with meaningful error messages
+- **✅ Code Quality**: Consistent patterns across all folder-related services
+- **✅ Maintainability**: Single source of truth for approval logic eliminates duplication

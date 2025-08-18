@@ -24,10 +24,10 @@ const SIDEBAR_ITEMS: {
     href: "/manager/tags",
   },
   {
-    name: "Folder Management",
+    name: "Google Drive Folders",
     icon: Folder,
     color: "#F59E0B",
-    href: "/manager/folder-management",
+    href: "/manager/google-drive-folders",
   },
   {
     name: "Home",

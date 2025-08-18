@@ -5,7 +5,7 @@ import { api } from "./api";
 export const moveDocument = async (documentVersionId: string, targetFolderId: string) => {
   const params = new URLSearchParams();
   params.append('targetFolderId', targetFolderId);
-  const response = await api.put(`/document/${documentVersionId}/move?${params.toString()}`);
+  const response = await api.put(`/document/folder-documents/${documentVersionId}/move?${params.toString()}`);
   return response.data;
 };
 
@@ -201,41 +201,34 @@ export const getMyDocumentsWithStats = async (
   return response.data;
 };
 
-// Thêm interface cho filters
+// Interface for approval queue filters
 interface ApprovalQueueFilters {
-  title?: string;
-  documentTypeId?: string;
-  isPublic?: boolean;
+  status?: string;
   fromDate?: string;
   toDate?: string;
-  folderId?: string;
-  departmentId?: string;
-  includeSubfolders?: boolean;
-  submittedBy?: string;
-  urgentOnly?: boolean;
+  documentTypeId?: string;
+  isPublic?: boolean;
+  title?: string;
 }
 
-// Updated getApprovalQueue to use folder-approval base
+// Updated getApprovalQueue to match new API
 export const getApprovalQueue = async (
   page = 1,
   pageSize = 10,
   filters: ApprovalQueueFilters = {}
 ) => {
   const params = new URLSearchParams();
-  params.append('page', String(page));
+  params.append('pageNumber', String(page));
   params.append('pageSize', String(pageSize));
-  if (filters.title) params.append('title', filters.title);
-  if (filters.documentTypeId) params.append('documentTypeId', filters.documentTypeId);
-  if (filters.isPublic !== undefined) params.append('isPublic', String(filters.isPublic));
-  if (filters.fromDate) params.append('fromDate', filters.fromDate);
-  if (filters.toDate) params.append('toDate', filters.toDate);
-  if (filters.folderId) params.append('folderId', filters.folderId);
-  if (filters.departmentId) params.append('departmentId', filters.departmentId);
-  if (filters.includeSubfolders !== undefined) params.append('includeSubfolders', String(filters.includeSubfolders));
-  if (filters.submittedBy) params.append('submittedBy', filters.submittedBy);
-  if (filters.urgentOnly !== undefined) params.append('urgentOnly', String(filters.urgentOnly));
 
-  const response = await api.get(`/document/folder-approval/queue?${params.toString()}`);
+  if (filters.status) params.append('Status', filters.status);
+  if (filters.fromDate) params.append('FromDate', filters.fromDate);
+  if (filters.toDate) params.append('ToDate', filters.toDate);
+  if (filters.documentTypeId) params.append('DocumentTypeId', filters.documentTypeId);
+  if (filters.isPublic !== undefined) params.append('IsPublic', String(filters.isPublic));
+  if (filters.title) params.append('Title', filters.title);
+
+  const response = await api.get(`/document/approval-queue?${params.toString()}`);
   return response.data.data;
 };
 

@@ -7,8 +7,6 @@ import WysiwygEditor from 'react-simple-wysiwyg';
 import toast from 'react-hot-toast';
 import moment from "moment";
 import { FolderSelectorInput } from "../../components/folder";
-import FolderDebug from "../../components/debug/FolderDebug";
-import TreeFolderSelectorTest from "../../components/debug/TreeFolderSelectorTest";
 
 const { Title, Text } = Typography
 const { Content } = Layout 
@@ -1052,9 +1050,6 @@ export default function UploadDocument() {
         </div>
       </Content>
 
-      {/* Debug Components - Remove in production */}
-      <FolderDebug />
-      <TreeFolderSelectorTest />
     </Layout>
   )
 }

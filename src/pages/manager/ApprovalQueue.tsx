@@ -39,36 +39,67 @@ interface ApprovalQueueFilters {
 }
 
 interface ApprovalQueueItem {
-  id: string; // version id (same as versionId)
-  versionId?: string;
-  documentFileId?: string;
-  versionName?: string;
+  documentFileId: string;
+  versionId: string;
+  versionName: string;
   title: string;
-  status: string; // Pending
-  containingFolder?: { fullPath?: string; id: string; name: string };
-  submittedAt: string;
-  submittedBy?: string;
-  submittedByName?: string;
+  submittedBy: string;
+  submittedByName: string;
+  lastSubmitted: string;
+  status: string;
+  departmentId: string;
+  departmentName: string;
+  documentTypeId: string;
+  documentTypeName: string;
+  isPublic: boolean;
+  signedBy: string;
+  effectiveFrom: string;
+  effectiveUntil: string;
+  isBeingReviewed: boolean;
+  reviewedBy: string | null;
+  claimedAt: string | null;
+  reviewedByName: string | null;
+  description: string;
+  summary: string;
+  fileSize: number;
+  fileType: string;
+  tags: string[];
+  createdTime: string;
+  lastUpdatedTime: string;
+  ownerId: string;
+  ownerName: string | null;
+  priority: string;
   daysSinceSubmission: number;
-  approvalDeadline?: string;
-  isUrgent?: boolean;
-  tags?: string[];
-  fileSize?: number;
+  isApproachingExpiration: boolean;
+  resubmissionCount: number;
+  previousRejectionReason: string | null;
 }
 
-
+interface ApprovalQueueStatistics {
+  totalPending: number;
+  totalApproved: number;
+  totalRejected: number;
+  totalArchived: number;
+  totalBeingReviewed: number;
+  recentSubmissions: number;
+  approachingExpiration: number;
+  averageProcessingTimeHours: number;
+}
 
 interface ApprovalQueueResponse {
-  pendingDocuments: ApprovalQueueItem[];
-  totalPending: number;
-  currentPage: number;
-  pageSize: number;
-  totalPages: number;
+  documents: {
+    size: number;
+    page: number;
+    total: number;
+    totalPages: number;
+    items: ApprovalQueueItem[];
+  };
+  statistics: ApprovalQueueStatistics;
 }
 
 export default function ApprovalQueue() {
   const [documents, setDocuments] = useState<ApprovalQueueItem[]>([]);
-
+  const [statistics, setStatistics] = useState<ApprovalQueueStatistics | null>(null);
   const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingDocumentTypes, setLoadingDocumentTypes] = useState(false);
@@ -111,8 +142,9 @@ export default function ApprovalQueue() {
 
       const res = await getApprovalQueue(page, pageSize, filters);
       const data = res as ApprovalQueueResponse;
-      setDocuments(data.pendingDocuments || []);
-      setTotal(data.totalPending || 0);
+      setDocuments(data.documents.items || []);
+      setTotal(data.documents.total || 0);
+      setStatistics(data.statistics);
 
     } catch (error: any) {
       toast.error(`Lỗi khi tải dữ liệu: ${error?.response?.data?.message || error.message}`);
@@ -173,20 +205,20 @@ export default function ApprovalQueue() {
       ),
     },
     {
-      title: "Folder",
-      dataIndex: "containingFolder",
-      key: "containingFolder",
-      render: (folder: any) => <Tag color="blue">{folder?.fullPath || folder?.name || '-'}</Tag>,
+      title: "Department",
+      dataIndex: "departmentName",
+      key: "departmentName",
+      render: (departmentName: string) => <Tag color="blue">{departmentName || '-'}</Tag>,
     },
     {
       title: "Submitted By",
       dataIndex: "submittedByName",
       key: "submittedByName",
-      render: (submittedByName: string | undefined, record: ApprovalQueueItem) => (
+      render: (submittedByName: string, record: ApprovalQueueItem) => (
         <div>
           <div style={{ display: "flex", alignItems: "center" }}>
             <UserOutlined style={{ marginRight: 4, color: "#666" }} />
-            <Text>{submittedByName || record.submittedBy || '-'}</Text>
+            <Text>{submittedByName || '-'}</Text>
           </div>
           <Text type="secondary" style={{ fontSize: "12px" }}>
             {record.daysSinceSubmission} days ago
@@ -196,8 +228,8 @@ export default function ApprovalQueue() {
     },
     {
       title: "Submitted Date",
-      dataIndex: "submittedAt",
-      key: "submittedAt",
+      dataIndex: "lastSubmitted",
+      key: "lastSubmitted",
       render: (date: string) => (
         <div>
           <div style={{ display: "flex", alignItems: "center" }}>
@@ -212,7 +244,7 @@ export default function ApprovalQueue() {
       title: "Version",
       dataIndex: "versionName",
       key: "versionName",
-      render: (version: string | undefined) => (
+      render: (version: string) => (
         <div>
           <Text>{version || '-'}</Text>
         </div>
@@ -225,9 +257,6 @@ export default function ApprovalQueue() {
       render: (status: string) => (
         <div>
           <Tag color={getStatusColor(status)}>{status}</Tag>
-          {record.isBeingReviewed && (
-            <Tag color="blue">Being Reviewed</Tag>
-          )}
         </div>
       ),
     },
@@ -240,7 +269,7 @@ export default function ApprovalQueue() {
             <Button
               type="primary"
               size="small"
-              onClick={() => navigate(`/manager/document-review/${record.documentFileId ?? record.id}/${record.versionId ?? record.id}`)}
+              onClick={() => navigate(`/manager/document-review/${record.documentFileId}/${record.versionId}`)}
             >
               Review
             </Button>
@@ -272,7 +301,7 @@ export default function ApprovalQueue() {
                   <div>
                     <Text type="secondary">Pending Approval</Text>
                     <div style={{ fontSize: "24px", fontWeight: "bold", margin: "8px 0" }}>
-                      {total}
+                      {statistics?.totalPending || 0}
                     </div>
                     <Text type="secondary" style={{ fontSize: "12px" }}>
                       Awaiting your review
@@ -288,7 +317,7 @@ export default function ApprovalQueue() {
                   <div>
                     <Text type="secondary">Approved</Text>
                     <div style={{ fontSize: "24px", fontWeight: "bold", margin: "8px 0" }}>
-                      --
+                      {statistics?.totalApproved || 0}
                     </div>
                     <Text type="secondary" style={{ fontSize: "12px" }}>
                       Documents approved
@@ -304,7 +333,7 @@ export default function ApprovalQueue() {
                   <div>
                     <Text type="secondary">Rejected</Text>
                     <div style={{ fontSize: "24px", fontWeight: "bold", margin: "8px 0" }}>
-                      --
+                      {statistics?.totalRejected || 0}
                     </div>
                     <Text type="secondary" style={{ fontSize: "12px" }}>
                       Sent back for revision
@@ -320,7 +349,7 @@ export default function ApprovalQueue() {
                   <div>
                     <Text type="secondary">Approaching Expiration</Text>
                     <div style={{ fontSize: "24px", fontWeight: "bold", margin: "8px 0" }}>
-                      --
+                      {statistics?.approachingExpiration || 0}
                     </div>
                     <Text type="secondary" style={{ fontSize: "12px" }}>
                       Urgent reviews needed
@@ -433,7 +462,7 @@ export default function ApprovalQueue() {
                       columns={columns} 
                       dataSource={documents} 
                       loading={loading} 
-                      rowKey={(r) => r.versionId || r.id}
+                      rowKey={(r) => r.versionId}
                       pagination={{
                         total,
                         pageSize,
@@ -462,7 +491,7 @@ export default function ApprovalQueue() {
                         <Card size="small">
                           <Text type="secondary">Recent Submissions (24h)</Text>
                           <div style={{ fontSize: "20px", fontWeight: "bold" }}>
-                            --
+                            {statistics?.recentSubmissions || 0}
                           </div>
                         </Card>
                       </Col>
@@ -470,7 +499,7 @@ export default function ApprovalQueue() {
                         <Card size="small">
                           <Text type="secondary">Being Reviewed</Text>
                           <div style={{ fontSize: "20px", fontWeight: "bold" }}>
-                            --
+                            {statistics?.totalBeingReviewed || 0}
                           </div>
                         </Card>
                       </Col>

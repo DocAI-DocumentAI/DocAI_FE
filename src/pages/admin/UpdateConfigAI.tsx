@@ -27,7 +27,7 @@ const UpdateConfigAI: React.FC = () => {
     isFree: true,
   });
 
-  const [errors, setErrors] = useState<Partial<UpdateAIConfigurationRequest>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof UpdateAIConfigurationRequest, string>>>({});
   const [isLoading, setIsLoading] = useState(true);
 
   // Find and load the configuration data
@@ -73,7 +73,7 @@ const UpdateConfigAI: React.FC = () => {
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<UpdateAIConfigurationRequest> = {};
+    const newErrors: Partial<Record<keyof UpdateAIConfigurationRequest, string>> = {};
 
     if (!formData.modelName.trim()) {
       newErrors.modelName = "Model name is required";

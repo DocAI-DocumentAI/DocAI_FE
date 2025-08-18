@@ -21,7 +21,7 @@ const CreateConfigAI: React.FC = () => {
     isFree: true,
   });
 
-  const [errors, setErrors] = useState<Partial<CreateAIConfigurationRequest>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof CreateAIConfigurationRequest, string>>>({});
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -44,7 +44,7 @@ const CreateConfigAI: React.FC = () => {
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<CreateAIConfigurationRequest> = {};
+    const newErrors: Partial<Record<keyof CreateAIConfigurationRequest, string>> = {};
 
     if (!formData.modelName.trim()) {
       newErrors.modelName = "Model name is required";
