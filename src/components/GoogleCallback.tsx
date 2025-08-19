@@ -11,18 +11,33 @@ import {
   GoogleCallbackProps,
   GoogleOAuthFlowStatus,
 } from "../types/GoogleOAuth";
+import {
+  useGoogleCallbackProtection,
+  clearGoogleOAuthProcessing,
+} from "../hooks/useGoogleCallbackProtection";
 
 const GoogleCallback: React.FC<GoogleCallbackProps> = ({
   onSuccess,
   onError,
 }) => {
-  console.log("GoogleCallback component rendered");
-  console.log("Current URL:", window.location.href);
+  console.log("🚀 GoogleCallback component rendered");
+  console.log("📍 Current URL:", window.location.href);
+  console.log("📍 Current pathname:", window.location.pathname);
+  console.log("📍 URL search params:", window.location.search);
 
   const [status, setStatus] = useState<GoogleOAuthFlowStatus>("processing");
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [isProcessing, setIsProcessing] = useState<boolean>(true);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  // Activate protection against premature redirects
+  const { isGoogleCallback } = useGoogleCallbackProtection();
+
+  console.log("🛡️ Google callback protection active:", isGoogleCallback);
+
+  // Force component to render immediately
+  console.log("🎯 GoogleCallback component is rendering with status:", status);
 
   useEffect(() => {
     console.log("GoogleCallback useEffect triggered");
@@ -76,9 +91,10 @@ const GoogleCallback: React.FC<GoogleCallbackProps> = ({
           throw new Error(`OAuth error: ${error}`);
         }
 
-        // Extract authorization code from URL
+        // Extract authorization code from URL BEFORE any other operations
         const code = GoogleAuthService.extractCodeFromUrl();
         console.log("Extracted code:", code);
+
         if (!code) {
           // If no code found, check if we're actually on the callback page
           if (window.location.pathname === "/auth/google/callback") {
@@ -130,15 +146,22 @@ const GoogleCallback: React.FC<GoogleCallbackProps> = ({
         console.log("Updating Redux state...");
         dispatch(loginSuccess(userData));
 
-        // Clean URL parameters
-        console.log("Cleaning URL parameters...");
-        GoogleAuthService.cleanUrlParams();
-
         console.log("Setting status to success...");
         setStatus("success");
+        setIsProcessing(false);
         onSuccess?.(userData);
 
-        // Navigate based on user role
+        // Clean URL parameters and stored code ONLY after successful authentication
+        console.log(
+          "Cleaning URL parameters and stored code after successful auth..."
+        );
+        setTimeout(() => {
+          GoogleAuthService.cleanUrlParams();
+          GoogleAuthService.clearStoredOAuthCode();
+          clearGoogleOAuthProcessing(); // Clear protection flag
+        }, 1500); // Delay cleaning to ensure user can see the success state
+
+        // Navigate based on user role with longer delay to show success UI
         console.log("Preparing navigation...");
         setTimeout(() => {
           const roleName = userData.role?.roleName;
@@ -158,42 +181,77 @@ const GoogleCallback: React.FC<GoogleCallbackProps> = ({
             console.log("Navigating to home page");
             navigate("/");
           }
-        }, 2000);
-      } catch (error: any) {
+        }, 3000); // Increased delay to 3 seconds to ensure user sees success state
+      } catch (error: unknown) {
         console.error("❌ Google authentication error:", error);
-        console.error("Error details:", {
-          message: error.message,
-          status: error.status,
-          response: error.response?.data,
-          stack: error.stack,
-        });
 
-        const errorMsg =
-          error.message || "Failed to complete Google authentication";
+        // Better error handling with type checking
+        let errorMsg = "Failed to complete Google authentication";
+        let errorStatus: number | undefined;
+        let errorResponse: any;
+
+        if (error instanceof Error) {
+          errorMsg = error.message;
+          console.error("Error details:", {
+            message: error.message,
+            name: error.name,
+            stack: error.stack,
+          });
+        }
+
+        // Handle axios errors specifically
+        if (
+          typeof error === "object" &&
+          error !== null &&
+          "response" in error
+        ) {
+          const axiosError = error as any;
+          errorStatus = axiosError.response?.status;
+          errorResponse = axiosError.response?.data;
+
+          console.error("Axios error details:", {
+            status: errorStatus,
+            statusText: axiosError.response?.statusText,
+            data: errorResponse,
+            url: axiosError.config?.url,
+            method: axiosError.config?.method,
+          });
+
+          // Use server error message if available
+          if (errorResponse?.message) {
+            errorMsg = errorResponse.message;
+          }
+        }
+
         console.log("Setting error message:", errorMsg);
 
         setErrorMessage(errorMsg);
         setStatus("error");
+        setIsProcessing(false);
         dispatch(loginFailure(errorMsg));
         onError?.(errorMsg);
 
-        // Clean URL parameters even on error
-        console.log("Cleaning URL parameters after error...");
-        GoogleAuthService.cleanUrlParams();
+        // Clean URL parameters and stored code after error with delay
+        console.log("Cleaning URL parameters and stored code after error...");
+        setTimeout(() => {
+          GoogleAuthService.cleanUrlParams();
+          GoogleAuthService.clearStoredOAuthCode();
+          clearGoogleOAuthProcessing(); // Clear protection flag
+        }, 2000);
 
-        // Redirect based on error type
+        // Redirect based on error type with longer delays to show error UI
         if (errorMsg.includes("GOOGLE OAUTH CONFIGURATION ISSUE")) {
-          console.log("Will redirect to OAuth fix page in 3 seconds...");
+          console.log("Will redirect to OAuth fix page in 5 seconds...");
           setTimeout(() => {
             console.log("Redirecting to OAuth fix page...");
             navigate("/google-oauth-fix");
-          }, 3000);
+          }, 5000);
         } else {
-          console.log("Will redirect to login in 4 seconds...");
+          console.log("Will redirect to login in 6 seconds...");
           setTimeout(() => {
             console.log("Redirecting to login page...");
             navigate("/login");
-          }, 4000);
+          }, 6000);
         }
       }
     };
@@ -341,6 +399,14 @@ const GoogleCallback: React.FC<GoogleCallbackProps> = ({
         return null;
     }
   };
+
+  // Force render the component and prevent early navigation
+  console.log(
+    "Rendering GoogleCallback with status:",
+    status,
+    "isProcessing:",
+    isProcessing
+  );
 
   return (
     <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">

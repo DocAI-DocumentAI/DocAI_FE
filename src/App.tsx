@@ -41,12 +41,27 @@ const App: React.FC = () => {
   // Initialize auth state from localStorage on app start
   useEffect(() => {
     console.log("App: Initializing auth...");
+    console.log("Current pathname:", window.location.pathname);
+
+    // Always initialize auth, but the authSlice will handle Google callback specially
     dispatch(initializeAuth());
     setIsInitialized(true);
   }, [dispatch]);
 
-  // Show loading screen while initializing
-  if (!isInitialized || loading) {
+  // Special handling for Google OAuth callback - don't show loading screen
+  const isGoogleCallback = window.location.pathname === "/auth/google/callback";
+
+  console.log(
+    "App render - isInitialized:",
+    isInitialized,
+    "loading:",
+    loading,
+    "isGoogleCallback:",
+    isGoogleCallback
+  );
+
+  // Show loading screen while initializing, but NOT for Google OAuth callback
+  if ((!isInitialized || loading) && !isGoogleCallback) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-900">
         <div className="flex flex-col items-center gap-4">
@@ -54,6 +69,95 @@ const App: React.FC = () => {
           <p className="text-gray-300">Initializing application...</p>
         </div>
       </div>
+    );
+  }
+
+  // Force render for Google OAuth callback even if not fully initialized
+  if (isGoogleCallback) {
+    console.log("🚀 Force rendering Google OAuth callback");
+    return (
+      <ChatProvider>
+        <BrowserRouter>
+          <ToastContainer />
+          <Routes>
+            {/* Public Routes */}
+            {PublicRoutes.map((route) => (
+              <Route key={route.path} path={route.path} element={route.element}>
+                {route.children &&
+                  route.children.map((child: any) => (
+                    <Route
+                      key={child.path}
+                      path={child.path}
+                      element={child.element}
+                    />
+                  ))}
+              </Route>
+            ))}
+
+            {/* Private Routes với Admin Layout */}
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <AdminPage />
+                </AdminRoute>
+              }
+            >
+              <Route path="dashboard" element={<DashboardPage />} />
+              <Route
+                path="chatbox-dashboard"
+                element={<ChatboxDashboardPage />}
+              />
+              <Route path="config-ai" element={<ConfigAIPage />} />
+              <Route path="config-ai/create" element={<CreateConfigAI />} />
+              <Route path="config-ai/update/:id" element={<UpdateConfigAI />} />
+              <Route path="users" element={<UsersPage />} />
+              <Route path="departments" element={<DepartmentPage />} />
+              <Route path="roles" element={<RolePage />} />
+              <Route path="permissions" element={<PermissionPage />} />
+              <Route path="document-types" element={<DocumentTypePage />} />
+              <Route path="notifications" element={<NotifyPage />} />
+              <Route path="/admin/users/create" element={<CreateUserPage />} />
+              <Route
+                path="/admin/departments/create"
+                element={<CreateDepartmentPage />}
+              />
+              <Route path="/admin/roles/create" element={<CreateRolePage />} />
+              <Route
+                path="/admin/permissions/create"
+                element={<CreatePermissionPage />}
+              />
+              <Route
+                path="/admin/document-types/create"
+                element={<CreateDocumentTypePage />}
+              />
+              <Route
+                path="/admin/users/update/:userId"
+                element={<UpdateUserPage />}
+              />
+              <Route
+                path="/admin/departments/update/:departmentId"
+                element={<UpdateDepartmentPage />}
+              />
+              <Route
+                path="/admin/roles/update/:roleId"
+                element={<UpdateRolePage />}
+              />
+              <Route
+                path="/admin/permissions/update/:permissionId"
+                element={<UpdatePermissionPage />}
+              />
+              <Route
+                path="/admin/document-types/update/:documentTypeId"
+                element={<UpdateDocumentTypePage />}
+              />
+              <Route index element={<Navigate to="dashboard" replace />} />
+            </Route>
+
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </ChatProvider>
     );
   }
 
