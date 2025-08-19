@@ -60,25 +60,22 @@ export default function SearchPage() {
   const [tags, setTags] = useState<any[]>([]);
   const [documentTypes, setDocumentTypes] = useState<DocumentTypeItem[]>([]);
 
-  // Restore state from URL parameters on mount
-  const isRestoringFromURL = useRef(false);
-  const hasSearchedInitialQuery = useRef(false);
+  // Simple URL restoration on mount only
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
+    // Only run once on mount
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
     const query = searchParams.get("q");
     const tags = searchParams.get("tags");
     const documentTypeId = searchParams.get("docType");
     const signedBy = searchParams.get("signedBy");
 
-    if (query || tags || documentTypeId || signedBy) {
-      isRestoringFromURL.current = true;
-    }
-
     if (query) {
       setInitialQuery(query);
       setIsSearched(true);
-      // Set loading immediately when we have a query from URL
-      setLoading(true);
     }
 
     if (tags || documentTypeId || signedBy) {
@@ -89,15 +86,7 @@ export default function SearchPage() {
         signedBy: signedBy || prev.signedBy,
       }));
     }
-
-    // Reset flags after a short delay
-    setTimeout(() => {
-      isRestoringFromURL.current = false;
-    }, 500);
-
-    // Reset search flag when URL changes
-    hasSearchedInitialQuery.current = false;
-  }, [searchParams]);
+  }, []); // Empty dependency array - only run on mount
 
   // Fetch reference data on mount
   useEffect(() => {
@@ -136,6 +125,12 @@ export default function SearchPage() {
   const handleSearch = useCallback(
     async (query: string) => {
       if (!query.trim()) return;
+
+      // Prevent duplicate searches
+      if (query === lastQueryRef.current && loading) {
+        return;
+      }
+
       lastQueryRef.current = query;
       setIsSearched(true);
       setLoading(true);
@@ -200,25 +195,41 @@ export default function SearchPage() {
   );
 
   // Auto-search when initialQuery is set and reference data is loaded
+  const hasAutoSearched = useRef(false);
   useEffect(() => {
     if (
       initialQuery &&
       tags.length > 0 &&
       documentTypes.length > 0 &&
-      !hasSearchedInitialQuery.current
+      !hasAutoSearched.current
     ) {
-      hasSearchedInitialQuery.current = true;
+      hasAutoSearched.current = true;
       handleSearch(initialQuery);
     }
   }, [initialQuery, tags.length, documentTypes.length, handleSearch]);
 
-  // Auto-search when filters change (but not when restoring from URL)
+  // Auto-search when filters change (debounced)
+  const filterChangeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (isSearched && lastQueryRef.current && !isRestoringFromURL.current) {
-      // Set loading state before search
-      setLoading(true);
-      handleSearch(lastQueryRef.current);
+    // Clear any existing timeout
+    if (filterChangeTimeoutRef.current) {
+      clearTimeout(filterChangeTimeoutRef.current);
     }
+
+    // Only trigger search if we have searched before and have a query
+    if (isSearched && lastQueryRef.current && !loading) {
+      // Debounce filter changes to prevent rapid successive searches
+      filterChangeTimeoutRef.current = setTimeout(() => {
+        handleSearch(lastQueryRef.current);
+      }, 300);
+    }
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (filterChangeTimeoutRef.current) {
+        clearTimeout(filterChangeTimeoutRef.current);
+      }
+    };
   }, [
     filter.startDate,
     filter.endDate,
@@ -231,9 +242,16 @@ export default function SearchPage() {
     filter.maxResults,
     filter.enableHybridScoring,
     filter.scope,
-    isSearched,
-    handleSearch,
-  ]);
+  ]); // Removed isSearched, handleSearch, loading from dependencies
+
+  // Cleanup timeout on component unmount
+  useEffect(() => {
+    return () => {
+      if (filterChangeTimeoutRef.current) {
+        clearTimeout(filterChangeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
