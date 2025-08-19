@@ -5,7 +5,7 @@ import { SearchBox } from "../../components/Search-box";
 import { SearchResults } from "../../components/Search-results";
 import { SearchFilter } from "../../components/Search-filter";
 import {
-  semanticSearchDocuments,
+  enhancedSemanticSearchDocuments,
   getDocumentTypes,
 } from "../../lib/api/document";
 import { getTags } from "../../lib/api/tag";
@@ -49,6 +49,9 @@ export default function SearchPage() {
     signedBy: "",
     fromDate: null,
     toDate: null,
+    // New folder filtering parameters
+    folderId: null,
+    includeSubfolders: false,
   });
   const [loading, setLoading] = useState(false);
   const [tags, setTags] = useState<any[]>([]);
@@ -148,49 +151,33 @@ export default function SearchPage() {
       }
       setSearchParams(newSearchParams);
       try {
-        let userId = "";
-        try {
-          const userStr = localStorage.getItem("user");
-          if (userStr) {
-            const user = JSON.parse(userStr);
-            userId = user.userId || user.id || "";
-          }
-        } catch {}
-        const params: any = {
-          Query: query,
-          Tags: filter.documentTags,
-          userId,
-          pageNumber: 1,
-          pageSize: filter.maxResults,
-          // Enhanced filter parameters
+        const params = {
+          query: query,
           minRelevance: filter.minRelevance,
           maxResults: filter.maxResults,
           enableHybridScoring: filter.enableHybridScoring,
-          boostDepartmentResults: filter.boostDepartmentResults,
-          latestVersionsOnly: filter.latestVersionsOnly,
-          scope: filter.scope,
-          documentTypeId: filter.documentTypeId || undefined,
-          signedBy: filter.signedBy || undefined,
+          scope: filter.scope.toString(), // Convert to string as expected by API
+          documentTypeId: filter.documentTypeId || null,
+          departmentId: null, // Can be added later if needed
+          fromDate: filter.fromDate ? filter.fromDate.toISOString() : null,
+          toDate: filter.toDate ? filter.toDate.toISOString() : null,
+          effectiveFrom: filter.startDate ? filter.startDate.toISOString() : null,
+          effectiveUntil: filter.endDate ? filter.endDate.toISOString() : null,
+          folderId: filter.folderId,
+          includeSubfolders: filter.includeSubfolders,
         };
 
-        // Date parameters
-        if (filter.startDate) {
-          params.EffectiveFrom = filter.startDate.toISOString();
-        }
-        if (filter.endDate) {
-          params.EffectiveUntil = filter.endDate.toISOString();
-        }
-        if (filter.fromDate) {
-          params.fromDate = filter.fromDate.toISOString();
-        }
-        if (filter.toDate) {
-          params.toDate = filter.toDate.toISOString();
-        }
-
         console.log("Enhanced search params:", params);
-        const res = await semanticSearchDocuments(params);
-        setSearchResults(res?.data?.items || []);
+        const res = await enhancedSemanticSearchDocuments(params);
+
+        // Update to handle the new response structure
+        if (res.data && res.data.success) {
+          setSearchResults(res.data.relevantDocuments || []);
+        } else {
+          setSearchResults([]);
+        }
       } catch (e) {
+        console.error("Search error:", e);
         setSearchResults([]);
       } finally {
         setLoading(false);
@@ -225,6 +212,12 @@ export default function SearchPage() {
     filter.documentTags,
     filter.documentTypeId,
     filter.signedBy,
+    filter.folderId,
+    filter.includeSubfolders,
+    filter.minRelevance,
+    filter.maxResults,
+    filter.enableHybridScoring,
+    filter.scope,
     isSearched,
     handleSearch,
   ]);

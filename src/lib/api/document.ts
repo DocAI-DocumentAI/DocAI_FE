@@ -254,6 +254,94 @@ export interface SemanticSearchParams {
   folderId?: string; // Folder filtering support
 }
 
+// New interface for enhanced semantic search API
+export interface EnhancedSemanticSearchParams {
+  query: string;
+  minRelevance?: number;
+  maxResults?: number;
+  enableHybridScoring?: boolean;
+  scope?: string; // "0" for All, "1" for Public only, "2" for Department only
+  documentTypeId?: string | null;
+  departmentId?: string | null;
+  fromDate?: string | null;
+  toDate?: string | null;
+  effectiveFrom?: string | null;
+  effectiveUntil?: string | null;
+  folderId?: string | null;
+  includeSubfolders?: boolean;
+}
+
+// Response interface for enhanced semantic search
+export interface EnhancedSemanticSearchResponse {
+  statusCode: number;
+  errorCode: string | null;
+  message: string;
+  data: {
+    requestId: string;
+    query: string;
+    answer: string;
+    hasAnswer: boolean;
+    relevantDocuments: Array<{
+      id: string;
+      departmentId: string;
+      departmentName: string;
+      title: string;
+      documentName: string;
+      description: string;
+      status: string;
+      createdBy: string;
+      createdByName: string;
+      createdTime: string;
+      lastUpdatedby: string;
+      lastUpdatedByName: string;
+      lastUpdatedTime: string;
+      filePath: string;
+      fileType: string;
+      fileSize: number;
+      version: string;
+      tags: string[];
+      replacementId: string | null;
+      replacementDocument: any | null;
+      isReplaced: boolean;
+      relevance: number;
+      documentTypeId: string;
+      documentTypeName: string;
+      isPublic: boolean;
+      signedBy: string;
+      effectiveFrom: string;
+      effectiveUntil: string;
+      scoring: {
+        semanticSimilarity: number;
+        metadataScore: number;
+        contextualScore: number;
+        finalScore: number;
+        appliedBoosts: any[];
+        matchingTags: any[];
+      };
+      isDepartmentBoosted: boolean;
+      rank: number;
+    }>;
+    totalDocuments: number;
+    processingTimeMs: number;
+    metadata: {
+      minRelevance: number;
+      maxResults: number;
+      hybridScoringEnabled: boolean;
+      scope: string;
+      departmentFilter: string | null;
+      documentTypeFilter: string | null;
+      dateRange: {
+        fromDate: string | null;
+        toDate: string | null;
+        effectiveFrom: string | null;
+        effectiveUntil: string | null;
+      };
+    };
+    errorMessage: string | null;
+    success: boolean;
+  };
+}
+
 export const semanticSearchDocuments = async (params: SemanticSearchParams) => {
   const {
     Query = "",
@@ -310,6 +398,36 @@ export const semanticSearchDocuments = async (params: SemanticSearchParams) => {
 
   const response = await api.get(
     `/document/semantic-search?${searchParams.toString()}`
+  );
+  return response.data;
+};
+
+// New enhanced semantic search function
+export const enhancedSemanticSearchDocuments = async (
+  params: EnhancedSemanticSearchParams
+): Promise<EnhancedSemanticSearchResponse> => {
+  const requestBody = {
+    query: params.query,
+    minRelevance: params.minRelevance ?? 0.3,
+    maxResults: params.maxResults ?? 10,
+    enableHybridScoring: params.enableHybridScoring ?? true,
+    scope: params.scope ?? "1",
+    documentTypeId: params.documentTypeId,
+    departmentId: params.departmentId,
+    fromDate: params.fromDate,
+    toDate: params.toDate,
+    effectiveFrom: params.effectiveFrom,
+    effectiveUntil: params.effectiveUntil,
+    folderId: params.folderId,
+    includeSubfolders: params.includeSubfolders ?? false,
+  };
+
+  const response = await api.post(
+    "/document/enhanced-semantic-search",
+    requestBody,
+    {
+      headers: { "Content-Type": "application/json" },
+    }
   );
   return response.data;
 };

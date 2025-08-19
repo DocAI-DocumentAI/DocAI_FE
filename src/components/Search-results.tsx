@@ -106,9 +106,9 @@ export function SearchResults({ results }: SearchResultsProps) {
                 >
                   {result.status}
                 </Tag>
-                {result.relevanceScore && (
+                {(result.relevanceScore || result.relevance) && (
                   <Tag color="blue" className="font-medium">
-                    {Math.round(result.relevanceScore * 100)}% match
+                    {Math.round((result.relevanceScore || result.relevance) * 100)}% match
                   </Tag>
                 )}
               </div>

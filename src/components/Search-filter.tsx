@@ -1,5 +1,5 @@
-import { 
-  Card, 
+import {
+  Card,
   Select,
   Slider,
   Switch,
@@ -11,12 +11,13 @@ import {
 } from "antd";
 import {
   FilterOutlined,
-  ClearOutlined, 
-  FolderOutlined, 
+  ClearOutlined,
+  FolderOutlined,
   SettingOutlined,
   GlobalOutlined
 } from '@ant-design/icons';
 import type { Dayjs } from 'dayjs';
+import FolderSelector from './folder/FolderSelector';
 
 const { Text } = Typography; 
 
@@ -35,6 +36,9 @@ export interface SearchFilterValue {
   signedBy: string;
   fromDate: Dayjs | null;
   toDate: Dayjs | null;
+  // New folder filtering parameters
+  folderId: string | null;
+  includeSubfolders: boolean;
 }
 
 export interface TagItem {
@@ -75,6 +79,8 @@ export function SearchFilter({ value, onChange,  documentTypes }: SearchFilterPr
       signedBy: '',
       fromDate: null,
       toDate: null,
+      folderId: null,
+      includeSubfolders: false,
     });
   };
 
@@ -206,6 +212,34 @@ export function SearchFilter({ value, onChange,  documentTypes }: SearchFilterPr
               </Select.Option>
             ))}
           </Select>
+        </div>
+
+        {/* Folder Filtering */}
+        <div>
+          <div className="flex items-center mb-2">
+            <FolderOutlined style={{ color: '#1e40af', marginRight: '6px' }} />
+            <Text type="secondary" className="text-sm font-medium">Folder Filter</Text>
+          </div>
+          <FolderSelector
+            selectedFolderId={value.folderId || undefined}
+            onFolderSelect={(folderId) => handleFilterChange('folderId', folderId || null)}
+            placeholder="Select folder to search in..."
+            allowClear={true}
+            className="[&_.ant-select-selector]:border-blue-200 [&_.ant-select-focused_.ant-select-selector]:border-blue-500"
+          />
+
+          {value.folderId && (
+            <div className="mt-2">
+              <div className="flex items-center justify-between">
+                <Text className="text-xs text-gray-600">Include Subfolders</Text>
+                <Switch
+                  checked={value.includeSubfolders}
+                  onChange={(checked) => handleFilterChange('includeSubfolders', checked)}
+                  size="small"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Tags */}
