@@ -1,9 +1,7 @@
-import { Menu, FileText, Upload, Home, LogOut } from "lucide-react";
+import {  Menu, Settings,FileText, Upload, Home } from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
-import { useLogout } from "../../services/authService";
-import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
 
 const SIDEBAR_ITEMS: {
   name: string;
@@ -28,7 +26,7 @@ const SIDEBAR_ITEMS: {
     icon: FileText,
     color: "#8B5CF6",
     href: "/editor/approval-manager",
-  },
+  }, 
   {
     name: "My Document",
     icon: FileText,
@@ -41,26 +39,16 @@ const SIDEBAR_ITEMS: {
     color: "#6366f1",
     href: "/",
   },
+  {
+    name: "Logout",
+    icon: Settings,
+    color: "#6EE7B7",
+    href: "/login",
+  },
 ];
 
 const SidebarEdited: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
-  const navigate = useNavigate();
-  const logoutMutation = useLogout();
-
-  const handleLogout = () => {
-    logoutMutation.mutate(undefined, {
-      onSuccess: () => {
-        toast.success("Logged out successfully!");
-        navigate("/login");
-      },
-      onError: (error: any) => {
-        toast.error(error.message || "Logout failed");
-        // Still navigate to login even if API fails for security
-        navigate("/login");
-      },
-    });
-  };
 
   return (
     <motion.div
@@ -104,39 +92,6 @@ const SidebarEdited: React.FC = () => {
             </Link>
           ))}
         </nav>
-
-        {/* Logout Button */}
-        <div className="mt-auto">
-          <motion.button
-            onClick={handleLogout}
-            disabled={logoutMutation.isPending}
-            className="flex items-center w-full p-4 text-sm font-medium transition-colors rounded-lg hover:bg-red-900 hover:bg-opacity-20 disabled:opacity-50 disabled:cursor-not-allowed"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            {logoutMutation.isPending ? (
-              <div className="w-5 h-5 border-2 border-red-400 rounded-full border-t-transparent animate-spin" />
-            ) : (
-              <LogOut
-                size={20}
-                style={{ color: "#EF4444", minWidth: "20px" }}
-              />
-            )}
-            <AnimatePresence>
-              {isSidebarOpen && (
-                <motion.span
-                  className="ml-4 whitespace-nowrap"
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: "auto" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  transition={{ duration: 0.2, delay: 0.3 }}
-                >
-                  {logoutMutation.isPending ? "Logging out..." : "Logout"}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </motion.button>
-        </div>
       </div>
     </motion.div>
   );

@@ -98,7 +98,7 @@ const DocumentSources: React.FC<{ sources: DocumentSource[] }> = ({ sources }) =
   );
 
   return (
-    <div className="mt-3 border-t border-gray-200 pt-3 hidden">
+    <div className="mt-3 border-t border-gray-200 pt-3">
       <div className="flex items-center gap-2 mb-2">
         <FileText size={14} className="text-gray-500" />
         <span className="text-sm font-medium text-gray-700">Best Matching Document</span>

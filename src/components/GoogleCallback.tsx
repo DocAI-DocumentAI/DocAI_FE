@@ -29,44 +29,10 @@ const GoogleCallback: React.FC<GoogleCallbackProps> = ({
     console.log("Current URL:", window.location.href);
     console.log("URL Protocol:", window.location.protocol);
     console.log("URL Host:", window.location.host);
-    console.log("URL Pathname:", window.location.pathname);
     console.log("URL Search:", window.location.search);
-    console.log("URL Hash:", window.location.hash);
-
-    // Parse URL parameters manually
-    const urlParams = new URLSearchParams(window.location.search);
-    console.log("🔍 Manual URL parameter parsing:");
-    if (urlParams.size === 0) {
-      console.warn("⚠️ NO URL PARAMETERS FOUND!");
-      console.warn(
-        "This means Google redirected to callback URL without any parameters"
-      );
-      console.warn("Possible causes:");
-      console.warn("1. Google OAuth app redirect URI is misconfigured");
-      console.warn(
-        "2. User denied authorization (should have error parameter)"
-      );
-      console.warn("3. OAuth flow was interrupted");
-      console.warn("4. Google OAuth app is not properly configured");
-    } else {
-      urlParams.forEach((value, key) => {
-        console.log(`  ${key}: ${value}`);
-      });
-    }
-
-    // Check if we're on the right path
-    if (!window.location.pathname.includes("/auth/google/callback")) {
-      console.warn("⚠️ Not on Google callback path:", window.location.pathname);
-    } else {
-      console.log("✅ On correct callback path");
-    }
 
     const handleCallback = async () => {
       console.log("Starting handleCallback");
-
-      // Run debug helper first
-      GoogleAuthService.debugCallbackUrl();
-
       dispatch(loginStart());
 
       try {
@@ -80,31 +46,7 @@ const GoogleCallback: React.FC<GoogleCallbackProps> = ({
         const code = GoogleAuthService.extractCodeFromUrl();
         console.log("Extracted code:", code);
         if (!code) {
-          // If no code found, check if we're actually on the callback page
-          if (window.location.pathname === "/auth/google/callback") {
-            // Check if there's an error parameter instead
-            const error = GoogleAuthService.extractErrorFromUrl();
-            if (error) {
-              throw new Error(`Google OAuth error: ${error}`);
-            } else {
-              throw new Error(
-                "🚨 GOOGLE OAUTH CONFIGURATION ISSUE 🚨\n\n" +
-                  "Google redirected to callback URL but WITHOUT authorization code.\n\n" +
-                  "REQUIRED FIX:\n" +
-                  "1. Go to Google Cloud Console → APIs & Services → Credentials\n" +
-                  "2. Edit your OAuth 2.0 Client ID\n" +
-                  "3. Add this URL to 'Authorized redirect URIs':\n" +
-                  `   ${window.location.protocol}//${window.location.host}/auth/google/callback\n\n` +
-                  "4. Save and wait 5-10 minutes for changes to propagate\n" +
-                  "5. Try Google login again\n\n" +
-                  "Visit /google-oauth-debug for detailed troubleshooting."
-              );
-            }
-          } else {
-            throw new Error(
-              "Not on Google callback page and no authorization code found"
-            );
-          }
+          throw new Error("No authorization code found in URL");
         }
 
         // Exchange code for user data
@@ -181,20 +123,12 @@ const GoogleCallback: React.FC<GoogleCallbackProps> = ({
         console.log("Cleaning URL parameters after error...");
         GoogleAuthService.cleanUrlParams();
 
-        // Redirect based on error type
-        if (errorMsg.includes("GOOGLE OAUTH CONFIGURATION ISSUE")) {
-          console.log("Will redirect to OAuth fix page in 3 seconds...");
-          setTimeout(() => {
-            console.log("Redirecting to OAuth fix page...");
-            navigate("/google-oauth-fix");
-          }, 3000);
-        } else {
-          console.log("Will redirect to login in 4 seconds...");
-          setTimeout(() => {
-            console.log("Redirecting to login page...");
-            navigate("/login");
-          }, 4000);
-        }
+        // Redirect to login page after showing error
+        console.log("Will redirect to login in 4 seconds...");
+        setTimeout(() => {
+          console.log("Redirecting to login page...");
+          navigate("/login");
+        }, 4000);
       }
     };
 

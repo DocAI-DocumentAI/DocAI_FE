@@ -1,4 +1,4 @@
-import { RouteObject } from "react-router-dom";
+import { Outlet, RouteObject } from "react-router-dom";
 // import Login from "../pages/Login";
 import SignUp from "../pages/auth/Signup";
 import VerifyEmail from "../pages/auth/VerifyEmail";
@@ -15,16 +15,29 @@ import PersonalizationSettings from "../pages/settings/Personalization";
 import NotificationsSettings from "../pages/settings/Notification";
 import NewChatPage from "../pages/chat/ChatNew";
 import ChatDetail from "../pages/chat/ChatDetail";
-
+import UploadDocument from "../pages/editor/UploadDocument"; 
 import DocumentPage from "../pages/document/DocumentDetail";
 import SearchPage from "../pages/search/SearchPage";
-
+import ApprovalManagerTable from "../pages/editor/ApprovalManagerTable";
+import ViewDraftTable from "../pages/editor/ViewDraftTable";
+import EditedLayout from "../components/layout/EditedLayoutLayout";
+import ManagerLayoutLayout from "../components/layout/ManagerLayoutLayout";
+import ApprovalQueue from "../pages/manager/ApprovalQueue";
+import DocumentReview from "../pages/manager/DocumentReview";
+import DocumentManagement from "../pages/manager/DocumentManagement";
+import DocumentDetail from "../pages/editor/DocumentDetail";
+import RecreateDocument from "../pages/editor/RecreateDocument";
 import BookmarksPage from "../pages/bookmarks/BookmarksPage";
+import NewVersionDocument from "../pages/editor/NewVersionDocument";
 import ChatIndexPage from "../pages/chat/ChatIndex";
+import Tags from "../pages/manager/Tags";
+import DocumentChoice from "../pages/editor/DocumentChoice";
+import DocumentReplacement from "../pages/editor/DocumentReplacement";
 import DocumentLibrary from "../pages/document/DocumentLibrary.tsx";
 import Notifications from "../pages/notification/Notifications.tsx";
 import AdminRouteTestPage from "../pages/AdminRouteTestPage";
 import DocumentVersionDetail from "../pages/document/DocumentVersionDetail.tsx";
+import EditDocument from "../pages/editor/EditDocument.tsx";
 
 const PublicRoutes: RouteObject[] = [
   // {
@@ -61,12 +74,7 @@ const PublicRoutes: RouteObject[] = [
   },
   {
     path: "/auth/google/callback",
-    element: (() => {
-      console.log("PublicRoutes: Google callback route matched!");
-      console.log("PublicRoutes: Current URL:", window.location.href);
-      console.log("PublicRoutes: URL search params:", window.location.search);
-      return <GoogleCallbackPage />;
-    })(),
+    element: <GoogleCallbackPage />,
   },
   {
     path: "/chat",
@@ -79,7 +87,7 @@ const PublicRoutes: RouteObject[] = [
   {
     path: "/chat/:id",
     element: <ChatDetail />,
-  },
+  },  
   {
     path: "/search",
     element: <SearchPage />,
@@ -104,10 +112,86 @@ const PublicRoutes: RouteObject[] = [
     path: "/admin-test",
     element: <AdminRouteTestPage />,
   },
+  {
+    path: "/manager",
+    element: <ManagerLayoutLayout />,
+    children: [
+      {
+        path: "document-management",
+        element: <DocumentManagement />,
+      },
+      {
+        path: "approvalQueue",
+        element: <ApprovalQueue />,
+      },
+      {
+        path: "tags",
+        element: <Tags />,
+      },
+      {
+        path: "document-review/:id/:versionId",
+        element: <DocumentReview />,
+      },
+    ],
+  },
+  {
+    path: "/editor",
+    element: <EditedLayout />,
+    children: [
+      {
+        path: "upload-document",
+        element: <UploadDocument />,
+      },
+      {
+        path: "upload-document-replacement",
+        element: <DocumentReplacement />,
+      },
 
+      {
+        path: "document-choice",
+        element: <DocumentChoice />,
+      },
+      {
+        path: "document-replacement",
+        element: <DocumentReplacement />,
+      },
+      {
+        path: "document/new-version/:id",
+        element: <NewVersionDocument />,
+      }, 
+      {
+        path: "my-document",
+        element: <ViewDraftTable />,
+      },
+      {
+        path: "approval-manager",
+        element: <ApprovalManagerTable />,
+      },
+      {
+        path: "view-draft",
+        element: <ViewDraftTable />,
+      },
+      {
+        path: "doc/:id/:versionId",
+        element: <DocumentDetail />,
+      },
+      {
+        path: "document/recreate/:id",
+        element: <RecreateDocument />,
+      },
+      {
+        path: "document/editDocument/:id",
+        element: <EditDocument />,
+      },
+    ],
+  },
   {
     path: "/settings",
-    element: <SettingsLayout />,
+    element: (
+      <SettingsLayout>
+        <Outlet />
+      </SettingsLayout>
+    ),
     children: [
       {
         index: true,

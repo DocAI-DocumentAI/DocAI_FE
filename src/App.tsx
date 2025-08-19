@@ -1,10 +1,37 @@
 import React, { useEffect, useState } from "react";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "./store";
-import routes from "./routes";
-import { initializeAuth } from "./store/slices/authSlice";
+import PublicRoutes from "./routes/PublicRoutes";
+import { AdminRoute } from "./routes/PrivateRoute";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { ChatProvider } from "./context/chat-context";
+import { initializeAuth } from "./store/slices/authSlice";
+
+// Import admin pages
+import AdminPage from "./pages/admin/adminPage";
+import DashboardPage from "./pages/admin/Dashboard";
+import UsersPage from "./pages/admin/UsersPage";
+import NotifyPage from "./pages/admin/NotifyPage";
+import DepartmentPage from "./pages/admin/DepartmentPage";
+import RolePage from "./pages/admin/RolePage";
+import PermissionPage from "./pages/admin/PermissionPage";
+import CreateUserPage from "./pages/admin/CreateUserPage";
+import CreateDepartmentPage from "./pages/admin/CreateDepartmentPage";
+import CreateRolePage from "./pages/admin/CreateRolePage";
+import CreatePermissionPage from "./pages/admin/CreatePermissionPage";
+import UpdateUserPage from "./pages/admin/UpdateUserPage";
+import UpdateDepartmentPage from "./pages/admin/UpdateDepartmentPage";
+import UpdateRolePage from "./pages/admin/UpdateRolePage";
+import UpdatePermissionPage from "./pages/admin/UpdatePermissionPage";
+import DocumentTypePage from "./pages/admin/DocumentTypePage";
+import CreateDocumentTypePage from "./pages/admin/CreateDocumentTypePage";
+import UpdateDocumentTypePage from "./pages/admin/UpdateDocumentTypePage";
+import ChatboxDashboardPage from "./pages/admin/ChatboxDashboardPage";
+import ConfigAIPage from "./pages/admin/ConfigAIPage";
+import CreateConfigAI from "./pages/admin/CreateConfigAI";
+import UpdateConfigAI from "./pages/admin/UpdateConfigAI";
 
 const App: React.FC = () => {
   const dispatch = useDispatch();
@@ -13,34 +40,105 @@ const App: React.FC = () => {
 
   // Initialize auth state from localStorage on app start
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        dispatch(initializeAuth());
-      } catch (error) {
-        console.error("Failed to initialize auth:", error);
-      } finally {
-        setIsInitialized(true);
-      }
-    };
-
-    initAuth();
+    console.log("App: Initializing auth...");
+    dispatch(initializeAuth());
+    setIsInitialized(true);
   }, [dispatch]);
 
-  // Show loading spinner while initializing
+  // Show loading screen while initializing
   if (!isInitialized || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-900">
-        <div className="w-8 h-8 border-2 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-2 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+          <p className="text-gray-300">Initializing application...</p>
+        </div>
       </div>
     );
   }
 
-  // Create router with our routes
-  const router = createBrowserRouter(routes);
-
   return (
     <ChatProvider>
-      <RouterProvider router={router} />
+      <BrowserRouter>
+        <ToastContainer />
+        <Routes>
+          {/* Public Routes */}
+          {PublicRoutes.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element}>
+              {route.children &&
+                route.children.map((child: any) => (
+                  <Route
+                    key={child.path}
+                    path={child.path}
+                    element={child.element}
+                  />
+                ))}
+            </Route>
+          ))}
+
+          {/* Private Routes với Admin Layout */}
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminPage />
+              </AdminRoute>
+            }
+          >
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route
+              path="chatbox-dashboard"
+              element={<ChatboxDashboardPage />}
+            />
+            <Route path="config-ai" element={<ConfigAIPage />} />
+            <Route path="config-ai/create" element={<CreateConfigAI />} />
+            <Route path="config-ai/update/:id" element={<UpdateConfigAI />} />
+            <Route path="users" element={<UsersPage />} />
+            <Route path="departments" element={<DepartmentPage />} />
+            <Route path="roles" element={<RolePage />} />
+            <Route path="permissions" element={<PermissionPage />} />
+            <Route path="document-types" element={<DocumentTypePage />} />
+            <Route path="notifications" element={<NotifyPage />} />
+            <Route path="/admin/users/create" element={<CreateUserPage />} />
+            <Route
+              path="/admin/departments/create"
+              element={<CreateDepartmentPage />}
+            />
+            <Route path="/admin/roles/create" element={<CreateRolePage />} />
+            <Route
+              path="/admin/permissions/create"
+              element={<CreatePermissionPage />}
+            />
+            <Route
+              path="/admin/document-types/create"
+              element={<CreateDocumentTypePage />}
+            />
+            <Route
+              path="/admin/users/update/:userId"
+              element={<UpdateUserPage />}
+            />
+            <Route
+              path="/admin/departments/update/:departmentId"
+              element={<UpdateDepartmentPage />}
+            />
+            <Route
+              path="/admin/roles/update/:roleId"
+              element={<UpdateRolePage />}
+            />
+            <Route
+              path="/admin/permissions/update/:permissionId"
+              element={<UpdatePermissionPage />}
+            />
+            <Route
+              path="/admin/document-types/update/:documentTypeId"
+              element={<UpdateDocumentTypePage />}
+            />
+            <Route index element={<Navigate to="dashboard" replace />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </BrowserRouter>
     </ChatProvider>
   );
 };

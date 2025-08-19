@@ -5,20 +5,7 @@ import { ArrowLeft, Save, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import Header from "../../components/common/Header";
-import {
-  useCreateAIConfiguration,
-  CreateAIConfigurationRequest,
-} from "../../services/chatboxService";
-
-interface FormErrors {
-  modelName?: string;
-  displayName?: string;
-  temperature?: string;
-  topP?: string;
-  maxTokens?: string;
-  systemPrompt?: string;
-  isFree?: string;
-}
+import { useCreateAIConfiguration, CreateAIConfigurationRequest } from "../../services/chatboxService";
 
 const CreateConfigAI: React.FC = () => {
   const navigate = useNavigate();
@@ -34,30 +21,30 @@ const CreateConfigAI: React.FC = () => {
     isFree: true,
   });
 
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errors, setErrors] = useState<Partial<CreateAIConfigurationRequest>>({});
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value, type } = e.target;
-
+    
     if (type === "checkbox") {
       const checked = (e.target as HTMLInputElement).checked;
-      setFormData((prev) => ({ ...prev, [name]: checked }));
+      setFormData(prev => ({ ...prev, [name]: checked }));
     } else if (type === "number") {
-      setFormData((prev) => ({ ...prev, [name]: parseFloat(value) || 0 }));
+      setFormData(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
     } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      setFormData(prev => ({ ...prev, [name]: value }));
     }
 
     // Clear error when user starts typing
-    if (errors[name as keyof FormErrors]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    if (errors[name as keyof CreateAIConfigurationRequest]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }));
     }
   };
 
   const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
+    const newErrors: Partial<CreateAIConfigurationRequest> = {};
 
     if (!formData.modelName.trim()) {
       newErrors.modelName = "Model name is required";
@@ -108,24 +95,20 @@ const CreateConfigAI: React.FC = () => {
     <div className="relative z-10 flex-1 overflow-auto">
       <Header title="Create AI Configuration" />
 
-      <main className="max-w-4xl px-4 py-6 mx-auto lg:px-8">
+      <main className="px-4 py-6 mx-auto max-w-4xl lg:px-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <Link
               to="/admin/config-ai"
-              className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-300 transition-colors bg-gray-700 border border-gray-600 rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Configurations
             </Link>
             <div>
-              <h1 className="text-2xl font-semibold text-gray-100">
-                Create New AI Configuration
-              </h1>
-              <p className="text-gray-400">
-                Configure a new AI model for the chatbox
-              </p>
+              <h1 className="text-2xl font-semibold text-gray-100">Create New AI Configuration</h1>
+              <p className="text-gray-400">Configure a new AI model for the chatbox</p>
             </div>
           </div>
         </div>
@@ -141,10 +124,7 @@ const CreateConfigAI: React.FC = () => {
             {/* Model Information */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
-                <label
-                  htmlFor="modelName"
-                  className="block mb-2 text-sm font-medium text-gray-300"
-                >
+                <label htmlFor="modelName" className="block text-sm font-medium text-gray-300 mb-2">
                   Model Name *
                 </label>
                 <input
@@ -159,7 +139,7 @@ const CreateConfigAI: React.FC = () => {
                   }`}
                 />
                 {errors.modelName && (
-                  <p className="flex items-center gap-1 mt-1 text-sm text-red-400">
+                  <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
                     <AlertCircle className="w-4 h-4" />
                     {errors.modelName}
                   </p>
@@ -167,10 +147,7 @@ const CreateConfigAI: React.FC = () => {
               </div>
 
               <div>
-                <label
-                  htmlFor="displayName"
-                  className="block mb-2 text-sm font-medium text-gray-300"
-                >
+                <label htmlFor="displayName" className="block text-sm font-medium text-gray-300 mb-2">
                   Display Name *
                 </label>
                 <input
@@ -185,7 +162,7 @@ const CreateConfigAI: React.FC = () => {
                   }`}
                 />
                 {errors.displayName && (
-                  <p className="flex items-center gap-1 mt-1 text-sm text-red-400">
+                  <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
                     <AlertCircle className="w-4 h-4" />
                     {errors.displayName}
                   </p>
@@ -196,10 +173,7 @@ const CreateConfigAI: React.FC = () => {
             {/* Parameters */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <div>
-                <label
-                  htmlFor="temperature"
-                  className="block mb-2 text-sm font-medium text-gray-300"
-                >
+                <label htmlFor="temperature" className="block text-sm font-medium text-gray-300 mb-2">
                   Temperature *
                 </label>
                 <input
@@ -216,7 +190,7 @@ const CreateConfigAI: React.FC = () => {
                   }`}
                 />
                 {errors.temperature && (
-                  <p className="flex items-center gap-1 mt-1 text-sm text-red-400">
+                  <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
                     <AlertCircle className="w-4 h-4" />
                     {errors.temperature}
                   </p>
@@ -224,10 +198,7 @@ const CreateConfigAI: React.FC = () => {
               </div>
 
               <div>
-                <label
-                  htmlFor="topP"
-                  className="block mb-2 text-sm font-medium text-gray-300"
-                >
+                <label htmlFor="topP" className="block text-sm font-medium text-gray-300 mb-2">
                   Top P *
                 </label>
                 <input
@@ -244,7 +215,7 @@ const CreateConfigAI: React.FC = () => {
                   }`}
                 />
                 {errors.topP && (
-                  <p className="flex items-center gap-1 mt-1 text-sm text-red-400">
+                  <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
                     <AlertCircle className="w-4 h-4" />
                     {errors.topP}
                   </p>
@@ -252,10 +223,7 @@ const CreateConfigAI: React.FC = () => {
               </div>
 
               <div>
-                <label
-                  htmlFor="maxTokens"
-                  className="block mb-2 text-sm font-medium text-gray-300"
-                >
+                <label htmlFor="maxTokens" className="block text-sm font-medium text-gray-300 mb-2">
                   Max Tokens *
                 </label>
                 <input
@@ -271,7 +239,7 @@ const CreateConfigAI: React.FC = () => {
                   }`}
                 />
                 {errors.maxTokens && (
-                  <p className="flex items-center gap-1 mt-1 text-sm text-red-400">
+                  <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
                     <AlertCircle className="w-4 h-4" />
                     {errors.maxTokens}
                   </p>
@@ -289,20 +257,14 @@ const CreateConfigAI: React.FC = () => {
                 onChange={handleInputChange}
                 className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
               />
-              <label
-                htmlFor="isFree"
-                className="ml-2 text-sm font-medium text-gray-300"
-              >
+              <label htmlFor="isFree" className="ml-2 text-sm font-medium text-gray-300">
                 This is a free model
               </label>
             </div>
 
             {/* System Prompt */}
             <div>
-              <label
-                htmlFor="systemPrompt"
-                className="block mb-2 text-sm font-medium text-gray-300"
-              >
+              <label htmlFor="systemPrompt" className="block text-sm font-medium text-gray-300 mb-2">
                 System Prompt *
               </label>
               <textarea
@@ -317,7 +279,7 @@ const CreateConfigAI: React.FC = () => {
                 }`}
               />
               {errors.systemPrompt && (
-                <p className="flex items-center gap-1 mt-1 text-sm text-red-400">
+                <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
                   <AlertCircle className="w-4 h-4" />
                   {errors.systemPrompt}
                 </p>
@@ -328,14 +290,14 @@ const CreateConfigAI: React.FC = () => {
             <div className="flex justify-end gap-4 pt-6 border-t border-gray-700">
               <Link
                 to="/admin/config-ai"
-                className="px-4 py-2 text-sm font-medium text-gray-300 transition-colors bg-gray-700 border border-gray-600 rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
                 Cancel
               </Link>
               <button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {createMutation.isPending ? (
                   <>

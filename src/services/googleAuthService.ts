@@ -55,27 +55,8 @@ export class GoogleAuthService {
    */
   static extractCodeFromUrl(url?: string): string | null {
     const currentUrl = url || window.location.href;
-    console.log("🔍 Extracting code from URL:", currentUrl);
-
-    try {
-      const urlObj = new URL(currentUrl);
-      console.log("🔍 URL pathname:", urlObj.pathname);
-      console.log("🔍 URL search params:", urlObj.search);
-
-      const urlParams = new URLSearchParams(urlObj.search);
-      const code = urlParams.get("code");
-
-      console.log("🔍 All URL parameters:");
-      urlParams.forEach((value, key) => {
-        console.log(`  ${key}: ${value}`);
-      });
-
-      console.log("🔍 Extracted code:", code);
-      return code;
-    } catch (error) {
-      console.error("❌ Error parsing URL:", error);
-      return null;
-    }
+    const urlParams = new URLSearchParams(new URL(currentUrl).search);
+    return urlParams.get("code");
   }
 
   /**
@@ -103,49 +84,6 @@ export class GoogleAuthService {
 
     // Update URL without reloading the page
     window.history.replaceState({}, document.title, url.toString());
-  }
-
-  /**
-   * Debug helper to check current URL and expected callback URL
-   */
-  static debugCallbackUrl(): void {
-    const currentUrl = window.location.href;
-    const expectedCallbackPath = "/auth/google/callback";
-    const currentDomain = `${window.location.protocol}//${window.location.host}`;
-    const expectedCallbackUrl = `${currentDomain}${expectedCallbackPath}`;
-
-    console.log("🔧 Google OAuth Debug Info:");
-    console.log("  Current URL:", currentUrl);
-    console.log("  Current Domain:", currentDomain);
-    console.log("  Expected Callback URL:", expectedCallbackUrl);
-    console.log("  Current Path:", window.location.pathname);
-    console.log(
-      "  Is Callback Path?",
-      window.location.pathname === expectedCallbackPath
-    );
-
-    // Check if URL has any OAuth-related parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const hasCode = urlParams.has("code");
-    const hasError = urlParams.has("error");
-    const hasState = urlParams.has("state");
-
-    console.log("  Has 'code' parameter?", hasCode);
-    console.log("  Has 'error' parameter?", hasError);
-    console.log("  Has 'state' parameter?", hasState);
-
-    if (hasError) {
-      console.log("  Error:", urlParams.get("error"));
-      console.log("  Error Description:", urlParams.get("error_description"));
-    }
-
-    if (!hasCode && !hasError) {
-      console.warn("⚠️ No OAuth parameters found in URL. Possible issues:");
-      console.warn("  1. Redirect URI mismatch in Google OAuth app config");
-      console.warn("  2. User denied authorization");
-      console.warn("  3. OAuth flow was interrupted");
-      console.warn("  Expected callback URL should be:", expectedCallbackUrl);
-    }
   }
 }
 

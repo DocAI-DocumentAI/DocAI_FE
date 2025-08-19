@@ -1,13 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
 import { AuthContainer } from "../../components/auth-container";
 import LayoutAuth from "../../components/layout/LayoutAuth";
 import { useForm } from "react-hook-form";
 import { authApi } from "../../lib/api/auth";
 import GoogleLoginButton from "../../components/GoogleLoginButton";
 import { toast } from "react-hot-toast";
-import { loginSuccess } from "../../store/slices/authSlice";
 
 export default function Login() {
   type FormValues = { email: string; password: string };
@@ -20,7 +18,6 @@ export default function Login() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const dispatch = useDispatch();
 
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
@@ -32,10 +29,6 @@ export default function Login() {
       });
       localStorage.setItem("token", data.docaiToken);
       localStorage.setItem("user", JSON.stringify(data));
-
-      // Update Redux state
-      dispatch(loginSuccess(data));
-
       switch (data.role?.roleName) {
         case "Editor":
           navigate("/editor/view-draft");
