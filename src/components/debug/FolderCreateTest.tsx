@@ -25,7 +25,7 @@ const FolderCreateTest: React.FC = () => {
 
       // Test with direct fetch first
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/document/folders', {
+      const response = await fetch('https://production.docai.asia/api/document/folders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

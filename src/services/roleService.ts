@@ -53,7 +53,7 @@ const fetchRoles = async (filters: RoleFilters = {}): Promise<RoleResponse> => {
   if (filters.description) params.append("description", filters.description);
 
   const response = await fetch(
-    `http://localhost:5000/api/auth/roles?${params}`,
+    `https://production.docai.asia/api/auth/roles?${params}`,
     {
       method: "GET",
       headers: {
@@ -77,7 +77,7 @@ const createRole = async (data: CreateRoleData) => {
   }
 
   const response = await fetch(
-    `http://localhost:5000/api/auth/create/role`,
+    `https://production.docai.asia/api/auth/create/role`,
     {
       method: "POST",
       headers: {
@@ -130,7 +130,7 @@ const fetchRoleById = async (roleId: string): Promise<Role> => {
   }
 
   const response = await fetch(
-    `http://localhost:5000/api/auth/role/${roleId}`,
+    `https://production.docai.asia/api/auth/role/${roleId}`,
     {
       method: "GET",
       headers: {
@@ -164,7 +164,7 @@ const deleteRole = async (roleId: string) => {
   }
 
   const response = await fetch(
-    `http://localhost:5000/api/auth/delete/role?roleId=${roleId}`,
+    `https://production.docai.asia/api/auth/delete/role?roleId=${roleId}`,
     {
       method: "DELETE",
       headers: {
@@ -205,7 +205,7 @@ const updateRole = async (roleId: string, data: UpdateRoleData) => {
   }
 
   const response = await fetch(
-    `http://localhost:5000/api/auth/update/role?roleId=${roleId}`,
+    `https://production.docai.asia/api/auth/update/role?roleId=${roleId}`,
     {
       method: "PATCH",
       headers: {

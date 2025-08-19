@@ -33,7 +33,7 @@ const fetchUsersByDepartment = async (
   });
 
   const response = await fetch(
-    `http://localhost:5000/api/auth/users?${params}`,
+    `https://production.docai.asia/api/auth/users?${params}`,
     {
       method: "GET",
       headers: {
@@ -62,7 +62,7 @@ const fetchDepartmentUserDistribution = async (): Promise<
 
   // First, get all departments
   const departmentsResponse = await fetch(
-    `http://localhost:5000/api/auth/departments?page=1&size=1000&isAsc=true`,
+    `https://production.docai.asia/api/auth/departments?page=1&size=1000&isAsc=true`,
     {
       method: "GET",
       headers: {

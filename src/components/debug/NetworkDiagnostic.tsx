@@ -37,7 +37,7 @@ const NetworkDiagnostic: React.FC = () => {
     // Test 1: Basic API connectivity
     updateResult('api-connectivity', 'loading', 'Testing API connectivity...');
     try {
-      const response = await fetch('http://localhost:5000/api/health', { 
+      const response = await fetch('https://production.docai.asia/api/health', { 
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       });

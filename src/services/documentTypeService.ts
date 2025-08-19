@@ -51,7 +51,7 @@ const fetchDocumentTypes = async (
   if (filters.description) params.append("description", filters.description);
 
   const response = await fetch(
-    `http://localhost:5000/api/document/document-types?${params}`,
+    `https://production.docai.asia/api/document/document-types?${params}`,
     {
       method: "GET",
       headers: {
@@ -107,7 +107,7 @@ const createDocumentType = async (data: CreateDocumentTypeData) => {
   }
 
   const response = await fetch(
-    `http://localhost:5000/api/document/document-types`,
+    `https://production.docai.asia/api/document/document-types`,
     {
       method: "POST",
       headers: {
@@ -136,7 +136,7 @@ const updateDocumentType = async (
   }
 
   const response = await fetch(
-    `http://localhost:5000/api/document/document-types/${documentTypeId}`,
+    `https://production.docai.asia/api/document/document-types/${documentTypeId}`,
     {
       method: "PUT",
       headers: {
@@ -166,7 +166,7 @@ const fetchDocumentTypeById = async (
   }
 
   const response = await fetch(
-    `http://localhost:5000/api/document/document-types/${documentTypeId}`,
+    `https://production.docai.asia/api/document/document-types/${documentTypeId}`,
     {
       method: "GET",
       headers: {
@@ -224,7 +224,7 @@ const deleteDocumentType = async (documentTypeId: string) => {
   }
 
   const response = await fetch(
-    `http://localhost:5000/api/document/document-types/${documentTypeId}`,
+    `https://production.docai.asia/api/document/document-types/${documentTypeId}`,
     {
       method: "DELETE",
       headers: {

@@ -55,7 +55,7 @@ const fetchDepartments = async (
   if (filters.description) params.append("description", filters.description);
 
   const response = await fetch(
-    `http://localhost:5000/api/auth/departments?${params}`,
+    `https://production.docai.asia/api/auth/departments?${params}`,
     {
       method: "GET",
       headers: {
@@ -79,7 +79,7 @@ const createDepartment = async (data: CreateDepartmentData) => {
   }
 
   const response = await fetch(
-    `http://localhost:5000/api/auth/create/department`,
+    `https://production.docai.asia/api/auth/create/department`,
     {
       method: "POST",
       headers: {
@@ -134,7 +134,7 @@ const fetchDepartmentById = async (
   }
 
   const response = await fetch(
-    `http://localhost:5000/api/auth/department/${departmentId}`,
+    `https://production.docai.asia/api/auth/department/${departmentId}`,
     {
       method: "GET",
       headers: {
@@ -168,7 +168,7 @@ const deleteDepartment = async (departmentId: string) => {
   }
 
   const response = await fetch(
-    `http://localhost:5000/api/auth/delete/department?departmentId=${departmentId}`,
+    `https://production.docai.asia/api/auth/delete/department?departmentId=${departmentId}`,
     {
       method: "DELETE",
       headers: {
@@ -212,7 +212,7 @@ const updateDepartment = async (
   }
 
   const response = await fetch(
-    `http://localhost:5000/api/auth/update/department?departmentId=${departmentId}`,
+    `https://production.docai.asia/api/auth/update/department?departmentId=${departmentId}`,
     {
       method: "PATCH",
       headers: {

@@ -416,7 +416,7 @@ export const getSearchUsers = async (): Promise<SearchUser[]> => {
     const token = userData.docaiToken;
 
     const response = await fetch(
-      `http://localhost:5000/api/auth/users?page=1&size=100&isAsc=true`,
+      `https://production.docai.asia/api/auth/users?page=1&size=100&isAsc=true`,
       {
         method: "GET",
         headers: {
