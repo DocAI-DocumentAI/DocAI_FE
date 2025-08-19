@@ -406,28 +406,25 @@ export const semanticSearchDocuments = async (params: SemanticSearchParams) => {
 export const enhancedSemanticSearchDocuments = async (
   params: EnhancedSemanticSearchParams
 ): Promise<EnhancedSemanticSearchResponse> => {
-  const requestBody = {
-    query: params.query,
-    minRelevance: params.minRelevance ?? 0.3,
-    maxResults: params.maxResults ?? 10,
-    enableHybridScoring: params.enableHybridScoring ?? true,
-    scope: params.scope ?? "1",
-    documentTypeId: params.documentTypeId,
-    departmentId: params.departmentId,
-    fromDate: params.fromDate,
-    toDate: params.toDate,
-    effectiveFrom: params.effectiveFrom,
-    effectiveUntil: params.effectiveUntil,
-    folderId: params.folderId,
-    includeSubfolders: params.includeSubfolders ?? false,
-  };
+  const searchParams = new URLSearchParams();
 
-  const response = await api.post(
-    "/document/enhanced-semantic-search",
-    requestBody,
-    {
-      headers: { "Content-Type": "application/json" },
-    }
+  // Add query parameters
+  searchParams.append("query", params.query);
+  if (params.minRelevance !== undefined) searchParams.append("minRelevance", params.minRelevance.toString());
+  if (params.maxResults !== undefined) searchParams.append("maxResults", params.maxResults.toString());
+  if (params.enableHybridScoring !== undefined) searchParams.append("enableHybridScoring", params.enableHybridScoring.toString());
+  if (params.scope !== undefined) searchParams.append("scope", params.scope);
+  if (params.documentTypeId) searchParams.append("documentTypeId", params.documentTypeId);
+  if (params.departmentId) searchParams.append("departmentId", params.departmentId);
+  if (params.fromDate) searchParams.append("fromDate", params.fromDate);
+  if (params.toDate) searchParams.append("toDate", params.toDate);
+  if (params.effectiveFrom) searchParams.append("effectiveFrom", params.effectiveFrom);
+  if (params.effectiveUntil) searchParams.append("effectiveUntil", params.effectiveUntil);
+  if (params.folderId) searchParams.append("folderId", params.folderId);
+  if (params.includeSubfolders !== undefined) searchParams.append("includeSubfolders", params.includeSubfolders.toString());
+
+  const response = await api.get(
+    `/document/enhanced-semantic-search?${searchParams.toString()}`
   );
   return response.data;
 };

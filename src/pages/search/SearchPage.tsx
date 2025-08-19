@@ -14,12 +14,13 @@ import type {
   DocumentTypeItem,
 } from "../../components/Search-filter";
 
-import { Card, Spin, Typography, Row, Col } from "antd";
+import { Card, Spin, Typography, Row, Col, Alert } from "antd";
 import {
   RobotOutlined,
   SearchOutlined,
   FilterOutlined,
   FileTextOutlined,
+  BulbOutlined,
 } from "@ant-design/icons";
 // Import test utilities for development/testing
 import {
@@ -32,6 +33,8 @@ const { Title, Paragraph } = Typography;
 export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [aiAnswer, setAiAnswer] = useState<string>("");
+  const [hasAnswer, setHasAnswer] = useState<boolean>(false);
   const [isSearched, setIsSearched] = useState(false);
   const [initialQuery, setInitialQuery] = useState("");
   const [filter, setFilter] = useState<SearchFilterValue>({
@@ -137,6 +140,10 @@ export default function SearchPage() {
       setIsSearched(true);
       setLoading(true);
 
+      // Clear previous AI answer
+      setAiAnswer("");
+      setHasAnswer(false);
+
       // Update URL parameters
       const newSearchParams = new URLSearchParams();
       newSearchParams.set("q", query);
@@ -173,12 +180,18 @@ export default function SearchPage() {
         // Update to handle the new response structure
         if (res.data && res.data.success) {
           setSearchResults(res.data.relevantDocuments || []);
+          setAiAnswer(res.data.answer || "");
+          setHasAnswer(res.data.hasAnswer || false);
         } else {
           setSearchResults([]);
+          setAiAnswer("");
+          setHasAnswer(false);
         }
       } catch (e) {
         console.error("Search error:", e);
         setSearchResults([]);
+        setAiAnswer("");
+        setHasAnswer(false);
       } finally {
         setLoading(false);
       }
@@ -272,6 +285,30 @@ export default function SearchPage() {
                   </div>
                 )}
 
+                {/* AI Answer Section */}
+                {isSearched && !loading && hasAnswer && aiAnswer && (
+                  <Card className="border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 mb-6">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0">
+                        <BulbOutlined className="text-2xl text-blue-600 mt-1" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center mb-3">
+                          <Title level={5} className="mb-0 text-blue-800">
+                            AI Generated Answer
+                          </Title>
+                          <span className="px-2 py-1 ml-2 text-xs text-blue-700 bg-blue-200 rounded-full">
+                            AI
+                          </span>
+                        </div>
+                        <div className="text-gray-700 leading-relaxed">
+                          {aiAnswer}
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                )}
+
                 {/* Results Section */}
                 {isSearched && !loading && (
                   <div>
@@ -279,7 +316,7 @@ export default function SearchPage() {
                       <div className="flex items-center mb-6">
                         <FileTextOutlined className="mr-2 text-blue-600" />
                         <span className="text-lg font-medium text-gray-800">
-                          Search Results
+                          {hasAnswer && aiAnswer ? "Source Documents" : "Search Results"}
                         </span>
                         <span className="px-2 py-1 ml-2 text-sm text-blue-800 bg-blue-100 rounded-full">
                           {searchResults.length} found
