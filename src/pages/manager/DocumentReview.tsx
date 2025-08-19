@@ -14,6 +14,7 @@ import {
 } from "@ant-design/icons"
 import { api } from "../../lib/api/api";
 import toast from 'react-hot-toast';
+import { FolderSelectorInput } from "../../components/folder";
 
 const { Title, Text, Paragraph } = Typography
 const { Content } = Layout
@@ -29,6 +30,8 @@ export default function DocumentReview() {
     const [previewVisible, setPreviewVisible] = useState(false);
     const [previewUrl, setPreviewUrl] = useState<string>("");
     const [previewLoading, setPreviewLoading] = useState(false);
+    // Optional target folder after approval
+    const [targetFolderId, setTargetFolderId] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         const fetchDocument = async () => {
@@ -56,17 +59,19 @@ export default function DocumentReview() {
             toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
             return;
         }
-        if (rejectionComments.length < 10) {
-            toast.error("Vui lòng nhập nhận xét tối thiểu 10 ký tự!");
+        if (!isApproved && rejectionComments.trim().length < 10) {
+            toast.error("Vui lòng nhập nhận xét tối thiểu 10 ký tự khi từ chối!");
             return;
         }
-        const user = JSON.parse(userStr);
+        /* const user = JSON.parse(userStr); */
         setSubmitting(true);
         try {
-            await api.post(`/document/review/${document.versionId}?userId=${user.userId}`, {
-                isApproved,
-                comments: rejectionComments
-            });
+            // Folder-approval review endpoint (consolidated): POST /{versionId}/review
+            const url = `/document/review/${document.versionId}`;
+            const body = isApproved
+              ? { isApproved: true, ...(rejectionComments.trim() ? { comments: rejectionComments } : {}), ...(targetFolderId ? { targetFolderId } : {}) }
+              : { isApproved: false, comments: rejectionComments, returnToDrafts: true };
+            await api.post(url, body);
             toast.success(isApproved ? "Duyệt tài liệu thành công!" : "Từ chối tài liệu thành công!");
             navigate(-1);
         } catch (error: any) {
@@ -276,8 +281,18 @@ export default function DocumentReview() {
                                     Review Actions
                                 </Title>
                                 <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
-                                    Please provide your review comments (required for both approve and reject)
+                                    Please provide your review comments (required for rejection; optional for approval)
                                 </Text>
+                                <div style={{ marginBottom: 16 }}>
+                                    <Text strong>Target Folder (optional)</Text>
+                                    <FolderSelectorInput
+                                        selectedFolderId={targetFolderId}
+                                        onFolderSelect={setTargetFolderId}
+                                        placeholder="Select target folder after approval (optional)"
+                                        allowClear={true}
+                                        filterPermission="write"
+                                    />
+                                </div>
                                 <div style={{ marginBottom: 16 }}>
                                     <Text strong>Comments *</Text>
                                     <TextArea
@@ -288,11 +303,11 @@ export default function DocumentReview() {
                                         style={{ marginTop: 8 }}
                                     />
                                     <Text type="secondary" style={{ fontSize: "12px" }}>
-                                        {rejectionComments.length}/10 characters minimum
+                                        {rejectionComments.length}/10 characters minimum for rejection
                                     </Text>
                                 </div>
                                 <Space direction="vertical" style={{ width: "100%" }}>
-                                    <Button type="primary" icon={<CheckOutlined />} block size="large" loading={submitting} onClick={() => handleReview(true)} disabled={rejectionComments.length < 10}>
+                                    <Button type="primary" icon={<CheckOutlined />} block size="large" loading={submitting} onClick={() => handleReview(true)}>
                                         Approve Document
                                     </Button>
                                     <Button danger icon={<CloseOutlined />} block size="large" loading={submitting} onClick={() => handleReview(false)} disabled={rejectionComments.length < 10}>

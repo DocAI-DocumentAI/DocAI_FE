@@ -105,6 +105,16 @@ const authSlice = createSlice({
     // Initialize auth state from localStorage
     initializeAuth(state) {
       console.log("Initializing auth from localStorage...");
+      console.log("Current URL:", window.location.href);
+      console.log("Current pathname:", window.location.pathname);
+
+      // Skip auth initialization for Google OAuth callback to preserve URL parameters
+      if (window.location.pathname === "/auth/google/callback") {
+        console.log("Skipping auth initialization for Google OAuth callback");
+        state.loading = false;
+        return;
+      }
+
       const token = localStorage.getItem("token");
       const userStr = localStorage.getItem("user");
 

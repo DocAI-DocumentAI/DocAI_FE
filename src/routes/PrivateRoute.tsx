@@ -1,6 +1,7 @@
 import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
 import { RootState } from "../store";
+import { isGoogleOAuthProcessing } from "../hooks/useGoogleCallbackProtection";
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -9,6 +10,15 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({
   const isAuthenticated = useSelector(
     (state: RootState) => state.auth.isAuthenticated
   );
+
+  // Check if Google OAuth is currently being processed
+  const isOAuthProcessing = isGoogleOAuthProcessing();
+
+  // If OAuth is processing, don't redirect to prevent interrupting the flow
+  if (isOAuthProcessing) {
+    console.log("🛡️ PrivateRoute: OAuth processing detected, not redirecting");
+    return <>{children}</>;
+  }
 
   // Nếu đã đăng nhập, render children (route private)
   // Nếu chưa, chuyển hướng về /login
@@ -21,6 +31,15 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, user } = useSelector(
     (state: RootState) => state.auth
   );
+
+  // Check if Google OAuth is currently being processed
+  const isOAuthProcessing = isGoogleOAuthProcessing();
+
+  // If OAuth is processing, don't redirect to prevent interrupting the flow
+  if (isOAuthProcessing) {
+    console.log("🛡️ AdminRoute: OAuth processing detected, not redirecting");
+    return <>{children}</>;
+  }
 
   // Kiểm tra authentication trước
   if (!isAuthenticated) {

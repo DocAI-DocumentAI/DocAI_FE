@@ -51,6 +51,9 @@ export interface OfficialDocumentsRequest {
   isPublic?: boolean;         // true for public, false for private
   departmentOnly?: boolean;   // true to show only user's department documents, false for all departments
 
+  // Folder Organization Filters
+  folderId?: string;          // Folder UUID for filtering documents by folder
+
   // File Property Filters
   minFileSize?: number;       // Bytes, min 0
   maxFileSize?: number;       // Bytes, max 1GB
@@ -87,6 +90,10 @@ export interface DocumentDraftResponse {
   submittedBy?: string;
   submittedByName?: string;
   totalDownloads?: number;
+  // Folder information
+  folderId?: string;
+  folderName?: string;
+  folderPath?: string;
   // Enhanced fields
   createdBy?: UserInfo;
   documentType?: DocumentTypeResponse;

@@ -1,4 +1,4 @@
-import { Outlet, RouteObject } from "react-router-dom";
+import { RouteObject } from "react-router-dom";
 // import Login from "../pages/Login";
 import SignUp from "../pages/auth/Signup";
 import VerifyEmail from "../pages/auth/VerifyEmail";
@@ -33,6 +33,9 @@ import ChatIndexPage from "../pages/chat/ChatIndex";
 import Tags from "../pages/manager/Tags";
 import DocumentChoice from "../pages/editor/DocumentChoice";
 import DocumentReplacement from "../pages/editor/DocumentReplacement";
+import ManagerFolderManagement from "../pages/manager/FolderManagement";
+import GoogleDriveFolder from "../pages/editor/GoogleDriveFolder";
+import GoogleDriveFolderManagement from "../pages/manager/GoogleDriveFolderManagement";
 import DocumentLibrary from "../pages/document/DocumentLibrary.tsx";
 import Notifications from "../pages/notification/Notifications.tsx";
 import AdminRouteTestPage from "../pages/AdminRouteTestPage";
@@ -129,6 +132,14 @@ const PublicRoutes: RouteObject[] = [
         element: <Tags />,
       },
       {
+        path: "folder-management",
+        element: <ManagerFolderManagement />,
+      },
+      {
+        path: "google-drive-folders",
+        element: <GoogleDriveFolderManagement />,
+      },
+      {
         path: "document-review/:id/:versionId",
         element: <DocumentReview />,
       },
@@ -180,6 +191,10 @@ const PublicRoutes: RouteObject[] = [
         element: <RecreateDocument />,
       },
       {
+        path: "google-drive-folders",
+        element: <GoogleDriveFolder />,
+      },
+      {
         path: "document/editDocument/:id",
         element: <EditDocument />,
       },
@@ -187,11 +202,7 @@ const PublicRoutes: RouteObject[] = [
   },
   {
     path: "/settings",
-    element: (
-      <SettingsLayout>
-        <Outlet />
-      </SettingsLayout>
-    ),
+    element: <SettingsLayout />,
     children: [
       {
         index: true,

@@ -225,6 +225,13 @@ const DocumentChoice: React.FC = () => {
               </div>
 
               <div style={{ marginBottom: 16 }}>
+                <Text strong style={{ color: "#595959" }}>Version Name</Text>
+                <Paragraph style={{ margin: "4px 0", color: "#595959" }}>
+                  {analysisData.versionName || "Not specified"}
+                </Paragraph>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
                 <Text strong style={{ color: "#595959" }}>File Name</Text>
                 <Paragraph style={{ margin: "4px 0", color: "#595959" }}>
                   {analysisData.file?.name || "Unknown"}

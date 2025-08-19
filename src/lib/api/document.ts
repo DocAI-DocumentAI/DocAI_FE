@@ -1,5 +1,14 @@
 import { api } from "./api";
 
+
+// Move a document (by document version) to another folder
+export const moveDocument = async (documentVersionId: string, targetFolderId: string) => {
+  const params = new URLSearchParams();
+  params.append('targetFolderId', targetFolderId);
+  const response = await api.put(`/document/folder-documents/${documentVersionId}/move?${params.toString()}`);
+  return response.data;
+};
+
 export const uploadDraftDocument = async (data: any) => {
   const formData = new FormData();
   formData.append("Title", data.title || "");
@@ -16,6 +25,7 @@ export const uploadDraftDocument = async (data: any) => {
   formData.append("ReplacementDocumentId", data.replacementDocumentId || "");
   formData.append("DocumentTypeId", data.documentTypeId || "");
   formData.append("IsPublic", data.isPublic ? "true" : "false"); // Add missing IsPublic field
+  formData.append("FolderId", data.folderId || ""); // Add folder ID field
   if (data.file) {
     formData.append("File", data.file);
   }
@@ -37,11 +47,33 @@ export const analyzeDocument = async (file: File) => {
 };
 export const recreateDocument = async (
   id: string,
-  data: any, 
+  data: any,
 ) => {
+  const formData = new FormData();
+
+  // Add all the standard fields
+  if (data.title) formData.append("Title", data.title);
+  if (data.versionName) formData.append("VersionName", data.versionName);
+  if (data.summary) formData.append("Summary", data.summary);
+  if (data.signedBy) formData.append("SignedBy", data.signedBy);
+  if (data.description) formData.append("Description", data.description);
+  if (data.effectiveFrom) formData.append("EffectiveFrom", data.effectiveFrom);
+  if (data.effectiveUntil) formData.append("EffectiveUntil", data.effectiveUntil);
+  if (data.tags) {
+    formData.append("Tags", Array.isArray(data.tags) ? data.tags.join(",") : data.tags);
+  }
+  if (data.replacementDocumentId) formData.append("ReplacementDocumentId", data.replacementDocumentId);
+  if (data.documentTypeId) formData.append("DocumentTypeId", data.documentTypeId);
+  formData.append("IsPublic", data.isPublic ? "true" : "false");
+  formData.append("FolderId", data.folderId || ""); // Add folder ID field
+
+  if (data.file) {
+    formData.append("File", data.file);
+  }
+
   const response = await api.put(
     `/document/drafts/${id}`,
-    data,
+    formData,
     {
       headers: { "Content-Type": "multipart/form-data" },
     }
@@ -51,11 +83,15 @@ export const recreateDocument = async (
 export const getDocuments = async (
   pageNumber = 1,
   pageSize = 10,
-  title?: string
+  title?: string,
+  folderId?: string
 ) => {
   let url = `/document/documents?pageNumber=${pageNumber}&pageSize=${pageSize}`;
   if (title) {
     url += `&Title=${encodeURIComponent(title)}`;
+  }
+  if (folderId) {
+    url += `&folderId=${encodeURIComponent(folderId)}`;
   }
   const response = await api.get(url);
   return response.data.data;
@@ -131,11 +167,15 @@ export const getMyDocuments = async (
   userId: string,
   pageNumber = 1,
   pageSize = 10,
-  title?: string
+  title?: string,
+  folderId?: string
 ) => {
   let url = `/document/my-documents?userId=${userId}&pageNumber=${pageNumber}&pageSize=${pageSize}`;
   if (title) {
     url += `&Title=${encodeURIComponent(title)}`;
+  }
+  if (folderId) {
+    url += `&folderId=${encodeURIComponent(folderId)}`;
   }
   const response = await api.get(url);
   return response.data.data;
@@ -161,45 +201,34 @@ export const getMyDocumentsWithStats = async (
   return response.data;
 };
 
-// Thêm interface cho filters
+// Interface for approval queue filters
 interface ApprovalQueueFilters {
-  title?: string;
-  documentTypeId?: string;
-  isPublic?: boolean;
+  status?: string;
   fromDate?: string;
   toDate?: string;
-  status?: string;
+  documentTypeId?: string;
+  isPublic?: boolean;
+  title?: string;
 }
 
-// Cập nhật hàm getApprovalQueue
+// Updated getApprovalQueue to match new API
 export const getApprovalQueue = async (
-  pageNumber = 1,
+  page = 1,
   pageSize = 10,
   filters: ApprovalQueueFilters = {}
 ) => {
-  let url = `/document/approval-queue?pageNumber=${pageNumber}&pageSize=${pageSize}`;
-  
-  // Thêm filters vào URL
-  if (filters.title) {
-    url += `&Title=${encodeURIComponent(filters.title)}`;
-  }
-  if (filters.documentTypeId) {
-    url += `&DocumentTypeId=${encodeURIComponent(filters.documentTypeId)}`;
-  }
-  if (filters.isPublic !== undefined) {
-    url += `&IsPublic=${filters.isPublic}`;
-  }
-  if (filters.fromDate) {
-    url += `&FromDate=${encodeURIComponent(filters.fromDate)}`;
-  }
-  if (filters.toDate) {
-    url += `&ToDate=${encodeURIComponent(filters.toDate)}`;
-  }
-  if (filters.status) {
-    url += `&Status=${encodeURIComponent(filters.status)}`;
-  }
-  
-  const response = await api.get(url);
+  const params = new URLSearchParams();
+  params.append('pageNumber', String(page));
+  params.append('pageSize', String(pageSize));
+
+  if (filters.status) params.append('Status', filters.status);
+  if (filters.fromDate) params.append('FromDate', filters.fromDate);
+  if (filters.toDate) params.append('ToDate', filters.toDate);
+  if (filters.documentTypeId) params.append('DocumentTypeId', filters.documentTypeId);
+  if (filters.isPublic !== undefined) params.append('IsPublic', String(filters.isPublic));
+  if (filters.title) params.append('Title', filters.title);
+
+  const response = await api.get(`/document/approval-queue?${params.toString()}`);
   return response.data.data;
 };
 
@@ -222,6 +251,95 @@ export interface SemanticSearchParams {
   signedBy?: string;
   fromDate?: string;
   toDate?: string;
+  folderId?: string; // Folder filtering support
+}
+
+// New interface for enhanced semantic search API
+export interface EnhancedSemanticSearchParams {
+  query: string;
+  minRelevance?: number;
+  maxResults?: number;
+  enableHybridScoring?: boolean;
+  scope?: string; // "0" for All, "1" for Public only, "2" for Department only
+  documentTypeId?: string | null;
+  departmentId?: string | null;
+  fromDate?: string | null;
+  toDate?: string | null;
+  effectiveFrom?: string | null;
+  effectiveUntil?: string | null;
+  folderId?: string | null;
+  includeSubfolders?: boolean;
+}
+
+// Response interface for enhanced semantic search
+export interface EnhancedSemanticSearchResponse {
+  statusCode: number;
+  errorCode: string | null;
+  message: string;
+  data: {
+    requestId: string;
+    query: string;
+    answer: string;
+    hasAnswer: boolean;
+    relevantDocuments: Array<{
+      id: string;
+      departmentId: string;
+      departmentName: string;
+      title: string;
+      documentName: string;
+      description: string;
+      status: string;
+      createdBy: string;
+      createdByName: string;
+      createdTime: string;
+      lastUpdatedby: string;
+      lastUpdatedByName: string;
+      lastUpdatedTime: string;
+      filePath: string;
+      fileType: string;
+      fileSize: number;
+      version: string;
+      tags: string[];
+      replacementId: string | null;
+      replacementDocument: any | null;
+      isReplaced: boolean;
+      relevance: number;
+      documentTypeId: string;
+      documentTypeName: string;
+      isPublic: boolean;
+      signedBy: string;
+      effectiveFrom: string;
+      effectiveUntil: string;
+      scoring: {
+        semanticSimilarity: number;
+        metadataScore: number;
+        contextualScore: number;
+        finalScore: number;
+        appliedBoosts: any[];
+        matchingTags: any[];
+      };
+      isDepartmentBoosted: boolean;
+      rank: number;
+    }>;
+    totalDocuments: number;
+    processingTimeMs: number;
+    metadata: {
+      minRelevance: number;
+      maxResults: number;
+      hybridScoringEnabled: boolean;
+      scope: string;
+      departmentFilter: string | null;
+      documentTypeFilter: string | null;
+      dateRange: {
+        fromDate: string | null;
+        toDate: string | null;
+        effectiveFrom: string | null;
+        effectiveUntil: string | null;
+      };
+    };
+    errorMessage: string | null;
+    success: boolean;
+  };
 }
 
 export const semanticSearchDocuments = async (params: SemanticSearchParams) => {
@@ -244,6 +362,7 @@ export const semanticSearchDocuments = async (params: SemanticSearchParams) => {
     signedBy,
     fromDate,
     toDate,
+    folderId,
   } = params;
 
   const searchParams = new URLSearchParams();
@@ -275,9 +394,37 @@ export const semanticSearchDocuments = async (params: SemanticSearchParams) => {
   if (signedBy) searchParams.append("signedBy", signedBy);
   if (fromDate) searchParams.append("fromDate", fromDate);
   if (toDate) searchParams.append("toDate", toDate);
+  if (folderId) searchParams.append("folderId", folderId);
 
   const response = await api.get(
     `/document/semantic-search?${searchParams.toString()}`
+  );
+  return response.data;
+};
+
+// New enhanced semantic search function
+export const enhancedSemanticSearchDocuments = async (
+  params: EnhancedSemanticSearchParams
+): Promise<EnhancedSemanticSearchResponse> => {
+  const searchParams = new URLSearchParams();
+
+  // Add query parameters
+  searchParams.append("query", params.query);
+  if (params.minRelevance !== undefined) searchParams.append("minRelevance", params.minRelevance.toString());
+  if (params.maxResults !== undefined) searchParams.append("maxResults", params.maxResults.toString());
+  if (params.enableHybridScoring !== undefined) searchParams.append("enableHybridScoring", params.enableHybridScoring.toString());
+  if (params.scope !== undefined) searchParams.append("scope", params.scope);
+  if (params.documentTypeId) searchParams.append("documentTypeId", params.documentTypeId);
+  if (params.departmentId) searchParams.append("departmentId", params.departmentId);
+  if (params.fromDate) searchParams.append("fromDate", params.fromDate);
+  if (params.toDate) searchParams.append("toDate", params.toDate);
+  if (params.effectiveFrom) searchParams.append("effectiveFrom", params.effectiveFrom);
+  if (params.effectiveUntil) searchParams.append("effectiveUntil", params.effectiveUntil);
+  if (params.folderId) searchParams.append("folderId", params.folderId);
+  if (params.includeSubfolders !== undefined) searchParams.append("includeSubfolders", params.includeSubfolders.toString());
+
+  const response = await api.get(
+    `/document/enhanced-semantic-search?${searchParams.toString()}`
   );
   return response.data;
 };
@@ -504,11 +651,15 @@ export const getReplacementSuggestionsForDocument = async (
   return response.data.data;
 };
 
-// Submit document for approval (separate from draft upload)
+// Submit document for approval (folder-approval; optional targetFolderId)
 export const submitDocumentForApproval = async (
-  versionId: string
+  versionId: string,
+  targetFolderId?: string
 ): Promise<any> => {
-  const response = await api.post(`/document/submit/${versionId}`);
+  const url = targetFolderId
+    ? `/document/folder-approval/${versionId}/submit?targetFolderId=${encodeURIComponent(targetFolderId)}`
+    : `/document/folder-approval/${versionId}/submit`;
+  const response = await api.post(url);
   return response.data;
 };
 
@@ -639,6 +790,10 @@ export const getOfficialDocuments = async (
       searchParams.append("isPublic", cleanedParams.isPublic.toString());
     if (cleanedParams.departmentOnly !== undefined)
       searchParams.append("departmentOnly", cleanedParams.departmentOnly.toString());
+
+    // Folder Organization Filters
+    if (cleanedParams.folderId)
+      searchParams.append("folderId", cleanedParams.folderId);
 
     // File Property Filters
     if (
@@ -1017,24 +1172,35 @@ export const getDocumentStats = async (): Promise<
  */
 export const createNewVersion = async (
   id: string,
-  data: any, 
+  data: any,
 ) => {
   const formData = new FormData();
-  
-  // Append all form fields
-  Object.keys(data).forEach(key => {
-    if (key === 'file' && data[key]) {
-      formData.append('file', data[key]);
-    } else if (data[key] !== null && data[key] !== undefined && data[key] !== '') {
-      formData.append(key, data[key]);
-    }
-  });
+
+  // Add all the standard fields with proper naming
+  if (data.title) formData.append("Title", data.title);
+  if (data.versionName) formData.append("VersionName", data.versionName);
+  if (data.summary) formData.append("Summary", data.summary);
+  if (data.signedBy) formData.append("SignedBy", data.signedBy);
+  if (data.description) formData.append("Description", data.description);
+  if (data.effectiveFrom) formData.append("EffectiveFrom", data.effectiveFrom);
+  if (data.effectiveUntil) formData.append("EffectiveUntil", data.effectiveUntil);
+  if (data.tags) {
+    formData.append("Tags", Array.isArray(data.tags) ? data.tags.join(",") : data.tags);
+  }
+  if (data.replacementDocumentId) formData.append("ReplacementDocumentId", data.replacementDocumentId);
+  if (data.documentTypeId) formData.append("DocumentTypeId", data.documentTypeId);
+  formData.append("IsPublic", data.isPublic ? "true" : "false");
+  formData.append("FolderId", data.folderId || ""); // Add folder ID field
+
+  if (data.file) {
+    formData.append("File", data.file);
+  }
 
   const response = await api.post(`/document/documents/${id}/versions`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
   });
-  
+
   return response.data;
 };

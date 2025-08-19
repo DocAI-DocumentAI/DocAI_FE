@@ -5,7 +5,7 @@ import { SearchBox } from "../../components/Search-box";
 import { SearchResults } from "../../components/Search-results";
 import { SearchFilter } from "../../components/Search-filter";
 import {
-  semanticSearchDocuments,
+  enhancedSemanticSearchDocuments,
   getDocumentTypes,
 } from "../../lib/api/document";
 import { getTags } from "../../lib/api/tag";
@@ -14,12 +14,13 @@ import type {
   DocumentTypeItem,
 } from "../../components/Search-filter";
 
-import { Card, Spin, Typography, Row, Col } from "antd";
+import { Card, Spin, Typography, Row, Col, Alert } from "antd";
 import {
   RobotOutlined,
   SearchOutlined,
   FilterOutlined,
   FileTextOutlined,
+  BulbOutlined,
 } from "@ant-design/icons";
 // Import test utilities for development/testing
 import {
@@ -32,6 +33,8 @@ const { Title, Paragraph } = Typography;
 export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [aiAnswer, setAiAnswer] = useState<string>("");
+  const [hasAnswer, setHasAnswer] = useState<boolean>(false);
   const [isSearched, setIsSearched] = useState(false);
   const [initialQuery, setInitialQuery] = useState("");
   const [filter, setFilter] = useState<SearchFilterValue>({
@@ -49,30 +52,30 @@ export default function SearchPage() {
     signedBy: "",
     fromDate: null,
     toDate: null,
+    // New folder filtering parameters
+    folderId: null,
+    includeSubfolders: false,
   });
   const [loading, setLoading] = useState(false);
   const [tags, setTags] = useState<any[]>([]);
   const [documentTypes, setDocumentTypes] = useState<DocumentTypeItem[]>([]);
 
-  // Restore state from URL parameters on mount
-  const isRestoringFromURL = useRef(false);
-  const hasSearchedInitialQuery = useRef(false);
+  // Simple URL restoration on mount only
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
+    // Only run once on mount
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
     const query = searchParams.get("q");
     const tags = searchParams.get("tags");
     const documentTypeId = searchParams.get("docType");
     const signedBy = searchParams.get("signedBy");
 
-    if (query || tags || documentTypeId || signedBy) {
-      isRestoringFromURL.current = true;
-    }
-
     if (query) {
       setInitialQuery(query);
       setIsSearched(true);
-      // Set loading immediately when we have a query from URL
-      setLoading(true);
     }
 
     if (tags || documentTypeId || signedBy) {
@@ -83,15 +86,7 @@ export default function SearchPage() {
         signedBy: signedBy || prev.signedBy,
       }));
     }
-
-    // Reset flags after a short delay
-    setTimeout(() => {
-      isRestoringFromURL.current = false;
-    }, 500);
-
-    // Reset search flag when URL changes
-    hasSearchedInitialQuery.current = false;
-  }, [searchParams]);
+  }, []); // Empty dependency array - only run on mount
 
   // Fetch reference data on mount
   useEffect(() => {
@@ -130,9 +125,19 @@ export default function SearchPage() {
   const handleSearch = useCallback(
     async (query: string) => {
       if (!query.trim()) return;
+
+      // Prevent duplicate searches
+      if (query === lastQueryRef.current && loading) {
+        return;
+      }
+
       lastQueryRef.current = query;
       setIsSearched(true);
       setLoading(true);
+
+      // Clear previous AI answer
+      setAiAnswer("");
+      setHasAnswer(false);
 
       // Update URL parameters
       const newSearchParams = new URLSearchParams();
@@ -148,50 +153,40 @@ export default function SearchPage() {
       }
       setSearchParams(newSearchParams);
       try {
-        let userId = "";
-        try {
-          const userStr = localStorage.getItem("user");
-          if (userStr) {
-            const user = JSON.parse(userStr);
-            userId = user.userId || user.id || "";
-          }
-        } catch {}
-        const params: any = {
-          Query: query,
-          Tags: filter.documentTags,
-          userId,
-          pageNumber: 1,
-          pageSize: filter.maxResults,
-          // Enhanced filter parameters
+        const params = {
+          query: query,
           minRelevance: filter.minRelevance,
           maxResults: filter.maxResults,
           enableHybridScoring: filter.enableHybridScoring,
-          boostDepartmentResults: filter.boostDepartmentResults,
-          latestVersionsOnly: filter.latestVersionsOnly,
-          scope: filter.scope,
-          documentTypeId: filter.documentTypeId || undefined,
-          signedBy: filter.signedBy || undefined,
+          scope: filter.scope.toString(), // Convert to string as expected by API
+          documentTypeId: filter.documentTypeId || null,
+          departmentId: null, // Can be added later if needed
+          fromDate: filter.fromDate ? filter.fromDate.toISOString() : null,
+          toDate: filter.toDate ? filter.toDate.toISOString() : null,
+          effectiveFrom: filter.startDate ? filter.startDate.toISOString() : null,
+          effectiveUntil: filter.endDate ? filter.endDate.toISOString() : null,
+          folderId: filter.folderId,
+          includeSubfolders: filter.includeSubfolders,
         };
 
-        // Date parameters
-        if (filter.startDate) {
-          params.EffectiveFrom = filter.startDate.toISOString();
-        }
-        if (filter.endDate) {
-          params.EffectiveUntil = filter.endDate.toISOString();
-        }
-        if (filter.fromDate) {
-          params.fromDate = filter.fromDate.toISOString();
-        }
-        if (filter.toDate) {
-          params.toDate = filter.toDate.toISOString();
-        }
-
         console.log("Enhanced search params:", params);
-        const res = await semanticSearchDocuments(params);
-        setSearchResults(res?.data?.items || []);
+        const res = await enhancedSemanticSearchDocuments(params);
+
+        // Update to handle the new response structure
+        if (res.data && res.data.success) {
+          setSearchResults(res.data.relevantDocuments || []);
+          setAiAnswer(res.data.answer || "");
+          setHasAnswer(res.data.hasAnswer || false);
+        } else {
+          setSearchResults([]);
+          setAiAnswer("");
+          setHasAnswer(false);
+        }
       } catch (e) {
+        console.error("Search error:", e);
         setSearchResults([]);
+        setAiAnswer("");
+        setHasAnswer(false);
       } finally {
         setLoading(false);
       }
@@ -200,34 +195,63 @@ export default function SearchPage() {
   );
 
   // Auto-search when initialQuery is set and reference data is loaded
+  const hasAutoSearched = useRef(false);
   useEffect(() => {
     if (
       initialQuery &&
       tags.length > 0 &&
       documentTypes.length > 0 &&
-      !hasSearchedInitialQuery.current
+      !hasAutoSearched.current
     ) {
-      hasSearchedInitialQuery.current = true;
+      hasAutoSearched.current = true;
       handleSearch(initialQuery);
     }
   }, [initialQuery, tags.length, documentTypes.length, handleSearch]);
 
-  // Auto-search when filters change (but not when restoring from URL)
+  // Auto-search when filters change (debounced)
+  const filterChangeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (isSearched && lastQueryRef.current && !isRestoringFromURL.current) {
-      // Set loading state before search
-      setLoading(true);
-      handleSearch(lastQueryRef.current);
+    // Clear any existing timeout
+    if (filterChangeTimeoutRef.current) {
+      clearTimeout(filterChangeTimeoutRef.current);
     }
+
+    // Only trigger search if we have searched before and have a query
+    if (isSearched && lastQueryRef.current && !loading) {
+      // Debounce filter changes to prevent rapid successive searches
+      filterChangeTimeoutRef.current = setTimeout(() => {
+        handleSearch(lastQueryRef.current);
+      }, 300);
+    }
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (filterChangeTimeoutRef.current) {
+        clearTimeout(filterChangeTimeoutRef.current);
+      }
+    };
   }, [
     filter.startDate,
     filter.endDate,
     filter.documentTags,
     filter.documentTypeId,
     filter.signedBy,
-    isSearched,
-    handleSearch,
-  ]);
+    filter.folderId,
+    filter.includeSubfolders,
+    filter.minRelevance,
+    filter.maxResults,
+    filter.enableHybridScoring,
+    filter.scope,
+  ]); // Removed isSearched, handleSearch, loading from dependencies
+
+  // Cleanup timeout on component unmount
+  useEffect(() => {
+    return () => {
+      if (filterChangeTimeoutRef.current) {
+        clearTimeout(filterChangeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
@@ -279,6 +303,30 @@ export default function SearchPage() {
                   </div>
                 )}
 
+                {/* AI Answer Section */}
+                {isSearched && !loading && hasAnswer && aiAnswer && (
+                  <Card className="border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 mb-6">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0">
+                        <BulbOutlined className="text-2xl text-blue-600 mt-1" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center mb-3">
+                          <Title level={5} className="mb-0 text-blue-800">
+                            AI Generated Answer
+                          </Title>
+                          <span className="px-2 py-1 ml-2 text-xs text-blue-700 bg-blue-200 rounded-full">
+                            AI
+                          </span>
+                        </div>
+                        <div className="text-gray-700 leading-relaxed">
+                          {aiAnswer}
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                )}
+
                 {/* Results Section */}
                 {isSearched && !loading && (
                   <div>
@@ -286,7 +334,7 @@ export default function SearchPage() {
                       <div className="flex items-center mb-6">
                         <FileTextOutlined className="mr-2 text-blue-600" />
                         <span className="text-lg font-medium text-gray-800">
-                          Search Results
+                          {hasAnswer && aiAnswer ? "Source Documents" : "Search Results"}
                         </span>
                         <span className="px-2 py-1 ml-2 text-sm text-blue-800 bg-blue-100 rounded-full">
                           {searchResults.length} found

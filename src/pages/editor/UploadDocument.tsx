@@ -1,11 +1,12 @@
 import { Layout, Typography, Card, Button, Input, Select, DatePicker, Upload, Form, Row, Col, Space, Spin, Switch } from "antd"
-import {  UploadOutlined, InboxOutlined, ArrowRightOutlined } from "@ant-design/icons"
-import { uploadDraftDocument, analyzeDocument, regenerateSummary, getDocumentTypes, submitDocumentForApproval, DocumentType } from "../../lib/api/document";
+import {  UploadOutlined, InboxOutlined, ArrowRightOutlined, FolderOutlined } from "@ant-design/icons"
+import { uploadDraftDocument, analyzeDocument, regenerateSummary, getDocumentTypes, submitDocumentForApproval, DocumentType } from "../../lib/api/document"; // submitDocumentForApproval supports targetFolderId
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import WysiwygEditor from 'react-simple-wysiwyg';
 import toast from 'react-hot-toast';
 import moment from "moment";
+import { FolderSelectorInput } from "../../components/folder";
 
 const { Title, Text } = Typography
 const { Content } = Layout 
@@ -77,6 +78,7 @@ export default function UploadDocument() {
 
   // Thêm state để track switch value
   const [isPublicState, setIsPublicState] = useState(false);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(undefined);
 
   // Load document types on component mount and handle pre-filled data
   useEffect(() => {
@@ -154,6 +156,7 @@ export default function UploadDocument() {
       file: selectedFile,
       documentTypeId: values.type || "",
       isPublic: values.isPublic === true, // Đảm bảo là boolean
+      folderId: values.folderId || selectedFolderId || "",
     };
 
     console.log('=== FINAL PAYLOAD DEBUG ===');
@@ -172,8 +175,8 @@ export default function UploadDocument() {
       const uploadResponse = await uploadDraftDocument(formValues);
 
       if (action === 'submit' && uploadResponse?.versionId) {
-        // If submitting, also call submit API
-        await submitDocumentForApproval(uploadResponse.versionId);
+        // If submitting, also call submit API (folder-aware)
+        await submitDocumentForApproval(uploadResponse.versionId, formValues.folderId || undefined);
         toast.success("Document submitted for approval successfully!");
       } else {
         toast.success("Document saved as draft successfully!");
@@ -822,6 +825,34 @@ export default function UploadDocument() {
                 <Row gutter={16}>
                   <Col xs={24} sm={12}>
                     <Form.Item
+                      name="folderId"
+                      label={
+                        <span>
+                          <FolderOutlined style={{ marginRight: 4 }} />
+                          Folder Location
+                        </span>
+                      }
+                    >
+                      <FolderSelectorInput
+                        selectedFolderId={selectedFolderId}
+                        onFolderSelect={(folderId) => {
+                          setSelectedFolderId(folderId);
+                          form.setFieldValue('folderId', folderId);
+                        }}
+                        placeholder="Select folder (optional)"
+                        allowClear={true}
+                        filterPermission="write"
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    {/* Empty column for spacing */}
+                  </Col>
+                </Row>
+
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
                       name="versionName"
                       label="Version Name"
                       rules={[{ required: true, message: "Please enter version name" }]}
@@ -1018,6 +1049,7 @@ export default function UploadDocument() {
           )}
         </div>
       </Content>
+
     </Layout>
   )
 }

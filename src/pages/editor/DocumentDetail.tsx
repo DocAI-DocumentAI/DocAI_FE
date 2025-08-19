@@ -86,11 +86,16 @@ export default function DocumentDetail({ onViewChange, }: any) {
             toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
             return;
         }
-        const user = JSON.parse(userStr);
+        /* const user = JSON.parse(userStr); */
 
         setSubmitting(true);
         try {
-            await api.post(`/document/submit/${document.versionId}?userId=${user.userId}`);
+            // Use folder-approval submit; attempt to include current folderId if present on document
+            const targetFolderId = document.folderId || document.currentFolderId || undefined;
+            const url = targetFolderId
+              ? `/document/folder-approval/${document.versionId}/submit${targetFolderId ? `?targetFolderId=${encodeURIComponent(targetFolderId)}` : ''}`
+              : `/document/folder-approval/${document.versionId}/submit`;
+            await api.post(url);
             toast.success("Đã gửi tài liệu lên quản lý kiểm duyệt!");
             await fetchDocument();
         } catch (error: any) {

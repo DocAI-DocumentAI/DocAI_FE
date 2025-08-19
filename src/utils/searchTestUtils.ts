@@ -134,6 +134,9 @@ export const testDefaultFilterValues = () => {
     signedBy: '',
     fromDate: null,
     toDate: null,
+    // New folder filtering parameters
+    folderId: null,
+    includeSubfolders: false,
   };
 
   console.log('🎯 Default Filter Values Test:', defaultFilter);

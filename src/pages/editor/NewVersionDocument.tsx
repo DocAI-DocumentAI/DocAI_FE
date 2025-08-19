@@ -1,11 +1,12 @@
 import { Layout, Typography, Card, Button, Input, Select, DatePicker, Upload, Form, Row, Col, Space, Spin, Switch } from "antd"
-import { UploadOutlined, InboxOutlined, ArrowRightOutlined } from "@ant-design/icons"
+import { UploadOutlined, InboxOutlined, ArrowRightOutlined, FolderOutlined } from "@ant-design/icons"
 import { analyzeDocument, createNewVersion, regenerateSummary, getDocumentTypes, DocumentType } from "../../lib/api/document";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import WysiwygEditor from 'react-simple-wysiwyg';
 import toast from 'react-hot-toast';
 import moment from "moment";
+import { FolderSelectorInput } from "../../components/folder";
 
 const { Title, Text } = Typography
 const { Content } = Layout
@@ -75,6 +76,7 @@ export default function NewVersionDocument() {
   const [isAnalyzed, setIsAnalyzed] = useState(false);
   const [mode, setMode] = useState<'upload' | 'create'>('upload');
   const [isPublicState, setIsPublicState] = useState(false);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(undefined);
 
   // Load document types on component mount
   useEffect(() => {
@@ -159,6 +161,7 @@ export default function NewVersionDocument() {
         documentTypeId: values.type || "",
         file: selectedFile,
         isPublic: isPublicState,
+        folderId: selectedFolderId,
       };
 
       setIsUploading(true);
@@ -739,6 +742,35 @@ export default function NewVersionDocument() {
                         ))}
                       </Select>
                     </Form.Item>
+                  </Col>
+                </Row>
+
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      name="folderId"
+                      label={
+                        <span>
+                          <FolderOutlined style={{ marginRight: 4 }} />
+                          Folder Location
+                        </span>
+                      }
+                    >
+                      <FolderSelectorInput
+                        selectedFolderId={selectedFolderId}
+                        onFolderSelect={(folderId) => {
+                          setSelectedFolderId(folderId);
+                          form.setFieldValue('folderId', folderId);
+                        }}
+                        placeholder="Select folder (optional)"
+                        allowClear={true}
+                        filterPermission="write"
+                        disabled={isAnyOperationInProgress}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    {/* Empty column for spacing */}
                   </Col>
                 </Row>
 

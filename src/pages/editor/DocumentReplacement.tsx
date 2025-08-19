@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { UploadOutlined, InboxOutlined, SearchOutlined, SwapOutlined, FileTextOutlined, ArrowLeftOutlined, FolderOutlined } from "@ant-design/icons"
 import { Layout, Typography, Card, Button, Input, Select, DatePicker, Form, Row, Col, Space, Spin, Table, Modal, Tag, Alert, Empty, Switch } from "antd"
-import { UploadOutlined, InboxOutlined, SearchOutlined, SwapOutlined, FileTextOutlined, ArrowLeftOutlined } from "@ant-design/icons"
 import {
   uploadDraftDocument,
   getDocumentTypes,
@@ -16,6 +16,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import WysiwygEditor from 'react-simple-wysiwyg';
 import toast from 'react-hot-toast';
 import moment from "moment";
+import { FolderSelectorInput } from "../../components/folder";
 
 const { Title, Text } = Typography;
 const { Content } = Layout;
@@ -47,6 +48,9 @@ const DocumentReplacement: React.FC = () => {
   // Replacement suggestions
   const [replacementSuggestions, setReplacementSuggestions] = useState<ReplacementSuggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+
+  // Folder selection
+  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(undefined);
 
   // Load document types and handle pre-filled data
   useEffect(() => {
@@ -212,6 +216,7 @@ const DocumentReplacement: React.FC = () => {
       replacementDocumentId: selectedDocument.id,
       documentTypeId: values.type || "",
       isPublic: false, // Add missing IsPublic field
+      folderId: selectedFolderId,
     };
 
     const isSubmitting = action === 'submit';
@@ -226,9 +231,9 @@ const DocumentReplacement: React.FC = () => {
       console.log("Draft upload response:", uploadResponse);
 
       if (action === 'submit' && uploadResponse?.versionId) {
-        // If submitting, also call submit API with the versionId from draft response
-        console.log("Submitting for approval with versionId:", uploadResponse.versionId);
-        await submitDocumentForApproval(uploadResponse.versionId);
+        // If submitting, also call submit API with the versionId from draft response (folder-aware)
+        console.log("Submitting for approval with versionId:", uploadResponse.versionId, "targetFolderId:", formValues.folderId);
+        await submitDocumentForApproval(uploadResponse.versionId, formValues.folderId || undefined);
         toast.success("Replacement document submitted for approval successfully!");
       } else {
         toast.success("Replacement document saved as draft successfully!");
@@ -490,6 +495,34 @@ const DocumentReplacement: React.FC = () => {
                         ))}
                       </Select>
                     </Form.Item>
+                  </Col>
+                </Row>
+
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      name="folderId"
+                      label={
+                        <span>
+                          <FolderOutlined style={{ marginRight: 4 }} />
+                          Folder Location
+                        </span>
+                      }
+                    >
+                      <FolderSelectorInput
+                        selectedFolderId={selectedFolderId}
+                        onFolderSelect={(folderId) => {
+                          setSelectedFolderId(folderId);
+                          form.setFieldValue('folderId', folderId);
+                        }}
+                        placeholder="Select folder (optional)"
+                        allowClear={true}
+                        filterPermission="write"
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    {/* Empty column for spacing */}
                   </Col>
                 </Row>
 

@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect, useCallback } from "react";
 import {
   ArrowLeft,
@@ -25,8 +24,10 @@ import toast from "react-hot-toast";
 import { DocumentChatBox } from "../../components/DocumentChatBox";
 
 export default function DocumentPage() {
-  const { id } = useParams();
-  const location = useLocation();
+  const { id } = useParams()
+  const location = useLocation()
+  const urlParams = new URLSearchParams(location.search)
+  const versionIdFromQuery = urlParams.get('versionId') || undefined
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<
     | "preview"
@@ -208,11 +209,20 @@ export default function DocumentPage() {
 
   useEffect(() => {
     if (!id) return;
-    api.get(`/document/documents/${id}/versions`).then((res) => {
-      setVersions(res.data.data || []);
+    api.get(`/document/documents/${id}/versions`).then(res => {
+      const list = res.data.data || [];
+      // If versionId provided via query, move that version to the front for mainDoc
+      if (versionIdFromQuery) {
+        const idx = list.findIndex((v: any) => v.versionId === versionIdFromQuery);
+        if (idx > 0) {
+          const [found] = list.splice(idx, 1);
+          list.unshift(found);
+        }
+      }
+      setVersions(list);
     });
     checkBookmarkStatus();
-  }, [id]);
+  }, [id, versionIdFromQuery]);
 
   // Use the first version as the main document for all tabs except Version
   const mainDoc = versions[0] || {};
