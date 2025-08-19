@@ -32,9 +32,11 @@ const StatisticsChatbox: React.FC = () => {
   // Format data for pie chart - show model usage by session count
   const chartData =
     statisticsData?.modelUsageStats
-      ?.filter(model => model.sessionCount > 0) // Only show models with sessions
+      ?.filter((model) => model.sessionCount > 0) // Only show models with sessions
       ?.map((model, index) => ({
-        name: model.modelName.split('/').pop()?.replace(':free', '') || model.modelName,
+        name:
+          model.modelName.split("/").pop()?.replace(":free", "") ||
+          model.modelName,
         value: model.sessionCount,
         color: COLORS[index % COLORS.length],
         fullName: model.modelName,

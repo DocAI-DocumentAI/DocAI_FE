@@ -5,16 +5,27 @@ import { ArrowLeft, Save, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import Header from "../../components/common/Header";
-import { 
-  useAIConfigurations, 
-  useUpdateAIConfiguration, 
-  UpdateAIConfigurationRequest 
+import {
+  useAIConfigurations,
+  useUpdateAIConfiguration,
+  UpdateAIConfigurationRequest,
 } from "../../services/chatboxService";
+
+interface FormErrors {
+  modelName?: string;
+  displayName?: string;
+  temperature?: string;
+  topP?: string;
+  maxTokens?: string;
+  systemPrompt?: string;
+  isFree?: string;
+}
 
 const UpdateConfigAI: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { data: configData, isLoading: isLoadingConfigs } = useAIConfigurations();
+  const { data: configData, isLoading: isLoadingConfigs } =
+    useAIConfigurations();
   const updateMutation = useUpdateAIConfiguration();
 
   const [formData, setFormData] = useState<UpdateAIConfigurationRequest>({
@@ -27,13 +38,14 @@ const UpdateConfigAI: React.FC = () => {
     isFree: true,
   });
 
-  const [errors, setErrors] = useState<Partial<Record<keyof UpdateAIConfigurationRequest, string>>>({});
+  const [errors, setErrors] = useState<FormErrors>({});
+
   const [isLoading, setIsLoading] = useState(true);
 
   // Find and load the configuration data
   useEffect(() => {
     if (configData && id) {
-      const config = configData.find(c => c.id === id);
+      const config = configData.find((c) => c.id === id);
       if (config) {
         setFormData({
           modelName: config.modelName,
@@ -56,24 +68,25 @@ const UpdateConfigAI: React.FC = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value, type } = e.target;
-    
+
     if (type === "checkbox") {
       const checked = (e.target as HTMLInputElement).checked;
-      setFormData(prev => ({ ...prev, [name]: checked }));
+      setFormData((prev) => ({ ...prev, [name]: checked }));
     } else if (type === "number") {
-      setFormData(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
+      setFormData((prev) => ({ ...prev, [name]: parseFloat(value) || 0 }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
 
     // Clear error when user starts typing
-    if (errors[name as keyof UpdateAIConfigurationRequest]) {
-      setErrors(prev => ({ ...prev, [name]: undefined }));
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<Record<keyof UpdateAIConfigurationRequest, string>> = {};
+    const newErrors: FormErrors = {};
+
 
     if (!formData.modelName.trim()) {
       newErrors.modelName = "Model name is required";
@@ -153,7 +166,9 @@ const UpdateConfigAI: React.FC = () => {
               Back to Configurations
             </Link>
             <div>
-              <h1 className="text-2xl font-semibold text-gray-100">Update AI Configuration</h1>
+              <h1 className="text-2xl font-semibold text-gray-100">
+                Update AI Configuration
+              </h1>
               <p className="text-gray-400">Modify the AI model configuration</p>
             </div>
           </div>
@@ -170,7 +185,10 @@ const UpdateConfigAI: React.FC = () => {
             {/* Model Information */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
-                <label htmlFor="modelName" className="block text-sm font-medium text-gray-300 mb-2">
+                <label
+                  htmlFor="modelName"
+                  className="block text-sm font-medium text-gray-300 mb-2"
+                >
                   Model Name *
                 </label>
                 <input
@@ -193,7 +211,10 @@ const UpdateConfigAI: React.FC = () => {
               </div>
 
               <div>
-                <label htmlFor="displayName" className="block text-sm font-medium text-gray-300 mb-2">
+                <label
+                  htmlFor="displayName"
+                  className="block text-sm font-medium text-gray-300 mb-2"
+                >
                   Display Name *
                 </label>
                 <input
@@ -219,7 +240,10 @@ const UpdateConfigAI: React.FC = () => {
             {/* Parameters */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <div>
-                <label htmlFor="temperature" className="block text-sm font-medium text-gray-300 mb-2">
+                <label
+                  htmlFor="temperature"
+                  className="block text-sm font-medium text-gray-300 mb-2"
+                >
                   Temperature *
                 </label>
                 <input
@@ -244,7 +268,10 @@ const UpdateConfigAI: React.FC = () => {
               </div>
 
               <div>
-                <label htmlFor="topP" className="block text-sm font-medium text-gray-300 mb-2">
+                <label
+                  htmlFor="topP"
+                  className="block text-sm font-medium text-gray-300 mb-2"
+                >
                   Top P *
                 </label>
                 <input
@@ -269,7 +296,10 @@ const UpdateConfigAI: React.FC = () => {
               </div>
 
               <div>
-                <label htmlFor="maxTokens" className="block text-sm font-medium text-gray-300 mb-2">
+                <label
+                  htmlFor="maxTokens"
+                  className="block text-sm font-medium text-gray-300 mb-2"
+                >
                   Max Tokens *
                 </label>
                 <input
@@ -303,14 +333,20 @@ const UpdateConfigAI: React.FC = () => {
                 onChange={handleInputChange}
                 className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
               />
-              <label htmlFor="isFree" className="ml-2 text-sm font-medium text-gray-300">
+              <label
+                htmlFor="isFree"
+                className="ml-2 text-sm font-medium text-gray-300"
+              >
                 This is a free model
               </label>
             </div>
 
             {/* System Prompt */}
             <div>
-              <label htmlFor="systemPrompt" className="block text-sm font-medium text-gray-300 mb-2">
+              <label
+                htmlFor="systemPrompt"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
                 System Prompt *
               </label>
               <textarea
