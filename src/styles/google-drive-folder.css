@@ -281,6 +281,24 @@
   opacity: 0.7;
 }
 
+/* Permission Grant Modal Styling */
+.ant-select-dropdown {
+  max-width: 400px !important;
+}
+
+.ant-select-item-option-content {
+  overflow: hidden !important;
+}
+
+/* Fix text overflow in permission modal */
+.ant-modal .ant-select {
+  width: 100% !important;
+}
+
+.ant-modal .ant-form-item-control-input {
+  min-height: auto !important;
+}
+
 .folder-item-card:hover {
   box-shadow: 0 4px 16px rgba(0,0,0,0.12);
   border-color: #1a73e8;

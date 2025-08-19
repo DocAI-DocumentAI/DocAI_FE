@@ -421,8 +421,8 @@ export const updateFolderPermission = async (
   return mapApiPermissionToFolderPermission(permission);
 };
 
-export const deleteFolderPermission = async (permissionId: string): Promise<void> => {
-  await api.delete(`/document/folder-permissions/${permissionId}`);
+export const deleteFolderPermission = async (folderId: string, permissionId: string): Promise<void> => {
+  await api.delete(`/document/folder-permissions/${folderId}/${permissionId}`);
 };
 
 export const checkUserPermission = async (
@@ -499,7 +499,7 @@ export const revokeUserPermission = async (folderId: string, userId: string): Pr
     throw new Error('User permission not found');
   }
 
-  await deleteFolderPermission(userPermission.id);
+  await deleteFolderPermission(folderId, userPermission.id);
 };
 
 export const revokeDepartmentPermission = async (folderId: string, departmentId: string): Promise<void> => {
@@ -511,7 +511,7 @@ export const revokeDepartmentPermission = async (folderId: string, departmentId:
     throw new Error('Department permission not found');
   }
 
-  await deleteFolderPermission(deptPermission.id);
+  await deleteFolderPermission(folderId, deptPermission.id);
 };
 
 // Utility functions for folder operations

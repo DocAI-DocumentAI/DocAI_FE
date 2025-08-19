@@ -41,7 +41,7 @@ import {
 } from '@ant-design/icons';
 import { FolderTree, FolderSelectorModal } from '../../components/folder';
 import { getFolderDocumentsList } from '../../lib/api/folder';
-import type { FolderNode, FolderPermission, FolderPermissionLevel } from '../../types/folder';
+import type { FolderNode, FolderPermission } from '../../types/folder';
 import {
   getFolderTree,
   getFolderPermissions,
@@ -49,13 +49,13 @@ import {
   updateFolder,
   deleteFolder,
   moveFolder,
-  grantUserPermission,
-  grantDepartmentPermission,
   revokeUserPermission,
   revokeDepartmentPermission
 } from '../../lib/api/folder';
+import { api } from '../../lib/api/api';
 import toast from 'react-hot-toast';
 import { moveDocument } from '../../lib/api/document';
+import { authApi, type DepartmentUser } from '../../lib/api/auth';
 import '../../styles/google-drive-folder.css';
 
 // const { Sider, Content } = Layout;
@@ -120,6 +120,10 @@ const GoogleDriveFolderManagement: React.FC = () => {
   // Document move state
   const [movingDocument, setMovingDocument] = useState<FolderItem | null>(null);
   const [documentMoveModalVisible, setDocumentMoveModalVisible] = useState(false);
+
+  // User and department selection state
+  const [users, setUsers] = useState<DepartmentUser[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
 
   // Load folder tree on mount
   useEffect(() => {
@@ -330,16 +334,37 @@ const GoogleDriveFolderManagement: React.FC = () => {
     }
   };
 
-
-
-  const getPermissionColor = (permission: FolderPermissionLevel): string => {
-    switch (permission) {
-      case 'admin': return 'red';
-      case 'write': return 'orange';
-      case 'read': return 'green';
-      default: return 'default';
+  const loadUsers = async (keyword?: string) => {
+    try {
+      setUsersLoading(true);
+      const response = await authApi.getDepartmentUsers({
+        page: 1,
+        size: 50,
+        keyword,
+        sortBy: 'FullName',
+        isAsc: true
+      });
+      setUsers(response.items);
+    } catch (error: any) {
+      console.error('Failed to load users:', error);
+      toast.error('Failed to load users');
+    } finally {
+      setUsersLoading(false);
     }
   };
+
+
+
+  // Map numeric permission types to display values
+  const getPermissionDisplay = (permissionType: number): { label: string; color: string } => {
+    switch (permissionType) {
+      case 1: return { label: 'View', color: 'green' };
+      case 2: return { label: 'Edit', color: 'orange' };
+      default: return { label: 'Unknown', color: 'default' };
+    }
+  };
+
+
 
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, item: FolderItem) => {
@@ -990,11 +1015,14 @@ const GoogleDriveFolderManagement: React.FC = () => {
                                 {
                                   title: 'Access',
                                   key: 'permission',
-                                  render: (record: FolderPermission) => (
-                                    <Tag color={getPermissionColor(record.permission)}>
-                                      {record.permission.toUpperCase()}
-                                    </Tag>
-                                  )
+                                  render: (record: FolderPermission) => {
+                                    const permissionDisplay = getPermissionDisplay(record.permissionType);
+                                    return (
+                                      <Tag color={permissionDisplay.color}>
+                                        {permissionDisplay.label}
+                                      </Tag>
+                                    );
+                                  }
                                 },
                                 {
                                   title: 'Actions',
@@ -1255,16 +1283,22 @@ const GoogleDriveFolderManagement: React.FC = () => {
               if (!selectedFolder) return;
               try {
                 setGrantLoading(true);
-                if (values.type === 'user') {
-                  await grantUserPermission(selectedFolder.id, {
-                    userId: values.userId,
-                    permission: values.permission,
-                  });
-                } else {
-                  await grantDepartmentPermission(selectedFolder.id, {
-                    departmentId: values.departmentId,
-                    permission: values.permission,
-                  });
+                // Call API directly with numeric permission values
+                const requestData = {
+                  permissionType: values.permission, // Pass numeric value directly (1=View, 2=Edit)
+                  applyToSubfolders: true, // Apply permission to all subfolders
+                  ...(values.type === 'user'
+                    ? { userId: values.userId }
+                    : { departmentId: values.departmentId }
+                  )
+                };
+
+                // Call the API directly with numeric permission type
+                const response = await api.post(`/document/folder-permissions/${selectedFolder.id}`, requestData);
+
+                // Check if the response indicates success (statusCode 200 or success field)
+                if (response.data?.statusCode !== 200 && !response.data?.success) {
+                  throw new Error(response.data?.message || 'Failed to grant permission');
                 }
                 toast.success('Permission granted successfully');
                 setGrantPermissionModalVisible(false);
@@ -1295,10 +1329,67 @@ const GoogleDriveFolderManagement: React.FC = () => {
                   return (
                     <Form.Item
                       name="userId"
-                      label="User ID"
-                      rules={[{ required: true, message: 'Please enter user id' }]}
+                      label="Select User"
+                      rules={[{ required: true, message: 'Please select a user' }]}
                     >
-                      <Input placeholder="user-001" />
+                      <Select
+                        placeholder="Search and select user"
+                        showSearch
+                        loading={usersLoading}
+                        onFocus={() => loadUsers()}
+                        onSearch={(value) => loadUsers(value)}
+                        filterOption={false}
+                        notFoundContent={usersLoading ? <Spin size="small" /> : 'No users found'}
+                        style={{ width: '100%' }}
+                      >
+                        {users.map(user => (
+                          <Option key={user.id} value={user.id} label={`${user.fullName} (${user.email})`}>
+                            <div style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center', // Changed to 'center' for better vertical alignment
+                              maxWidth: '100%',
+                              overflow: 'hidden'
+                            }}>
+                              {/* This is the div that needs to be changed */}
+                              <div style={{
+                                flex: 1,
+                                minWidth: 0,
+                                marginRight: 8,
+                                display: 'flex',         
+                                alignItems: 'baseline',    
+                                gap: 8                  
+                              }}>
+                                <div style={{
+                                  fontWeight: 500,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}>
+                                  {user.fullName}
+                                </div>
+                                <div style={{
+                                  fontSize: '12px',
+                                  color: '#666',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}>
+                                  {user.email}
+                                </div>
+                              </div>
+                              <div style={{
+                                fontSize: '11px',
+                                color: '#999',
+                                textAlign: 'right',
+                                flexShrink: 0,
+                              }}>
+                                {user.department?.departmentName}
+                              </div>
+                            </div>
+                          </Option>
+                        ))}
+                      </Select>
                     </Form.Item>
                   );
                 }
@@ -1322,10 +1413,36 @@ const GoogleDriveFolderManagement: React.FC = () => {
               label="Permission Level"
               rules={[{ required: true, message: 'Please select permission level' }]}
             >
-              <Select placeholder="Select permission level">
-                <Option value="read">Read</Option>
-                <Option value="write">Write</Option>
-                <Option value="admin">Admin</Option>
+              <Select placeholder="Select permission level" style={{ width: '100%' }}>
+                <Option value={1}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Tag color="green">View</Tag>
+                    <div style={{
+                      fontSize: '12px',
+                      color: '#666',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      View only access - can see folder and documents
+                    </div>
+                  </div>
+                </Option>
+
+                <Option value={2}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Tag color="orange">Edit</Tag>
+                    <div style={{
+                      fontSize: '12px',
+                      color: '#666',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      Edit access - can view, move documents, create subfolders
+                    </div>
+                  </div>
+                </Option>
               </Select>
             </Form.Item>
           </Form>
