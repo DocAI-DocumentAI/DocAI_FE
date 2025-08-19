@@ -15,7 +15,9 @@ import {
   CloseOutlined,
   MinusOutlined,
   RobotOutlined,
-  FileTextOutlined
+  FileTextOutlined,
+  LockOutlined,
+  PlusOutlined
 } from '@ant-design/icons';
 import { sendMessageStream, getChatModels, createChatSession } from '../lib/api/chat';
 import ChatMessage from './chat-message';
@@ -53,6 +55,7 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [loadingModels, setLoadingModels] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [hasChatStarted, setHasChatStarted] = useState<boolean>(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<any>(null);
@@ -84,8 +87,23 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
     scrollToBottom();
   }, [messages]);
 
+  // Check if chat has started based on existing messages
+  useEffect(() => {
+    if (messages.length > 0 && !hasChatStarted) {
+      setHasChatStarted(true);
+    }
+  }, [messages, hasChatStarted]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const startNewChat = () => {
+    setMessages([]);
+    setHasChatStarted(false);
+    setSessionId(null);
+    setInputValue('');
+    message.success('Started new conversation');
   };
 
   const handleSendMessage = async () => {
@@ -106,6 +124,11 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
     setIsStreaming(true);
+
+    // Mark that chat has started - prevent model changes
+    if (!hasChatStarted) {
+      setHasChatStarted(true);
+    }
 
     // Create AI response message placeholder
     const aiMessageId = (Date.now() + 1).toString();
@@ -261,6 +284,17 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
             </div>
           </div>
           <Space>
+            {hasChatStarted && (
+              <Tooltip title="Start a new conversation">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<PlusOutlined />}
+                  onClick={startNewChat}
+                  className="text-white hover:bg-blue-700 border-0"
+                />
+              </Tooltip>
+            )}
             <Button
               type="text"
               size="small"
@@ -283,23 +317,35 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
           <>
             {/* Model Selection */}
             <div className="p-3 border-b bg-gray-50">
-              <Select
-                value={selectedModel}
-                onChange={setSelectedModel}
-                placeholder="Select AI Model"
-                size="small"
-                style={{ width: '100%' }}
-                loading={loadingModels}
+              <Tooltip
+                title={hasChatStarted ? "Cannot change model after starting the conversation" : "Select an AI model to chat with"}
+                placement="top"
               >
-                {models.map(model => (
-                  <Select.Option key={model.modelName} value={model.modelName}>
-                    <div className="flex items-center">
-                      <RobotOutlined className="mr-2" />
-                      {model.displayName || model.modelName}
-                    </div>
-                  </Select.Option>
-                ))}
-              </Select>
+                <Select
+                  value={selectedModel}
+                  onChange={setSelectedModel}
+                  placeholder="Select AI Model"
+                  size="small"
+                  style={{ width: '100%' }}
+                  loading={loadingModels}
+                  disabled={hasChatStarted}
+                >
+                  {models.map(model => (
+                    <Select.Option key={model.modelName} value={model.modelName}>
+                      <div className="flex items-center">
+                        <RobotOutlined className="mr-2" />
+                        {model.displayName || model.modelName}
+                      </div>
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Tooltip>
+              {hasChatStarted && (
+                <Text type="secondary" className="text-xs mt-1 block">
+                  <LockOutlined className="mr-1" />
+                  Model locked for this conversation
+                </Text>
+              )}
             </div>
 
             {/* Messages */}

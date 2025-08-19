@@ -108,9 +108,7 @@ const UpdateConfigAI: React.FC = () => {
       newErrors.maxTokens = "Max tokens must be between 1 and 100,000";
     }
 
-    if (!formData.systemPrompt.trim()) {
-      newErrors.systemPrompt = "System prompt is required";
-    }
+    // System prompt is optional - no validation required
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -347,7 +345,7 @@ const UpdateConfigAI: React.FC = () => {
                 htmlFor="systemPrompt"
                 className="block text-sm font-medium text-gray-300 mb-2"
               >
-                System Prompt *
+                System Prompt
               </label>
               <textarea
                 id="systemPrompt"
@@ -355,7 +353,7 @@ const UpdateConfigAI: React.FC = () => {
                 value={formData.systemPrompt}
                 onChange={handleInputChange}
                 rows={8}
-                placeholder="Enter the system prompt for this AI model..."
+                placeholder="Enter the system prompt for this AI model (optional)..."
                 className={`w-full px-3 py-2 bg-gray-700 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-100 placeholder-gray-400 resize-vertical ${
                   errors.systemPrompt ? "border-red-500" : "border-gray-600"
                 }`}
