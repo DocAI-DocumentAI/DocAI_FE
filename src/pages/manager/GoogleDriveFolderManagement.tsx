@@ -167,21 +167,26 @@ const GoogleDriveFolderManagement: React.FC = () => {
       setLoading(true);
       const response = await getFolderTree({ includeSystemFolders: true });
       setFolders(response.data.rootNodes);
+      return response.data.rootNodes; // Return the fresh data
     } catch (error: any) {
       console.error('Failed to load folder tree:', error);
       toast.error('Failed to load folders');
+      return [];
     } finally {
       setLoading(false);
     }
   };
 
-  const loadFolderContents = async (folderId: string) => {
+  const loadFolderContents = async (folderId: string, freshFolders?: FolderNode[]) => {
     try {
       setLoading(true);
       setSelectedFolder(null);
 
+      // Use fresh folders if provided, otherwise use current state
+      const foldersToUse = freshFolders || folders;
+
       // 1) Always fetch subfolders (from our local tree if available)
-      const folder = findFolderById(folders, folderId);
+      const folder = findFolderById(foldersToUse, folderId);
       const subfolderItems: FolderItem[] = folder?.children?.map(child => ({
         id: child.id,
         name: child.name,
@@ -229,22 +234,34 @@ const GoogleDriveFolderManagement: React.FC = () => {
     }
   };
 
-  const loadRootContents = () => {
-    // Show the root folder's children (subfolders) when no specific folder is selected
-    if (folders.length > 0) {
-      const rootFolder = folders[0]; // The main department folder
-      const contents: FolderItem[] = rootFolder.children.map(folder => ({
-        id: folder.id,
-        name: folder.name,
-        type: 'folder' as const,
-        modifiedAt: folder.updatedAt || folder.createdAt,
-        modifiedBy: folder.folderType === 'system' ? 'System' : 'User',
-        icon: <FolderOutlined />
-      }));
-      setCurrentFolderContents(contents);
-      setSelectedFolder(null);
-    } else {
-      setCurrentFolderContents([]);
+  const loadRootContents = async (freshFolders?: FolderNode[]) => {
+    try {
+      setLoading(true);
+
+      // Use fresh folders if provided, otherwise use current state
+      const foldersToUse = freshFolders || folders;
+
+      // Show the root folder's children (subfolders) when no specific folder is selected
+      if (foldersToUse.length > 0) {
+        const rootFolder = foldersToUse[0]; // The main department folder
+        const contents: FolderItem[] = rootFolder.children.map(folder => ({
+          id: folder.id,
+          name: folder.name,
+          type: 'folder' as const,
+          modifiedAt: folder.updatedAt || folder.createdAt,
+          modifiedBy: folder.folderType === 'system' ? 'System' : 'User',
+          icon: <FolderOutlined />
+        }));
+        setCurrentFolderContents(contents);
+        setSelectedFolder(null);
+      } else {
+        setCurrentFolderContents([]);
+      }
+    } catch (error: any) {
+      console.error('Failed to load root contents:', error);
+      toast.error('Failed to load root contents');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -416,19 +433,19 @@ const GoogleDriveFolderManagement: React.FC = () => {
         if (currentFolderId) {
           await loadFolderContents(currentFolderId);
         } else {
-          loadRootContents();
+          await loadRootContents();
         }
       } else if (draggedItem.type === 'folder') {
         // Move folder
         await moveFolder(draggedItem.id, { newParentFolderId: targetItem.id });
         toast.success(`Folder "${draggedItem.name}" moved to "${targetItem.name}"`);
 
-        // Refresh folder tree and contents
-        await loadFolderTree();
+        // Refresh folder tree and contents with proper sequencing
+        const freshFolders = await loadFolderTree();
         if (currentFolderId) {
-          await loadFolderContents(currentFolderId);
+          await loadFolderContents(currentFolderId, freshFolders);
         } else {
-          loadRootContents();
+          await loadRootContents(freshFolders);
         }
       }
     } catch (error: any) {
@@ -789,8 +806,12 @@ const GoogleDriveFolderManagement: React.FC = () => {
                   setLoading(true);
                   await moveFolder(dragFolder.id, { newParentFolderId: newParentId });
                   toast.success('Folder moved successfully');
-                  await loadFolderTree();
-                  if (currentFolderId) await loadFolderContents(currentFolderId);
+                  const freshFolders = await loadFolderTree();
+                  if (currentFolderId) {
+                    await loadFolderContents(currentFolderId, freshFolders);
+                  } else {
+                    await loadRootContents(freshFolders);
+                  }
                 } catch (e: any) {
                   toast.error(e?.response?.data?.message || 'Failed to move folder');
                 } finally {
@@ -1096,15 +1117,15 @@ const GoogleDriveFolderManagement: React.FC = () => {
                 setCreateModalVisible(false);
                 createForm.resetFields();
 
-                // Refresh tree first
-                await loadFolderTree();
+                // Refresh tree first and get fresh data
+                const freshFolders = await loadFolderTree();
 
                 // Then reload the current folder contents properly (including documents)
                 if (parentId) {
-                  await loadFolderContents(parentId);
+                  await loadFolderContents(parentId, freshFolders);
                 } else {
                   // If we're at root level, reload root contents
-                  loadRootContents();
+                  await loadRootContents(freshFolders);
                 }
               } catch (e: any) {
                 toast.error(e?.response?.data?.message || 'Failed to create folder');
@@ -1134,8 +1155,12 @@ const GoogleDriveFolderManagement: React.FC = () => {
               toast.success('Folder moved');
               setMoveModalVisible(false);
               setMovingFolder(null);
-              await loadFolderTree();
-              if (currentFolderId) await loadFolderContents(currentFolderId);
+              const freshFolders = await loadFolderTree();
+              if (currentFolderId) {
+                await loadFolderContents(currentFolderId, freshFolders);
+              } else {
+                await loadRootContents(freshFolders);
+              }
             } catch (e: any) {
               toast.error(e?.response?.data?.message || 'Failed to move folder');
             } finally {
@@ -1171,7 +1196,7 @@ const GoogleDriveFolderManagement: React.FC = () => {
               if (currentFolderId) {
                 await loadFolderContents(currentFolderId);
               } else {
-                loadRootContents();
+                await loadRootContents();
               }
             } catch (e: any) {
               toast.error(e?.response?.data?.message || 'Failed to move document');
@@ -1205,17 +1230,17 @@ const GoogleDriveFolderManagement: React.FC = () => {
                 await updateFolder(selectedFolder.id, { name: values.name });
                 toast.success('Folder renamed');
                 setRenameModalVisible(false);
-                await loadFolderTree();
+                const freshFolders = await loadFolderTree();
 
                 // Refresh current folder contents if we're viewing a folder
                 if (currentFolderId) {
-                  await loadFolderContents(currentFolderId);
+                  await loadFolderContents(currentFolderId, freshFolders);
                 } else {
-                  loadRootContents();
+                  await loadRootContents(freshFolders);
                 }
 
                 // Refresh current selection details
-                const folder = findFolderById(folders, selectedFolder.id);
+                const folder = findFolderById(freshFolders, selectedFolder.id);
                 if (folder) {
                   setSelectedFolder(folder);
                   await loadPermissions(folder.id);
@@ -1246,13 +1271,13 @@ const GoogleDriveFolderManagement: React.FC = () => {
               toast.success('Folder deleted');
               setDeleteModalVisible(false);
               setSelectedFolder(null);
-              await loadFolderTree();
+              const freshFolders = await loadFolderTree();
 
               // Refresh current folder contents properly
               if (currentFolderId) {
-                await loadFolderContents(currentFolderId);
+                await loadFolderContents(currentFolderId, freshFolders);
               } else {
-                loadRootContents();
+                await loadRootContents(freshFolders);
               }
             } catch (e: any) {
               toast.error(e?.response?.data?.message || 'Failed to delete folder');

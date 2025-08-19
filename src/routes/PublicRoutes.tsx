@@ -1,4 +1,4 @@
-import { Outlet, RouteObject } from "react-router-dom";
+import { RouteObject } from "react-router-dom";
 // import Login from "../pages/Login";
 import SignUp from "../pages/auth/Signup";
 import VerifyEmail from "../pages/auth/VerifyEmail";
@@ -202,11 +202,7 @@ const PublicRoutes: RouteObject[] = [
   },
   {
     path: "/settings",
-    element: (
-      <SettingsLayout>
-        <Outlet />
-      </SettingsLayout>
-    ),
+    element: <SettingsLayout />,
     children: [
       {
         index: true,
