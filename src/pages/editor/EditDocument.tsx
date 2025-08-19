@@ -1,12 +1,12 @@
 import { Layout, Typography, Card, Button, Input, Select, DatePicker, Form, Row, Col, Space, Spin, Switch } from "antd"
-import { UploadOutlined, ArrowRightOutlined } from "@ant-design/icons"
-import { recreateDocument, regenerateSummary, getDocumentTypes, DocumentType } from "../../lib/api/document";
-import { api } from "../../lib/api/api";
+import { UploadOutlined, ArrowRightOutlined, FolderOutlined } from "@ant-design/icons"
+import { regenerateSummary, getDocumentTypes, DocumentType, editDocument } from "../../lib/api/document";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import WysiwygEditor from 'react-simple-wysiwyg';
 import toast from 'react-hot-toast';
 import moment from "moment";
+import { FolderSelectorInput } from "../../components/folder";
 
 const { Title, Text } = Typography
 const { Content } = Layout
@@ -64,7 +64,7 @@ export default function EditDocument() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isAnalyzing] = useState(false);
-
+  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(undefined);
   const [isUploading, setIsUploading] = useState(false);
   const [isRegeneratingSummary, setIsRegeneratingSummary] = useState(false);
   const [htmlDescription, setHtmlDescription] = useState("");
@@ -103,6 +103,7 @@ export default function EditDocument() {
             signedBy: analysisData.signedBy || "",
             type: analysisData.documentTypeId || "",
             isPublic: isPublicValue,
+            
           };
 
           form.setFieldsValue(formValues);
@@ -129,6 +130,7 @@ export default function EditDocument() {
             signedBy: documentData.signedBy || "",
             type: documentData.documentTypeId || "",
             isPublic: isPublicValue,
+            
           };
 
           // Set form values immediately and also with a delay to ensure it sticks
@@ -198,33 +200,14 @@ export default function EditDocument() {
     formData.append("ReplacementDocumentId", values.replacementDocumentId || "");
     formData.append("DocumentTypeId", values.type || "");
     formData.append("IsPublic", isPublicState ? "true" : "false");
-
-    // Only append file if a new file is selected
-    if (selectedFile) {
-      formData.append("File", selectedFile);
-    }
+    formData.append("FolderId", selectedFolderId || "");
 
     try {
       setIsUploading(true);
 
       // First, recreate as draft
-      const recreateResponse = await recreateDocument(id, formData);
-
-      if (action === 'submit' && recreateResponse?.versionId) {
-        // If submitting, also call submit API
-        const userStr = localStorage.getItem("user");
-        if (!userStr) {
-          toast.error("User information not found, please login again!");
-          return;
-        }
-        const user = JSON.parse(userStr);
-
-        await api.post(`/document/submit/${recreateResponse.versionId}?userId=${user.userId}`);
-        toast.success("Document updated and submitted for approval successfully!");
-      } else {
-        toast.success("Document updated as draft successfully!");
-      }
-
+      await editDocument(id, formData);
+      toast.success("Document updated as draft successfully!");
       // Reset form and navigate back
       form.resetFields();
       setHtmlDescription("");
@@ -249,7 +232,7 @@ export default function EditDocument() {
   const handleSaveAsDraft = async (values: any) => {
     await handleDocumentAction(values, 'draft');
   };
- 
+
 
 
   const handleRegenerateSummary = async () => {
@@ -569,7 +552,34 @@ export default function EditDocument() {
                     </Form.Item>
                   </Col>
                 </Row>
-
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      name="folderId"
+                      label={
+                        <span>
+                          <FolderOutlined style={{ marginRight: 4 }} />
+                          Folder Location
+                        </span>
+                      }
+                    >
+                      <FolderSelectorInput
+                        selectedFolderId={selectedFolderId}
+                        onFolderSelect={(folderId) => {
+                          setSelectedFolderId(folderId);
+                          form.setFieldValue('folderId', folderId);
+                        }}
+                        placeholder="Select folder (optional)"
+                        allowClear={true}
+                        filterPermission="write"
+                        disabled={isAnyOperationInProgress}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    {/* Empty column for spacing */}
+                  </Col>
+                </Row>
                 <Row gutter={16}>
                   <Col xs={24} sm={12}>
                     <Form.Item
@@ -690,7 +700,7 @@ export default function EditDocument() {
                       disabled={(!selectedFile && !(location.state?.documentData && location.state?.mode === 'edit')) || isAnyOperationInProgress}
                     >
                       {isUploading ? "Saving..." : "Save as Draft"}
-                    </Button> 
+                    </Button>
                   </Space>
                 </Form.Item>
               </Form>
