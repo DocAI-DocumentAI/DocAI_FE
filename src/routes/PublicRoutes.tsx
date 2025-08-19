@@ -33,8 +33,8 @@ import ChatIndexPage from "../pages/chat/ChatIndex";
 import Tags from "../pages/manager/Tags";
 import DocumentChoice from "../pages/editor/DocumentChoice";
 import DocumentReplacement from "../pages/editor/DocumentReplacement";
-import EditorFolderManagement from "../pages/editor/FolderManagement";
 import ManagerFolderManagement from "../pages/manager/FolderManagement";
+import GoogleDriveFolder from "../pages/editor/GoogleDriveFolder";
 import GoogleDriveFolderManagement from "../pages/manager/GoogleDriveFolderManagement";
 import DocumentLibrary from "../pages/document/DocumentLibrary.tsx";
 import Notifications from "../pages/notification/Notifications.tsx";
@@ -191,8 +191,8 @@ const PublicRoutes: RouteObject[] = [
         element: <RecreateDocument />,
       },
       {
-        path: "folder-management",
-        element: <EditorFolderManagement />,
+        path: "google-drive-folders",
+        element: <GoogleDriveFolder />,
       },
       {
         path: "document/editDocument/:id",

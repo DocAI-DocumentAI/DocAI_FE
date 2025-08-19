@@ -32,7 +32,7 @@ const SIDEBAR_ITEMS: {
   },
 
   {
-    name: "Google Drive Folders",
+    name: "Folder Management",
     icon: Folder,
     color: "#F59E0B",
     href: "/manager/google-drive-folders",

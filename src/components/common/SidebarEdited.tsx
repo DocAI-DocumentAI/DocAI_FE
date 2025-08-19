@@ -40,8 +40,8 @@ const SIDEBAR_ITEMS: {
   {
     name: "Folder Management",
     icon: Folder,
-    color: "#F59E0B",
-    href: "/editor/folder-management",
+    color: "#4285f4",
+    href: "/editor/google-drive-folders",
   },
   {
     name: "Home",
