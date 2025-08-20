@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import {
-  Settings,
   Clock,
   Calendar,
   Database,
@@ -25,7 +24,7 @@ const formatCronExpression = (cronExpression: string) => {
   // Basic cron expression formatting - you can enhance this
   const parts = cronExpression.split(" ");
   if (parts.length >= 6) {
-    const [second, minute, hour, day, month, dayOfWeek] = parts;
+    const [second, minute, hour] = parts;
     if (hour === "7" && minute === "0" && second === "0") {
       return "Daily at 7:00 AM";
     }

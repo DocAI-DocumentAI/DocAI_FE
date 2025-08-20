@@ -1,21 +1,20 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { 
-  Save, 
-  ArrowLeft, 
+import { useNavigate } from "react-router-dom";
+import {
+  Save,
+  ArrowLeft,
   AlertTriangle,
   Database,
   Calendar,
   Zap,
-  Clock
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Header from "../../components/common/Header";
-import { 
-  useNotificationConfig, 
+import {
+  useNotificationConfig,
   useUpdateNotificationConfig,
-  UpdateNotificationConfigRequest 
+  UpdateNotificationConfigRequest,
 } from "../../services/notificationService";
 
 // Custom Switch Component
@@ -53,7 +52,9 @@ const Switch: React.FC<SwitchProps> = ({
         />
       </button>
       {label && (
-        <span className={`text-sm text-gray-300 ${disabled ? "opacity-50" : ""}`}>
+        <span
+          className={`text-sm text-gray-300 ${disabled ? "opacity-50" : ""}`}
+        >
           {label}
         </span>
       )}
@@ -63,8 +64,7 @@ const Switch: React.FC<SwitchProps> = ({
 
 const UpdateConfigNotificationPage: React.FC = () => {
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
-  
+
   const [formData, setFormData] = useState<UpdateNotificationConfigRequest>({
     warningThresholdDays: 7,
     scanCronExpression: "0 0 7 * * ?",
@@ -94,13 +94,18 @@ const UpdateConfigNotificationPage: React.FC = () => {
     const newErrors: Record<string, string> = {};
 
     // Validate warning threshold days
-    if (formData.warningThresholdDays < 1 || formData.warningThresholdDays > 365) {
-      newErrors.warningThresholdDays = "Warning threshold must be between 1 and 365 days";
+    if (
+      formData.warningThresholdDays < 1 ||
+      formData.warningThresholdDays > 365
+    ) {
+      newErrors.warningThresholdDays =
+        "Warning threshold must be between 1 and 365 days";
     }
 
     // Validate log retention days
     if (formData.logRetentionDays < 1 || formData.logRetentionDays > 3650) {
-      newErrors.logRetentionDays = "Log retention must be between 1 and 3650 days";
+      newErrors.logRetentionDays =
+        "Log retention must be between 1 and 3650 days";
     }
 
     // Basic cron expression validation
@@ -109,7 +114,8 @@ const UpdateConfigNotificationPage: React.FC = () => {
     } else {
       const cronParts = formData.scanCronExpression.trim().split(/\s+/);
       if (cronParts.length !== 6) {
-        newErrors.scanCronExpression = "Cron expression must have 6 parts (second minute hour day month dayOfWeek)";
+        newErrors.scanCronExpression =
+          "Cron expression must have 6 parts (second minute hour day month dayOfWeek)";
       }
     }
 
@@ -119,7 +125,7 @@ const UpdateConfigNotificationPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       toast.error("Please fix the validation errors");
       return;
@@ -130,21 +136,26 @@ const UpdateConfigNotificationPage: React.FC = () => {
       toast.success("Notification configuration updated successfully!");
       navigate("/admin/config-notification");
     } catch (error: any) {
-      toast.error(error.message || "Failed to update notification configuration");
+      toast.error(
+        error.message || "Failed to update notification configuration"
+      );
     }
   };
 
-  const handleInputChange = (field: keyof UpdateNotificationConfigRequest, value: any) => {
-    setFormData(prev => ({
+  const handleInputChange = (
+    field: keyof UpdateNotificationConfigRequest,
+    value: any
+  ) => {
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
-    
+
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [field]: ""
+        [field]: "",
       }));
     }
   };
@@ -154,7 +165,7 @@ const UpdateConfigNotificationPage: React.FC = () => {
     return (
       <div className="relative z-10 flex-1 overflow-auto">
         <Header title="Update Notification Configuration" />
-        <main className="px-4 py-6 mx-auto max-w-4xl lg:px-8">
+        <main className="max-w-4xl px-4 py-6 mx-auto lg:px-8">
           <div className="flex items-center justify-center h-64">
             <div className="flex flex-col items-center gap-4">
               <div className="w-8 h-8 border-2 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
@@ -171,7 +182,7 @@ const UpdateConfigNotificationPage: React.FC = () => {
     return (
       <div className="relative z-10 flex-1 overflow-auto">
         <Header title="Update Notification Configuration" />
-        <main className="px-4 py-6 mx-auto max-w-4xl lg:px-8">
+        <main className="max-w-4xl px-4 py-6 mx-auto lg:px-8">
           <div className="flex items-center justify-center h-64">
             <div className="flex flex-col items-center gap-4">
               <div className="w-12 h-12 text-red-500">
@@ -195,7 +206,7 @@ const UpdateConfigNotificationPage: React.FC = () => {
     <div className="relative z-10 flex-1 overflow-auto">
       <Header title="Update Notification Configuration" />
 
-      <main className="px-4 py-6 mx-auto max-w-4xl lg:px-8">
+      <main className="max-w-4xl px-4 py-6 mx-auto lg:px-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <button
@@ -233,14 +244,23 @@ const UpdateConfigNotificationPage: React.FC = () => {
                 min="1"
                 max="365"
                 value={formData.warningThresholdDays}
-                onChange={(e) => handleInputChange("warningThresholdDays", parseInt(e.target.value) || 0)}
+                onChange={(e) =>
+                  handleInputChange(
+                    "warningThresholdDays",
+                    parseInt(e.target.value) || 0
+                  )
+                }
                 className={`w-full px-3 py-2 bg-gray-700 border rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.warningThresholdDays ? "border-red-500" : "border-gray-600"
+                  errors.warningThresholdDays
+                    ? "border-red-500"
+                    : "border-gray-600"
                 }`}
                 placeholder="Enter warning threshold in days"
               />
               {errors.warningThresholdDays && (
-                <p className="mt-1 text-sm text-red-400">{errors.warningThresholdDays}</p>
+                <p className="mt-1 text-sm text-red-400">
+                  {errors.warningThresholdDays}
+                </p>
               )}
               <p className="mt-1 text-xs text-gray-500">
                 Number of days before sending warning notifications (1-365)
@@ -258,14 +278,21 @@ const UpdateConfigNotificationPage: React.FC = () => {
                 min="1"
                 max="3650"
                 value={formData.logRetentionDays}
-                onChange={(e) => handleInputChange("logRetentionDays", parseInt(e.target.value) || 0)}
+                onChange={(e) =>
+                  handleInputChange(
+                    "logRetentionDays",
+                    parseInt(e.target.value) || 0
+                  )
+                }
                 className={`w-full px-3 py-2 bg-gray-700 border rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   errors.logRetentionDays ? "border-red-500" : "border-gray-600"
                 }`}
                 placeholder="Enter log retention in days"
               />
               {errors.logRetentionDays && (
-                <p className="mt-1 text-sm text-red-400">{errors.logRetentionDays}</p>
+                <p className="mt-1 text-sm text-red-400">
+                  {errors.logRetentionDays}
+                </p>
               )}
               <p className="mt-1 text-xs text-gray-500">
                 Number of days to retain logs (1-3650)
@@ -281,17 +308,24 @@ const UpdateConfigNotificationPage: React.FC = () => {
               <input
                 type="text"
                 value={formData.scanCronExpression}
-                onChange={(e) => handleInputChange("scanCronExpression", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("scanCronExpression", e.target.value)
+                }
                 className={`w-full px-3 py-2 bg-gray-700 border rounded-md text-gray-100 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.scanCronExpression ? "border-red-500" : "border-gray-600"
+                  errors.scanCronExpression
+                    ? "border-red-500"
+                    : "border-gray-600"
                 }`}
                 placeholder="0 0 7 * * ?"
               />
               {errors.scanCronExpression && (
-                <p className="mt-1 text-sm text-red-400">{errors.scanCronExpression}</p>
+                <p className="mt-1 text-sm text-red-400">
+                  {errors.scanCronExpression}
+                </p>
               )}
               <p className="mt-1 text-xs text-gray-500">
-                Cron expression for scheduling scans (format: second minute hour day month dayOfWeek)
+                Cron expression for scheduling scans (format: second minute hour
+                day month dayOfWeek)
               </p>
               <p className="mt-1 text-xs text-gray-400">
                 Example: "0 0 7 * * ?" = Daily at 7:00 AM
@@ -306,7 +340,9 @@ const UpdateConfigNotificationPage: React.FC = () => {
               </label>
               <Switch
                 checked={formData.quartzEnabled}
-                onChange={(checked) => handleInputChange("quartzEnabled", checked)}
+                onChange={(checked) =>
+                  handleInputChange("quartzEnabled", checked)
+                }
                 label={formData.quartzEnabled ? "Enabled" : "Disabled"}
               />
               <p className="mt-2 text-xs text-gray-500">
