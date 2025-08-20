@@ -15,7 +15,7 @@ import PersonalizationSettings from "../pages/settings/Personalization";
 import NotificationsSettings from "../pages/settings/Notification";
 import NewChatPage from "../pages/chat/ChatNew";
 import ChatDetail from "../pages/chat/ChatDetail";
-import UploadDocument from "../pages/editor/UploadDocument"; 
+import UploadDocument from "../pages/editor/UploadDocument";
 import DocumentPage from "../pages/document/DocumentDetail";
 import SearchPage from "../pages/search/SearchPage";
 import ApprovalManagerTable from "../pages/editor/ApprovalManagerTable";
@@ -41,6 +41,7 @@ import Notifications from "../pages/notification/Notifications.tsx";
 import AdminRouteTestPage from "../pages/AdminRouteTestPage";
 import DocumentVersionDetail from "../pages/document/DocumentVersionDetail.tsx";
 import EditDocument from "../pages/editor/EditDocument.tsx";
+import UserManagerPage from "../pages/manager/UserManagerPage";
 
 const PublicRoutes: RouteObject[] = [
   // {
@@ -90,7 +91,7 @@ const PublicRoutes: RouteObject[] = [
   {
     path: "/chat/:id",
     element: <ChatDetail />,
-  },  
+  },
   {
     path: "/search",
     element: <SearchPage />,
@@ -119,6 +120,10 @@ const PublicRoutes: RouteObject[] = [
     path: "/manager",
     element: <ManagerLayoutLayout />,
     children: [
+      {
+        path: "users",
+        element: <UserManagerPage />,
+      },
       {
         path: "document-management",
         element: <DocumentManagement />,
@@ -169,7 +174,7 @@ const PublicRoutes: RouteObject[] = [
       {
         path: "document/new-version/:id",
         element: <NewVersionDocument />,
-      }, 
+      },
       {
         path: "my-document",
         element: <ViewDraftTable />,

@@ -32,6 +32,9 @@ import ChatboxDashboardPage from "./pages/admin/ChatboxDashboardPage";
 import ConfigAIPage from "./pages/admin/ConfigAIPage";
 import CreateConfigAI from "./pages/admin/CreateConfigAI";
 import UpdateConfigAI from "./pages/admin/UpdateConfigAI";
+import ConfigNotificationPage from "./pages/admin/ConfigNotificationPage";
+import UpdateConfigNotificationPage from "./pages/admin/UpdateConfigNotificationPage";
+import NotificationDashboardPage from "./pages/admin/NotificationDashboardPage";
 
 const App: React.FC = () => {
   const dispatch = useDispatch();
@@ -117,6 +120,18 @@ const App: React.FC = () => {
               <Route path="permissions" element={<PermissionPage />} />
               <Route path="document-types" element={<DocumentTypePage />} />
               <Route path="notifications" element={<NotifyPage />} />
+              <Route
+                path="config-notification"
+                element={<ConfigNotificationPage />}
+              />
+              <Route
+                path="config-notification/update/:id"
+                element={<UpdateConfigNotificationPage />}
+              />
+              <Route
+                path="notification-dashboard"
+                element={<NotificationDashboardPage />}
+              />
               <Route path="/admin/users/create" element={<CreateUserPage />} />
               <Route
                 path="/admin/departments/create"
@@ -203,6 +218,18 @@ const App: React.FC = () => {
             <Route path="permissions" element={<PermissionPage />} />
             <Route path="document-types" element={<DocumentTypePage />} />
             <Route path="notifications" element={<NotifyPage />} />
+            <Route
+              path="config-notification"
+              element={<ConfigNotificationPage />}
+            />
+            <Route
+              path="config-notification/update/:id"
+              element={<UpdateConfigNotificationPage />}
+            />
+            <Route
+              path="notification-dashboard"
+              element={<NotificationDashboardPage />}
+            />
             <Route path="/admin/users/create" element={<CreateUserPage />} />
             <Route
               path="/admin/departments/create"

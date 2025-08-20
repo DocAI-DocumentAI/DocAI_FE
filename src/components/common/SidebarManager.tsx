@@ -1,4 +1,3 @@
-
 import { Menu, FileText, Home, Users, LogOut, Folder } from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
