@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Filter, Plus, Trash2 } from "lucide-react";
 import {
-  getDepartmentsApi,
+  useDepartmentsPaginated,
   Department,
   useDeleteDepartment,
 } from "../../services/departmentService";
@@ -17,55 +17,45 @@ interface Filters {
 
 const DepartmentTable: React.FC = () => {
   const navigate = useNavigate();
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [showFilters, setShowFilters] = useState(false);
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     department: Department | null;
   }>({ isOpen: false, department: null });
 
-  const deleteDepartmentMutation = useDeleteDepartment();
-
   const [filters, setFilters] = useState<Filters>({
     name: "",
     description: "",
   });
 
-  const fetchDepartments = async (page = 1) => {
-    setLoading(true);
-    try {
-      const activeFilters = Object.fromEntries(
-        Object.entries(filters).filter(([_, value]) => value !== "")
-      );
+  // React Query hooks
+  const {
+    data: departmentsData,
+    isLoading,
+    isError,
+    error,
+  } = useDepartmentsPaginated({
+    ...Object.fromEntries(
+      Object.entries(filters).filter(([_, value]) => value !== "")
+    ),
+    page: currentPage,
+    size: pageSize,
+  });
 
-      const response = await getDepartmentsApi({
-        ...activeFilters,
-        page,
-        size: 10,
-      });
+  const deleteDepartmentMutation = useDeleteDepartment();
 
-      setDepartments(response.items);
-      setCurrentPage(response.page);
-      setTotalPages(response.totalPages);
-      setTotal(response.total);
-    } catch (error: any) {
-      toast.error(`Error loading departments: ${error.message}`);
-      setDepartments([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDepartments(1);
-  }, [filters]);
+  // Handle errors
+  if (isError) toast.error(`Error loading departments: ${error?.message}`);
 
   const handleFilterChange = (key: keyof Filters, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
+    setCurrentPage(1);
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
     setCurrentPage(1);
   };
 
@@ -84,7 +74,7 @@ const DepartmentTable: React.FC = () => {
       onSuccess: () => {
         toast.success("Department deleted successfully!");
         setDeleteModal({ isOpen: false, department: null });
-        fetchDepartments(currentPage); // Refresh the table
+        // Data will be automatically refreshed via queryClient.invalidateQueries
       },
       onError: (error: any) => {
         toast.error(error.message || "Failed to delete department");
@@ -95,6 +85,10 @@ const DepartmentTable: React.FC = () => {
   const handleDeleteCancel = () => {
     setDeleteModal({ isOpen: false, department: null });
   };
+
+  const departments = departmentsData?.items || [];
+  const total = departmentsData?.total || 0;
+  const totalPages = departmentsData?.totalPages || 1;
 
   return (
     <motion.div
@@ -179,7 +173,7 @@ const DepartmentTable: React.FC = () => {
           </thead>
 
           <tbody className="divide-y divide-gray-700">
-            {loading ? (
+            {isLoading ? (
               <tr>
                 <td colSpan={6} className="px-6 py-4 text-center">
                   <div className="flex justify-center">
@@ -261,19 +255,35 @@ const DepartmentTable: React.FC = () => {
       {/* Pagination */}
       {totalPages > 0 && (
         <div className="flex items-center justify-between mt-6">
-          <div className="text-sm text-gray-400">
-            Page {currentPage} of {totalPages} ({total} total departments)
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-gray-400">
+              Page {currentPage} of {totalPages} ({total} total departments)
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-400">Show:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                className="px-2 py-1 text-sm text-white bg-gray-600 rounded"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+              <span className="text-sm text-gray-400">per page</span>
+            </div>
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => fetchDepartments(currentPage - 1)}
+              onClick={() => setCurrentPage(currentPage - 1)}
               disabled={currentPage === 1}
               className="px-3 py-1 text-white bg-gray-600 rounded disabled:opacity-50"
             >
               Previous
             </button>
             <button
-              onClick={() => fetchDepartments(currentPage + 1)}
+              onClick={() => setCurrentPage(currentPage + 1)}
               disabled={currentPage === totalPages}
               className="px-3 py-1 text-white bg-gray-600 rounded disabled:opacity-50"
             >

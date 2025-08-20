@@ -1,36 +1,46 @@
-import { useEffect, useRef } from "react" 
-import { useParams, useNavigate } from "react-router-dom"
-import { useChat } from "../../context/chat-context"
-import { ChatInput } from "../../components/chat-input"
-import ChatSidebar from "../../components/ChatSidebar" 
-import ChatMessage from "../../components/chat-message"
-import ModelSelector from "../../components/ModelSelector"
+import { useEffect, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useChat } from "../../context/chat-context";
+import { ChatInput } from "../../components/chat-input";
+import ChatSidebar from "../../components/ChatSidebar";
+import ChatMessage from "../../components/chat-message";
+import ModelSelector from "../../components/ModelSelector";
 
 export default function ChatPage() {
-  const { id } = useParams()
-  const { currentChat, sendMessage, loadChatDetail, changeModel, loading, sending, streaming } = useChat()
-  const chatIdRef = useRef(id)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const navigate = useNavigate()
+  const { id } = useParams();
+  const {
+    currentChat,
+    sendMessage,
+    loadChatDetail,
+    changeModel,
+    loading,
+    sending,
+    streaming,
+    hasConversation,
+    startNewChatWithModel,
+  } = useChat();
+  const chatIdRef = useRef(id);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   // Auto scroll to bottom when new messages are added
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [currentChat?.messages])
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [currentChat?.messages]);
 
   // Load chat detail when component mounts or ID changes
   useEffect(() => {
-    if (id && id !== 'new') {
+    if (id && id !== "new") {
       if (!currentChat || currentChat.id !== id || chatIdRef.current !== id) {
-        chatIdRef.current = id as string
-        loadChatDetail(id)
+        chatIdRef.current = id as string;
+        loadChatDetail(id);
       }
     }
-  }, [id, loadChatDetail])
+  }, [id, loadChatDetail]);
 
   const handleSendMessage = (message: string) => {
-    sendMessage(message, navigate)
-  }
+    sendMessage(message, navigate);
+  };
 
   if (loading) {
     return (
@@ -39,22 +49,26 @@ export default function ChatPage() {
         <div className="flex-1 flex flex-col items-center justify-center p-4 pt-14 lg:pt-0">
           <div className="text-center">
             <div className="animate-spin h-8 w-8 border-4 border-gray-300 border-t-blue-600 rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-600 text-sm sm:text-base">Loading chat...</p>
+            <p className="text-gray-600 text-sm sm:text-base">
+              Loading chat...
+            </p>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
-  if (id !== 'new' && (!currentChat || currentChat.id !== id)) {
+  if (id !== "new" && (!currentChat || currentChat.id !== id)) {
     return (
       <div className="flex h-screen bg-gray-50">
         <ChatSidebar />
         <div className="flex-1 flex flex-col items-center justify-center p-4 pt-14 lg:pt-0">
           <div className="text-center">
-            <p className="text-gray-600 text-sm sm:text-base">Chat not found.</p>
+            <p className="text-gray-600 text-sm sm:text-base">
+              Chat not found.
+            </p>
             <button
-              onClick={() => navigate('/chat/new')}
+              onClick={() => navigate("/chat/new")}
               className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
             >
               Start New Chat
@@ -62,7 +76,7 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -74,7 +88,7 @@ export default function ChatPage() {
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
               <h1 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
-                {currentChat?.title || 'New Chat'}
+                {currentChat?.title || "New Chat"}
               </h1>
             </div>
             <div className="flex items-center gap-2 sm:gap-4 ml-4">
@@ -85,6 +99,10 @@ export default function ChatPage() {
                     selectedModel={currentChat.modelName}
                     onModelChange={changeModel}
                     disabled={sending}
+                    hasConversation={hasConversation(currentChat)}
+                    onStartNewChat={(modelName) =>
+                      startNewChatWithModel(modelName, navigate)
+                    }
                   />
                 </div>
               )}
@@ -92,7 +110,9 @@ export default function ChatPage() {
               {currentChat?.isModelActive && (
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                  <span className="text-xs sm:text-sm text-green-600 hidden sm:inline">Active</span>
+                  <span className="text-xs sm:text-sm text-green-600 hidden sm:inline">
+                    Active
+                  </span>
                 </div>
               )}
             </div>
@@ -104,6 +124,10 @@ export default function ChatPage() {
                 selectedModel={currentChat.modelName}
                 onModelChange={changeModel}
                 disabled={sending}
+                hasConversation={hasConversation(currentChat)}
+                onStartNewChat={(modelName) =>
+                  startNewChatWithModel(modelName, navigate)
+                }
               />
             </div>
           )}
@@ -150,7 +174,7 @@ export default function ChatPage() {
             <ChatInput
               onSend={handleSendMessage}
               placeholder="Ask anything..."
-              disabled={(!currentChat?.canSendMessages) || sending || streaming}
+              disabled={!currentChat?.canSendMessages || sending || streaming}
             />
             {sending && (
               <div className="text-center text-xs sm:text-sm text-gray-500 mt-2 sm:mt-3">
@@ -172,5 +196,5 @@ export default function ChatPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

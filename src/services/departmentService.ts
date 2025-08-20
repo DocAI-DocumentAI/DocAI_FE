@@ -106,7 +106,7 @@ export const useDepartments = () => {
   });
 };
 
-// Hook for table with pagination
+// Hook for table with pagination and filters
 export const useDepartmentsPaginated = (filters: DepartmentFilters) => {
   return useQuery({
     queryKey: ["departments", "paginated", filters],
@@ -119,8 +119,14 @@ export const useDepartmentsPaginated = (filters: DepartmentFilters) => {
 export const getDepartmentsApi = fetchDepartments;
 
 export const useCreateDepartment = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: createDepartment,
+    onSuccess: () => {
+      // Invalidate departments queries to refresh the list
+      queryClient.invalidateQueries({ queryKey: ["departments"] });
+    },
   });
 };
 
