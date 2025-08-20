@@ -121,13 +121,7 @@ const ConfigAIPage: React.FC = () => {
   });
 
   // Fetch data using React Query
-  const {
-    data: configData,
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useAIConfigurations();
+  const { data: configData, isLoading, isError, error } = useAIConfigurations();
   const deleteMutation = useDeleteAIConfiguration();
   const activateMutation = useActivateAIConfiguration();
   const deactivateMutation = useDeactivateAIConfiguration();
@@ -161,8 +155,7 @@ const ConfigAIPage: React.FC = () => {
       await deleteMutation.mutateAsync(deleteConfirm.configId);
       toast.success("AI configuration deleted successfully!");
       setDeleteConfirm({ isOpen: false, configId: "", configName: "" });
-      // Refetch data to update the list
-      window.location.reload(); // Simple way to refresh data
+      // Data will be automatically refreshed via queryClient.invalidateQueries
     } catch (error: any) {
       toast.error(error.message || "Failed to delete AI configuration");
     }
@@ -186,7 +179,7 @@ const ConfigAIPage: React.FC = () => {
         await activateMutation.mutateAsync(configId);
         toast.success("Model activated successfully!");
       }
-      refetch(); // Refresh data
+      // Data will be automatically refreshed via queryClient.invalidateQueries
     } catch (error: any) {
       toast.error(error.message || "Failed to update model status");
     }
@@ -206,7 +199,7 @@ const ConfigAIPage: React.FC = () => {
     try {
       await setDefaultMutation.mutateAsync(configId);
       toast.success("Model set as default successfully!");
-      refetch(); // Refresh data
+      // Data will be automatically refreshed via queryClient.invalidateQueries
     } catch (error: any) {
       toast.error(error.message || "Failed to set model as default");
     }

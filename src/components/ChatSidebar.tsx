@@ -1,10 +1,30 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, Plus, MessageSquare, MoreHorizontal, Home, Library, PanelLeftClose, PanelLeftOpen, Settings, User, LogOut, X, HelpCircle, Trash2 } from "lucide-react";
-import { getChatSessions, ChatSession, deleteChatSession } from "../lib/api/chat";
-import { useChat } from "../context/chat-context"; 
+import {
+  Menu,
+  Plus,
+  MessageSquare,
+  MoreHorizontal,
+  Home,
+  Library,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Settings,
+  User,
+  LogOut,
+  X,
+  HelpCircle,
+  Trash2,
+} from "lucide-react";
+import {
+  getChatSessions,
+  ChatSession,
+  deleteChatSession,
+} from "../lib/api/chat";
+import { useChat } from "../context/chat-context";
 import { toast } from "react-toastify";
 import { api } from "../lib/api/api";
+import { createChatboxUserPayload } from "../utils/chatboxPayloadUtils";
 
 interface Characteristic {
   value: string;
@@ -25,7 +45,7 @@ interface UserPreferences {
 function ChatSidebar() {
   // Initialize sidebar state based on screen size
   const [isOpen, setIsOpen] = useState(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       return window.innerWidth >= 1024; // lg breakpoint
     }
     return true;
@@ -42,10 +62,11 @@ function ChatSidebar() {
     userName: "",
     chatbotCharacteristics: [] as string[],
     additionalInfo: "",
-    applyToNewChats: false
   });
-  const [availableCharacteristics, setAvailableCharacteristics] = useState<Characteristic[]>([]);
-  
+  const [availableCharacteristics, setAvailableCharacteristics] = useState<
+    Characteristic[]
+  >([]);
+
   const location = useLocation();
   const navigate = useNavigate();
   const { clearCurrentChat } = useChat();
@@ -61,8 +82,8 @@ function ChatSidebar() {
       }
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Fetch chat sessions on component mount
@@ -87,8 +108,8 @@ function ChatSidebar() {
     };
 
     if (showChatMenu) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
     }
   }, [showChatMenu]);
 
@@ -105,41 +126,52 @@ function ChatSidebar() {
   };
 
   // Handle delete chat session
-  const handleDeleteChat = async (sessionId: string, event: React.MouseEvent) => {
+  const handleDeleteChat = async (
+    sessionId: string,
+    event: React.MouseEvent
+  ) => {
     event.preventDefault();
     event.stopPropagation();
-    
-    const chatToDelete = chatSessions.find(chat => chat.id === sessionId);
+
+    const chatToDelete = chatSessions.find((chat) => chat.id === sessionId);
     if (!chatToDelete) return;
 
     // Confirm deletion
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa cuộc trò chuyện "${chatToDelete.title}"?`)) {
+    if (
+      !window.confirm(
+        `Bạn có chắc chắn muốn xóa cuộc trò chuyện "${chatToDelete.title}"?`
+      )
+    ) {
       return;
     }
 
     try {
       setDeletingChatId(sessionId);
-      
+
       // Call delete API
       await deleteChatSession(sessionId);
-      
+
       // Remove from local state
-      setChatSessions(prev => prev.filter(chat => chat.id !== sessionId));
-      
+      setChatSessions((prev) => prev.filter((chat) => chat.id !== sessionId));
+
       // Close menu
       setShowChatMenu(null);
-      
+
       // If currently viewing this chat, navigate to new chat
       const currentChatId = getCurrentChatId();
       if (currentChatId === sessionId) {
         clearCurrentChat();
-        navigate('/chat/new');
+        navigate("/chat/new");
       }
-      
-      toast.success('Đã xóa cuộc trò chuyện thành công');
+
+      toast.success("Đã xóa cuộc trò chuyện thành công");
     } catch (error: any) {
       console.error("Failed to delete chat session:", error);
-      toast.error(`Xóa cuộc trò chuyện thất bại: ${error?.response?.data?.message || error.message}`);
+      toast.error(
+        `Xóa cuộc trò chuyện thất bại: ${
+          error?.response?.data?.message || error.message
+        }`
+      );
     } finally {
       setDeletingChatId(null);
     }
@@ -156,32 +188,26 @@ function ChatSidebar() {
   const fetchUserPreferences = async () => {
     try {
       setCustomizeLoading(true);
-      console.log('=== FETCHING USER PREFERENCES ===');
-      
-      const response = await api.get('/chatbox/user/preferences');
+
+      const response = await api.get("/chatbox/user/preferences");
       const preferences: UserPreferences = response.data;
-      
-      console.log('Fetched preferences:', preferences);
-      console.log('Fetched characteristics:', preferences.chatbotCharacteristics);
-      console.log('Fetched characteristics count:', preferences.chatbotCharacteristics?.length);
-      
+
       setCustomizeSettings({
         userName: preferences.userName || "",
         chatbotCharacteristics: preferences.chatbotCharacteristics || [],
         additionalInfo: preferences.additionalInfo || "",
-        applyToNewChats: preferences.applyToNewChats || false
       });
-      
+
       setAvailableCharacteristics(preferences.availableCharacteristics || []);
-      
-      console.log('=== END FETCH DEBUG ===');
     } catch (error: any) {
       console.error("Failed to fetch user preferences:", error);
       toast.error("Không thể tải thông tin cá nhân hóa");
-      
+
       // Fallback: fetch characteristics separately
       try {
-        const characteristicsResponse = await api.get('/chatbox/preferences/characteristics');
+        const characteristicsResponse = await api.get(
+          "/chatbox/preferences/characteristics"
+        );
         setAvailableCharacteristics(characteristicsResponse.data || []);
       } catch (charError) {
         console.error("Failed to fetch characteristics:", charError);
@@ -193,11 +219,11 @@ function ChatSidebar() {
 
   const handleNewChatClick = () => {
     // nếu đang ở chat new thì ko làm gì cả
-    if (location.pathname === '/chat/new') {
+    if (location.pathname === "/chat/new") {
       return;
     }
     clearCurrentChat();
-    navigate('/chat/new');
+    navigate("/chat/new");
   };
 
   // Group chat sessions by date
@@ -267,46 +293,26 @@ function ChatSidebar() {
   const handleSaveCustomize = async () => {
     try {
       setCustomizeLoading(true);
- 
-      // Tạo payload mới để đảm bảo không có reference issues
-      console.log(123,customizeSettings.chatbotCharacteristics);
-      
-      const payload = {
-        userName: customizeSettings.userName || "",
-        chatbotCharacteristics: [...customizeSettings.chatbotCharacteristics], // Clone array
-        additionalInfo: customizeSettings.additionalInfo || "",
-        applyToNewChats: customizeSettings.applyToNewChats
-      };
 
-      console.log('Payload object:', payload);
-      console.log('Payload characteristics:', payload.chatbotCharacteristics);
-      console.log('Payload characteristics length:', payload.chatbotCharacteristics.length);
-      console.log('Stringified payload:', JSON.stringify(payload, null, 2));
+      const payload = createChatboxUserPayload(customizeSettings);
 
-      // Log trước khi gọi API
-      console.log('About to call API with payload...');
+      await api.patch("/chatbox/user", payload);
 
-      const response = await api.patch('/chatbox/user', payload);
-      
-      console.log('API Response status:', response.status);
-      console.log('API Response data:', response.data);
-      console.log('=== END SAVE DEBUG ===');
-      
       toast.success("Đã lưu cài đặt cá nhân hóa thành công!");
-      
+
       // Fetch lại để verify
       setTimeout(async () => {
-        console.log('Fetching preferences after save to verify...');
         await fetchUserPreferences();
       }, 1000);
-      
+
       setShowCustomizeModal(false);
     } catch (error: any) {
       console.error("Failed to save preferences:", error);
-      console.log('Error response data:', error?.response?.data);
-      console.log('Error response status:', error?.response?.status);
-      console.log('Error full response:', error?.response);
-      toast.error(`Lưu cài đặt thất bại: ${error?.response?.data?.message || error.message}`);
+      toast.error(
+        `Lưu cài đặt thất bại: ${
+          error?.response?.data?.message || error.message
+        }`
+      );
     } finally {
       setCustomizeLoading(false);
     }
@@ -314,31 +320,37 @@ function ChatSidebar() {
 
   // Thêm validation trước khi save
   const validateAndSave = async () => {
-   
     await handleSaveCustomize();
   };
 
- 
   const handleCancelCustomize = () => {
     setShowCustomizeModal(false);
   };
 
-  const handleCharacteristicToggle = (characteristicValue: string) => { 
-    const isSelected = customizeSettings.chatbotCharacteristics.includes(characteristicValue);
-    
+  const handleCharacteristicToggle = (characteristicValue: string) => {
+    const isSelected =
+      customizeSettings.chatbotCharacteristics.includes(characteristicValue);
+
     let newCharacteristics;
     if (isSelected) {
       // Remove characteristic
       newCharacteristics = customizeSettings.chatbotCharacteristics.filter(
-        char => char !== characteristicValue
+        (char) => char !== characteristicValue
       );
     } else {
-      // Add characteristic
-      newCharacteristics = [...customizeSettings.chatbotCharacteristics, characteristicValue];
-    } 
+      // Add characteristic - chỉ cho phép tối đa 2
+      if (customizeSettings.chatbotCharacteristics.length >= 2) {
+        toast.warning("Bạn chỉ có thể chọn tối đa 2 đặc điểm");
+        return;
+      }
+      newCharacteristics = [
+        ...customizeSettings.chatbotCharacteristics,
+        characteristicValue,
+      ];
+    }
     setCustomizeSettings({
       ...customizeSettings,
-      chatbotCharacteristics: newCharacteristics
+      chatbotCharacteristics: newCharacteristics,
     });
   };
 
@@ -360,18 +372,22 @@ function ChatSidebar() {
           "lg:relative lg:z-0 lg:translate-x-0",
           isCollapsed ? "lg:w-16" : "w-72"
         )}
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {/* Sidebar header */}
-        <div className="flex h-14 items-center justify-between px-4">
+        <div className="flex items-center justify-between px-4 h-14">
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="rounded-md p-2 hover:bg-blue-800 lg:hidden"
+            className="p-2 rounded-md hover:bg-blue-800 lg:hidden"
             aria-label="Toggle sidebar"
           >
             <Menu size={20} />
           </button>
-          <div className={`flex flex-1 items-center ${isCollapsed ? 'justify-center' : 'justify-center lg:justify-start'}`}>
+          <div
+            className={`flex flex-1 items-center ${
+              isCollapsed ? "justify-center" : "justify-center lg:justify-start"
+            }`}
+          >
             {!isCollapsed && (
               <Link to="/" className="text-2xl font-medium">
                 Docs<span className="text-blue-300">+</span>AI
@@ -381,11 +397,15 @@ function ChatSidebar() {
           <div className="flex items-center gap-1">
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="rounded-md p-2 hover:bg-blue-800 hidden lg:block"
+              className="hidden p-2 rounded-md hover:bg-blue-800 lg:block"
               aria-label="Toggle sidebar collapse"
               title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              {isCollapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+              {isCollapsed ? (
+                <PanelLeftOpen size={20} />
+              ) : (
+                <PanelLeftClose size={20} />
+              )}
             </button>
           </div>
         </div>
@@ -394,7 +414,11 @@ function ChatSidebar() {
         <div className="p-4">
           <button
             onClick={handleNewChatClick}
-            className={`flex w-full items-center ${isCollapsed ? 'justify-center px-2 py-2' : 'justify-center gap-2 px-4 py-2'} rounded-md bg-blue-950 text-sm font-medium hover:bg-blue-900 transition-all`}
+            className={`flex w-full items-center ${
+              isCollapsed
+                ? "justify-center px-2 py-2"
+                : "justify-center gap-2 px-4 py-2"
+            } rounded-md bg-blue-950 text-sm font-medium hover:bg-blue-900 transition-all`}
             title="New chat"
           >
             <Plus size={16} />
@@ -407,7 +431,9 @@ function ChatSidebar() {
           <div className="space-y-2">
             <Link
               to="/"
-              className={`flex w-full items-center ${isCollapsed ? 'justify-center' : 'justify-start gap-3'} rounded-md px-3 py-2 text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors`}
+              className={`flex w-full items-center ${
+                isCollapsed ? "justify-center" : "justify-start gap-3"
+              } rounded-md px-3 py-2 text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors`}
               title="Home"
             >
               <Home size={16} className="flex-shrink-0" />
@@ -415,7 +441,9 @@ function ChatSidebar() {
             </Link>
             <Link
               to="/document-library"
-              className={`flex w-full items-center ${isCollapsed ? 'justify-center' : 'justify-start gap-3'} rounded-md px-3 py-2 text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors`}
+              className={`flex w-full items-center ${
+                isCollapsed ? "justify-center" : "justify-start gap-3"
+              } rounded-md px-3 py-2 text-sm text-blue-100 hover:bg-blue-800 hover:text-white transition-colors`}
               title="Document Library"
             >
               <Library size={16} className="flex-shrink-0" />
@@ -426,17 +454,16 @@ function ChatSidebar() {
 
         {/* Chat history - Ẩn thanh cuộn */}
         {!isCollapsed && (
-          <div 
+          <div
             className="flex-1 overflow-auto"
-            style={{ 
-              scrollbarWidth: 'none', 
-              msOverflowStyle: 'none', 
+            style={{
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
             }}
           >
-           
             {loading ? (
               <div className="p-4">
-                <div className="animate-pulse space-y-2">
+                <div className="space-y-2 animate-pulse">
                   {[...Array(5)].map((_, i) => (
                     <div key={i} className="h-8 bg-blue-800 rounded"></div>
                   ))}
@@ -446,7 +473,7 @@ function ChatSidebar() {
               <div className="px-4">
                 {Object.entries(groupedHistory).map(([groupKey, chats]) => (
                   <div key={groupKey} className="mb-4">
-                    <h3 className="text-xs font-medium text-blue-300 mb-2 uppercase tracking-wider">
+                    <h3 className="mb-2 text-xs font-medium tracking-wider text-blue-300 uppercase">
                       {groupKey}
                     </h3>
                     <div className="space-y-1">
@@ -461,11 +488,16 @@ function ChatSidebar() {
                                 : "text-blue-100 hover:bg-blue-800 hover:text-white"
                             )}
                           >
-                            <MessageSquare size={16} className="flex-shrink-0" />
-                            <span className="flex-1 truncate">{chat.title}</span>
+                            <MessageSquare
+                              size={16}
+                              className="flex-shrink-0"
+                            />
+                            <span className="flex-1 truncate">
+                              {chat.title}
+                            </span>
                             <button
                               onClick={(e) => handleChatMenuToggle(chat.id, e)}
-                              className="p-1 rounded hover:bg-blue-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="p-1 transition-opacity rounded opacity-0 hover:bg-blue-700 group-hover:opacity-100"
                               disabled={deletingChatId === chat.id}
                             >
                               {deletingChatId === chat.id ? (
@@ -478,10 +510,10 @@ function ChatSidebar() {
 
                           {/* Chat Options Menu */}
                           {showChatMenu === chat.id && (
-                            <div className="absolute right-0 top-full mt-1 z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-32">
+                            <div className="absolute right-0 z-50 py-1 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg top-full min-w-32">
                               <button
                                 onClick={(e) => handleDeleteChat(chat.id, e)}
-                                className="flex w-full  items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                className="flex items-center w-full gap-2 px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50"
                                 disabled={deletingChatId === chat.id}
                               >
                                 <Trash2 size={14} />
@@ -500,19 +532,25 @@ function ChatSidebar() {
         )}
 
         {/* Footer với Profile Menu */}
-        <div className="mt-auto border-t border-blue-800 p-4 relative">
+        <div className="relative p-4 mt-auto border-t border-blue-800">
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className={`flex w-full items-center ${isCollapsed ? 'justify-center' : 'gap-3'} rounded-md px-3 py-2 text-sm text-blue-100 hover:bg-blue-800 transition-colors`}
+            className={`flex w-full items-center ${
+              isCollapsed ? "justify-center" : "gap-3"
+            } rounded-md px-3 py-2 text-sm text-blue-100 hover:bg-blue-800 transition-colors`}
             title={user?.userName || "User Profile"}
           >
-            <div className="w-8 h-8 bg-blue-700 rounded-full flex items-center justify-center flex-shrink-0">
+            <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 bg-blue-700 rounded-full">
               <User size={16} />
             </div>
             {!isCollapsed && (
               <div className="flex-1 text-left">
-                <div className="font-medium text-white">{user?.userName || "User"}</div>
-                <div className="text-xs text-blue-300">{user?.email || "user@example.com"}</div>
+                <div className="font-medium text-white">
+                  {user?.userName || "User"}
+                </div>
+                <div className="text-xs text-blue-300">
+                  {user?.email || "user@example.com"}
+                </div>
               </div>
             )}
             {!isCollapsed && (
@@ -523,44 +561,52 @@ function ChatSidebar() {
           {/* Profile Dropdown Menu */}
           {showProfileMenu && (
             <>
-              <div 
-                className="fixed inset-0 z-40" 
+              <div
+                className="fixed inset-0 z-40"
                 onClick={() => setShowProfileMenu(false)}
               />
-              
-              <div className={`absolute ${isCollapsed ? 'left-16 bottom-4' : 'left-4 bottom-16'} right-4 z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-64`}>
+
+              <div
+                className={`absolute ${
+                  isCollapsed ? "left-16 bottom-4" : "left-4 bottom-16"
+                } right-4 z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-64`}
+              >
                 <div className="px-4 py-3 border-b border-gray-100">
-                  <div className="font-medium text-gray-900">{user?.userName || "User"}</div>
-                  <div className="text-sm text-gray-500">{user?.email || "user@example.com"}</div>
+                  <div className="font-medium text-gray-900">
+                    {user?.userName || "User"}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {user?.email || "user@example.com"}
+                  </div>
                 </div>
 
                 <div className="py-1">
                   <button
                     onClick={() => {
-                      navigate('/settings/account');
+                      navigate("/settings/account");
                     }}
-                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="flex items-center w-full gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     <User size={16} />
                     Profile Settings
                   </button>
-                  
+
                   <button
                     onClick={handleCustomizeClick}
-                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="flex items-center w-full gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     <Settings size={16} />
                     Tùy chỉnh chat
                   </button>
 
-                  <div className="border-t border-gray-100 my-1"></div>
-                  
+                  <div className="my-1 border-t border-gray-100"></div>
+
                   <button
                     onClick={() => {
                       setShowProfileMenu(false);
                       handleLogout();
                     }}
-                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    className="flex items-center w-full gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                   >
                     <LogOut size={16} />
                     Log out
@@ -582,12 +628,14 @@ function ChatSidebar() {
               {/* Header */}
               <div className="flex items-center justify-between p-6 border-b border-gray-700">
                 <div className="flex items-center gap-3">
-                  <h2 className="text-xl font-semibold">Tùy chỉnh ChatGPT</h2>
+                  <h2 className="text-xl font-semibold">
+                    Tùy chỉnh Chat DocAI
+                  </h2>
                   <HelpCircle size={20} className="text-gray-400" />
                 </div>
                 <button
                   onClick={handleCancelCustomize}
-                  className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                  className="p-2 transition-colors rounded-lg hover:bg-gray-700"
                   disabled={customizeLoading}
                 >
                   <X size={20} />
@@ -596,27 +644,33 @@ function ChatSidebar() {
 
               {/* Body */}
               <div className="p-6 space-y-6">
-                <p className="text-gray-300 text-sm">
-                  Hãy giới thiệu bản thân để nhận được các phản hồi chính xác và phù hợp hơn với bạn
+                <p className="text-sm text-gray-300">
+                  Hãy giới thiệu bản thân để nhận được các phản hồi chính xác và
+                  phù hợp hơn với bạn
                 </p>
 
                 {customizeLoading ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+                  <div className="py-8 text-center">
+                    <div className="w-8 h-8 mx-auto border-b-2 border-white rounded-full animate-spin"></div>
                     <p className="mt-2 text-gray-400">Đang tải cài đặt...</p>
                   </div>
                 ) : (
                   <>
                     {/* Name Field */}
                     <div>
-                      <label className="block text-sm font-medium mb-2">
-                        ChatGPT nên gọi bạn là gì?
+                      <label className="block mb-2 text-sm font-medium">
+                        Chat DocAI nên gọi bạn là gì?
                       </label>
                       <input
                         type="text"
                         value={customizeSettings.userName}
-                        onChange={(e) => setCustomizeSettings({...customizeSettings, userName: e.target.value})}
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onChange={(e) =>
+                          setCustomizeSettings({
+                            ...customizeSettings,
+                            userName: e.target.value,
+                          })
+                        }
+                        className="w-full px-3 py-2 text-white placeholder-gray-400 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Nhập tên bạn muốn ChatGPT gọi"
                       />
                     </div>
@@ -625,64 +679,96 @@ function ChatSidebar() {
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <label className="block text-sm font-medium">
-                          ChatGPT nên có những đặc điểm gì?
+                          Chat DocAI nên có những đặc điểm gì?
                         </label>
                         <HelpCircle size={16} className="text-gray-400" />
                       </div>
-                      
+                      <p className="mb-2 text-xs text-gray-400">
+                        Chọn tối đa 2 đặc điểm (
+                        {customizeSettings.chatbotCharacteristics.length}/2)
+                      </p>
+
                       {/* Available Characteristics */}
                       <div className="flex flex-wrap gap-2 mt-3">
                         {availableCharacteristics.map((characteristic) => {
-                          const isSelected = customizeSettings.chatbotCharacteristics.includes(characteristic.value); 
+                          const isSelected =
+                            customizeSettings.chatbotCharacteristics.includes(
+                              characteristic.value
+                            );
+                          const isMaxSelected =
+                            customizeSettings.chatbotCharacteristics.length >=
+                            2;
+                          const isDisabled = !isSelected && isMaxSelected;
+
                           return (
                             <button
                               key={characteristic.value}
-                              onClick={() => handleCharacteristicToggle(characteristic.value)}
+                              onClick={() =>
+                                handleCharacteristicToggle(characteristic.value)
+                              }
+                              disabled={isDisabled}
                               className={`px-3 py-1 border rounded-full text-sm transition-colors ${
-                                isSelected 
-                                  ? 'bg-blue-600 border-blue-500 text-white' 
-                                  : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
+                                isSelected
+                                  ? "bg-blue-600 border-blue-500 text-white"
+                                  : isDisabled
+                                  ? "bg-gray-800 border-gray-700 text-gray-500 cursor-not-allowed"
+                                  : "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
                               }`}
                             >
-                              {isSelected ? '✓ ' : '+ '}{characteristic.displayName}
+                              {isSelected ? "✓ " : "+ "}
+                              {characteristic.displayName}
                             </button>
                           );
                         })}
                       </div>
-
-                 
                     </div>
 
                     {/* Additional Info Field */}
                     <div>
-                      <label className="block text-sm font-medium mb-2">
+                      <label className="block mb-2 text-sm font-medium">
                         Thông tin bổ sung
                       </label>
                       <textarea
                         value={customizeSettings.additionalInfo}
-                        onChange={(e) => setCustomizeSettings({...customizeSettings, additionalInfo: e.target.value})}
+                        onChange={(e) =>
+                          setCustomizeSettings({
+                            ...customizeSettings,
+                            additionalInfo: e.target.value,
+                          })
+                        }
                         rows={4}
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        className="w-full px-3 py-2 text-white placeholder-gray-400 bg-gray-700 border border-gray-600 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Hãy mô tả thêm về bản thân hoặc cách bạn muốn ChatGPT phản hồi..."
                       />
                     </div>
 
                     {/* Toggle for new chats */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Áp dụng cho các đoạn chat mới</span>
+                    {/* <div className="flex items-center justify-between">
+                      <span className="text-sm">
+                        Áp dụng cho các đoạn chat mới
+                      </span>
                       <button
-                        onClick={() => setCustomizeSettings({...customizeSettings, applyToNewChats: !customizeSettings.applyToNewChats})}
+                        onClick={() =>
+                          setCustomizeSettings({
+                            ...customizeSettings,
+                            applyToNewChats: !customizeSettings.applyToNewChats,
+                          })
+                        }
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          customizeSettings.applyToNewChats ? 'bg-blue-600' : 'bg-gray-600'
+                          customizeSettings.applyToNewChats
+                            ? "bg-blue-600"
+                            : "bg-gray-600"
                         }`}
                       >
                         <span
                           className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            customizeSettings.applyToNewChats ? 'translate-x-6' : 'translate-x-1'
+                            customizeSettings.applyToNewChats
+                              ? "translate-x-6"
+                              : "translate-x-1"
                           }`}
                         />
                       </button>
-                    </div>
+                    </div> */}
                   </>
                 )}
               </div>
@@ -691,14 +777,14 @@ function ChatSidebar() {
               <div className="flex justify-end gap-3 p-6 border-t border-gray-700">
                 <button
                   onClick={handleCancelCustomize}
-                  className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+                  className="px-4 py-2 text-gray-300 transition-colors hover:text-white"
                   disabled={customizeLoading}
                 >
                   Hủy bỏ
                 </button>
                 <button
                   onClick={validateAndSave} // Thay vì handleSaveCustomize
-                  className="px-6 py-2 bg-white text-gray-900 rounded-lg hover:bg-gray-100 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2 font-medium text-gray-900 transition-colors bg-white rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={customizeLoading}
                 >
                   {customizeLoading ? "Đang lưu..." : "Lưu"}
@@ -710,10 +796,10 @@ function ChatSidebar() {
       )}
 
       {/* Mobile header */}
-      <div className="fixed left-0 right-0 top-0 z-30 flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4 lg:hidden">
+      <div className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 bg-white border-b border-gray-200 h-14 lg:hidden">
         <button
           onClick={() => setIsOpen(true)}
-          className="rounded-md p-2 hover:bg-gray-100"
+          className="p-2 rounded-md hover:bg-gray-100"
           aria-label="Open sidebar"
         >
           <Menu size={20} />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   Card,
   Input,
@@ -7,8 +7,8 @@ import {
   Space,
   Select,
   Tooltip,
-  message
-} from 'antd';
+  message,
+} from "antd";
 import {
   MessageOutlined,
   SendOutlined,
@@ -17,15 +17,18 @@ import {
   RobotOutlined,
   FileTextOutlined,
   LockOutlined,
-  PlusOutlined
-} from '@ant-design/icons';
-import { sendMessageStream, getChatModels, createChatSession } from '../lib/api/chat';
-import ChatMessage from './chat-message';
+  PlusOutlined,
+} from "@ant-design/icons";
+import {
+  sendMessageStream,
+  getChatModels,
+  createChatSession,
+} from "../lib/api/chat";
+import ChatMessage from "./chat-message";
+import ModelChangeConfirmModal from "./ModelChangeConfirmModal";
 
 const { Text } = Typography;
 const { TextArea } = Input;
-
-
 
 interface Message {
   id: string;
@@ -44,18 +47,20 @@ interface DocumentChatBoxProps {
 
 export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
   documentId,
-  documentTitle
+  documentTitle,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [models, setModels] = useState<any[]>([]);
-  const [selectedModel, setSelectedModel] = useState<string>('');
+  const [selectedModel, setSelectedModel] = useState<string>("");
   const [loadingModels, setLoadingModels] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [hasChatStarted, setHasChatStarted] = useState<boolean>(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingModel, setPendingModel] = useState<string>("");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<any>(null);
@@ -72,8 +77,8 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
           setSelectedModel(models[0].modelName);
         }
       } catch (error) {
-        console.error('Failed to load models:', error);
-        message.error('Failed to load AI models');
+        console.error("Failed to load models:", error);
+        message.error("Failed to load AI models");
       } finally {
         setLoadingModels(false);
       }
@@ -94,22 +99,74 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
     }
   }, [messages, hasChatStarted]);
 
+  // Helper function to check if there's a conversation (user message + AI response)
+  const hasConversation = () => {
+    if (messages.length < 2) return false;
+
+    let hasUserMessage = false;
+    for (const message of messages) {
+      if (message.isUser) {
+        hasUserMessage = true;
+      } else if (!message.isUser && hasUserMessage) {
+        // Found AI response after user message
+        return true;
+      }
+    }
+    return false;
+  };
+
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const startNewChat = () => {
     setMessages([]);
     setHasChatStarted(false);
     setSessionId(null);
-    setInputValue('');
-    message.success('Started new conversation');
+    setInputValue("");
+    message.success("Started new conversation");
+  };
+
+  const handleModelChange = (modelName: string) => {
+    if (modelName === selectedModel) return;
+
+    // If there's an ongoing conversation, show confirmation modal
+    if (hasConversation()) {
+      setPendingModel(modelName);
+      setShowConfirmModal(true);
+    } else {
+      // No conversation, change model directly
+      setSelectedModel(modelName);
+    }
+  };
+
+  const handleStartNewChatWithModel = () => {
+    // Start new chat and change to pending model
+    const newModelName = pendingModel;
+    setMessages([]);
+    setHasChatStarted(false);
+    setSessionId(null);
+    setInputValue("");
+    setSelectedModel(newModelName);
+    setShowConfirmModal(false);
+    setPendingModel("");
+    message.success(
+      `Started new conversation with ${
+        models.find((m) => m.modelName === newModelName)?.displayName ||
+        newModelName
+      }`
+    );
+  };
+
+  const handleContinueWithCurrentModel = () => {
+    setShowConfirmModal(false);
+    setPendingModel("");
   };
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isStreaming || !selectedModel) {
       if (!selectedModel) {
-        message.warning('Please select an AI model first');
+        message.warning("Please select an AI model first");
       }
       return;
     }
@@ -118,11 +175,11 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
       id: Date.now().toString(),
       content: inputValue.trim(),
       isUser: true,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputValue('');
+    setMessages((prev) => [...prev, userMessage]);
+    setInputValue("");
     setIsStreaming(true);
 
     // Mark that chat has started - prevent model changes
@@ -134,19 +191,22 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
     const aiMessageId = (Date.now() + 1).toString();
     const aiMessage: Message = {
       id: aiMessageId,
-      content: '', // Start with empty content
+      content: "", // Start with empty content
       isUser: false,
       timestamp: new Date(),
-      isStreaming: true
+      isStreaming: true,
     };
 
-    setMessages(prev => [...prev, aiMessage]);
+    setMessages((prev) => [...prev, aiMessage]);
 
     try {
       // Ensure we have a session ID like ChatDetail does
       let effectiveSessionId = sessionId;
       if (!effectiveSessionId) {
-        const created = await createChatSession({ title: '', modelName: selectedModel });
+        const created = await createChatSession({
+          title: "",
+          modelName: selectedModel,
+        });
         effectiveSessionId = created.id;
         setSessionId(effectiveSessionId);
       }
@@ -155,23 +215,25 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
         message: userMessage.content,
         sessionId: effectiveSessionId!,
         modelName: selectedModel,
-        documentId: documentId
+        documentId: documentId,
       } as const;
 
       await sendMessageStream(
         payload,
         (chunk: any) => {
           // Handle streaming chunks - use chunk.content (full accumulated content)
-          const chunkContent = chunk.content || '';
-          setMessages(prev =>
-            prev.map(msg =>
+          const chunkContent = chunk.content || "";
+          setMessages((prev) =>
+            prev.map((msg) =>
               msg.id === aiMessageId
                 ? {
                     ...msg,
                     content: chunkContent || msg.content,
                     isStreaming: !chunk.isComplete,
-                    documentSources: chunk.documentSources ?? msg.documentSources,
-                    hasDocumentContext: chunk.hasDocumentContext ?? msg.hasDocumentContext
+                    documentSources:
+                      chunk.documentSources ?? msg.documentSources,
+                    hasDocumentContext:
+                      chunk.hasDocumentContext ?? msg.hasDocumentContext,
                   }
                 : msg
             )
@@ -179,48 +241,56 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
         },
         (finalMessage: any) => {
           // Handle completion
-          setMessages(prev =>
-            prev.map(msg =>
+          setMessages((prev) =>
+            prev.map((msg) =>
               msg.id === aiMessageId
                 ? {
                     ...msg,
                     content: finalMessage.message || msg.content,
-                    isStreaming: false
+                    isStreaming: false,
                   }
                 : msg
             )
           );
-          console.log('Chat completed:', finalMessage);
+          console.log("Chat completed:", finalMessage);
         },
         (error: any) => {
-          console.error('Streaming error:', error);
-          setMessages(prev =>
-            prev.map(msg =>
+          console.error("Streaming error:", error);
+          setMessages((prev) =>
+            prev.map((msg) =>
               msg.id === aiMessageId
-                ? { ...msg, content: 'Sorry, I encountered an error. Please try again.', isStreaming: false }
+                ? {
+                    ...msg,
+                    content: "Sorry, I encountered an error. Please try again.",
+                    isStreaming: false,
+                  }
                 : msg
             )
           );
-          message.error('Failed to get AI response');
+          message.error("Failed to get AI response");
         }
       );
     } catch (error) {
-      console.error('Chat error:', error);
-      setMessages(prev =>
-        prev.map(msg =>
+      console.error("Chat error:", error);
+      setMessages((prev) =>
+        prev.map((msg) =>
           msg.id === aiMessageId
-            ? { ...msg, content: 'Sorry, I encountered an error. Please try again.', isStreaming: false }
+            ? {
+                ...msg,
+                content: "Sorry, I encountered an error. Please try again.",
+                isStreaming: false,
+              }
             : msg
         )
       );
-      message.error('Failed to send message');
+      message.error("Failed to send message");
     } finally {
       setIsStreaming(false);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -252,7 +322,7 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
             icon={<MessageOutlined />}
             onClick={toggleChat}
             className="shadow-lg hover:shadow-xl transition-all duration-300 bg-blue-600 hover:bg-blue-700"
-            style={{ width: '56px', height: '56px' }}
+            style={{ width: "56px", height: "56px" }}
           />
         </Tooltip>
       </div>
@@ -264,9 +334,9 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
       <Card
         className="shadow-2xl border-0 overflow-hidden transition-all duration-300"
         style={{
-          width: '500px',
-          height: isMinimized ? '60px' : '700px',
-          borderRadius: '12px'
+          width: "500px",
+          height: isMinimized ? "60px" : "700px",
+          borderRadius: "12px",
         }}
         styles={{ body: { padding: 0 } }}
       >
@@ -318,20 +388,27 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
             {/* Model Selection */}
             <div className="p-3 border-b bg-gray-50">
               <Tooltip
-                title={hasChatStarted ? "Cannot change model after starting the conversation" : "Select an AI model to chat with"}
+                title={
+                  hasConversation()
+                    ? "Cannot change model after conversation has started"
+                    : "Select an AI model to chat with"
+                }
                 placement="top"
               >
                 <Select
                   value={selectedModel}
-                  onChange={setSelectedModel}
+                  onChange={handleModelChange}
                   placeholder="Select AI Model"
                   size="small"
-                  style={{ width: '100%' }}
+                  style={{ width: "100%" }}
                   loading={loadingModels}
-                  disabled={hasChatStarted}
+                  disabled={loadingModels}
                 >
-                  {models.map(model => (
-                    <Select.Option key={model.modelName} value={model.modelName}>
+                  {models.map((model) => (
+                    <Select.Option
+                      key={model.modelName}
+                      value={model.modelName}
+                    >
                       <div className="flex items-center">
                         <RobotOutlined className="mr-2" />
                         {model.displayName || model.modelName}
@@ -340,7 +417,7 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
                   ))}
                 </Select>
               </Tooltip>
-              {hasChatStarted && (
+              {hasConversation() && (
                 <Text type="secondary" className="text-xs mt-1 block">
                   <LockOutlined className="mr-1" />
                   Model locked for this conversation
@@ -351,7 +428,11 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
             {/* Messages */}
             <div
               className="flex-1 overflow-y-auto p-4 space-y-4"
-              style={{ height: '520px', display: 'flex', flexDirection: 'column' }}
+              style={{
+                height: "520px",
+                display: "flex",
+                flexDirection: "column",
+              }}
             >
               <div className="flex-grow space-y-4">
                 {messages.length === 0 && (
@@ -362,21 +443,21 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
                     </Text>
                   </div>
                 )}
-                
+
                 {messages.map((message) => (
                   <ChatMessage
                     key={message.id}
-                    role={message.isUser ? 'user' : 'assistant'}
+                    role={message.isUser ? "user" : "assistant"}
                     content={message.content}
                     timestamp={message.timestamp}
                     isStreaming={message.isStreaming}
                   />
                 ))}
-                
+
                 {/* REMOVED BLOCK: The isStreaming indicator was removed from here.
                   The visual feedback is now handled by the AI message bubble appearing and being populated with text.
                 */}
-                
+
                 <div ref={messagesEndRef} />
               </div>
             </div>
@@ -406,6 +487,22 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
           </>
         )}
       </Card>
+
+      {/* Model Change Confirmation Modal */}
+      <ModelChangeConfirmModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        currentModel={
+          models.find((m) => m.modelName === selectedModel)?.displayName ||
+          selectedModel
+        }
+        newModel={
+          models.find((m) => m.modelName === pendingModel)?.displayName ||
+          pendingModel
+        }
+        onStartNewChat={handleStartNewChatWithModel}
+        onContinueWithCurrent={handleContinueWithCurrentModel}
+      />
     </div>
   );
 };

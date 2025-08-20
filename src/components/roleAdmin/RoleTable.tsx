@@ -1,7 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Filter, Plus, Trash2 } from "lucide-react";
-import { getRolesApi, Role, useDeleteRole } from "../../services/roleService";
+import {
+  useRolesPaginated,
+  Role,
+  useDeleteRole,
+} from "../../services/roleService";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import DeleteConfirmationModal from "../common/DeleteConfirmationModal";
@@ -13,62 +17,47 @@ interface Filters {
 
 const RoleTable: React.FC = () => {
   const navigate = useNavigate();
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [showFilters, setShowFilters] = useState(false);
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     role: Role | null;
   }>({ isOpen: false, role: null });
 
-  const deleteRoleMutation = useDeleteRole();
-
   const [filters, setFilters] = useState<Filters>({
     name: "",
     description: "",
   });
 
-  const fetchRoles = async (page = 1) => {
-    setLoading(true);
-    try {
-      const activeFilters = Object.fromEntries(
-        Object.entries(filters).filter(([_, value]) => value !== "")
-      );
+  // React Query hooks
+  const {
+    data: rolesData,
+    isLoading,
+    isError,
+    error,
+  } = useRolesPaginated({
+    ...Object.fromEntries(
+      Object.entries(filters)
+        .filter(([_, value]) => value !== "")
+        .map(([key, value]) => [key === "name" ? "roleName" : key, value])
+    ),
+    page: currentPage,
+    size: pageSize,
+  });
 
-      // Map name to roleName for API
-      const apiFilters = { ...activeFilters };
-      if (apiFilters.name) {
-        apiFilters.roleName = apiFilters.name;
-        delete apiFilters.name;
-      }
+  const deleteRoleMutation = useDeleteRole();
 
-      const response = await getRolesApi({
-        ...apiFilters,
-        page,
-        size: 10,
-      });
-
-      setRoles(response.items);
-      setCurrentPage(response.page);
-      setTotalPages(response.totalPages);
-      setTotal(response.total);
-    } catch (error: any) {
-      toast.error(`Error loading roles: ${error.message}`);
-      setRoles([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchRoles(1);
-  }, [filters]);
+  // Handle errors
+  if (isError) toast.error(`Error loading roles: ${error?.message}`);
 
   const handleFilterChange = (key: keyof Filters, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
+    setCurrentPage(1);
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
     setCurrentPage(1);
   };
 
@@ -87,7 +76,7 @@ const RoleTable: React.FC = () => {
       onSuccess: () => {
         toast.success("Role deleted successfully!");
         setDeleteModal({ isOpen: false, role: null });
-        fetchRoles(currentPage);
+        // Data will be automatically refreshed via queryClient.invalidateQueries
       },
       onError: (error: any) => {
         toast.error(error.message || "Failed to delete role");
@@ -98,6 +87,10 @@ const RoleTable: React.FC = () => {
   const handleDeleteCancel = () => {
     setDeleteModal({ isOpen: false, role: null });
   };
+
+  const roles = rolesData?.items || [];
+  const total = rolesData?.total || 0;
+  const totalPages = rolesData?.totalPages || 1;
 
   return (
     <motion.div
@@ -180,7 +173,7 @@ const RoleTable: React.FC = () => {
           </thead>
 
           <tbody className="divide-y divide-gray-700">
-            {loading ? (
+            {isLoading ? (
               <tr>
                 <td colSpan={6} className="px-6 py-4 text-center">
                   <div className="flex justify-center">
@@ -260,19 +253,35 @@ const RoleTable: React.FC = () => {
       {/* Pagination */}
       {totalPages > 0 && (
         <div className="flex items-center justify-between mt-6">
-          <div className="text-sm text-gray-400">
-            Page {currentPage} of {totalPages} ({total} total roles)
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-gray-400">
+              Page {currentPage} of {totalPages} ({total} total roles)
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-400">Show:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                className="px-2 py-1 text-sm text-white bg-gray-600 rounded"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+              <span className="text-sm text-gray-400">per page</span>
+            </div>
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => fetchRoles(currentPage - 1)}
+              onClick={() => setCurrentPage(currentPage - 1)}
               disabled={currentPage === 1}
               className="px-3 py-1 text-white bg-gray-600 rounded disabled:opacity-50"
             >
               Previous
             </button>
             <button
-              onClick={() => fetchRoles(currentPage + 1)}
+              onClick={() => setCurrentPage(currentPage + 1)}
               disabled={currentPage === totalPages}
               className="px-3 py-1 text-white bg-gray-600 rounded disabled:opacity-50"
             >

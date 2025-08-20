@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export interface ChatboxStatisticsData {
   date: string;
@@ -256,8 +256,14 @@ const createAIConfiguration = async (
 
 // React Query mutation for creating AI configuration
 export const useCreateAIConfiguration = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: createAIConfiguration,
+    onSuccess: () => {
+      // Invalidate AI configurations queries to refresh the list
+      queryClient.invalidateQueries({ queryKey: ["aiConfigurations"] });
+    },
   });
 };
 
@@ -293,6 +299,8 @@ const updateAIConfiguration = async (
 
 // React Query mutation for updating AI configuration
 export const useUpdateAIConfiguration = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: ({
       id,
@@ -301,6 +309,10 @@ export const useUpdateAIConfiguration = () => {
       id: string;
       data: UpdateAIConfigurationRequest;
     }) => updateAIConfiguration(id, data),
+    onSuccess: () => {
+      // Invalidate AI configurations queries to refresh the list
+      queryClient.invalidateQueries({ queryKey: ["aiConfigurations"] });
+    },
   });
 };
 
@@ -330,8 +342,14 @@ const deleteAIConfiguration = async (id: string): Promise<void> => {
 
 // React Query mutation for deleting AI configuration
 export const useDeleteAIConfiguration = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: deleteAIConfiguration,
+    onSuccess: () => {
+      // Invalidate AI configurations queries to refresh the list
+      queryClient.invalidateQueries({ queryKey: ["aiConfigurations"] });
+    },
   });
 };
 
@@ -413,20 +431,38 @@ const setDefaultAIConfiguration = async (id: string): Promise<void> => {
 
 // React Query mutations
 export const useActivateAIConfiguration = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: activateAIConfiguration,
+    onSuccess: () => {
+      // Invalidate AI configurations queries to refresh the list
+      queryClient.invalidateQueries({ queryKey: ["aiConfigurations"] });
+    },
   });
 };
 
 export const useDeactivateAIConfiguration = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: deactivateAIConfiguration,
+    onSuccess: () => {
+      // Invalidate AI configurations queries to refresh the list
+      queryClient.invalidateQueries({ queryKey: ["aiConfigurations"] });
+    },
   });
 };
 
 export const useSetDefaultAIConfiguration = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: setDefaultAIConfiguration,
+    onSuccess: () => {
+      // Invalidate AI configurations queries to refresh the list
+      queryClient.invalidateQueries({ queryKey: ["aiConfigurations"] });
+    },
   });
 };
 

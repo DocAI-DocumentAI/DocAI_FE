@@ -6,6 +6,7 @@ import PublicRoutes from "./routes/PublicRoutes";
 import { AdminRoute } from "./routes/PrivateRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Toaster } from "react-hot-toast";
 import { ChatProvider } from "./context/chat-context";
 import { initializeAuth } from "./store/slices/authSlice";
 
@@ -82,6 +83,7 @@ const App: React.FC = () => {
       <ChatProvider>
         <BrowserRouter>
           <ToastContainer />
+          <Toaster position="top-right" />
           <Routes>
             {/* Public Routes */}
             {PublicRoutes.map((route) => (
@@ -180,6 +182,7 @@ const App: React.FC = () => {
     <ChatProvider>
       <BrowserRouter>
         <ToastContainer />
+        <Toaster position="top-right" />
         <Routes>
           {/* Public Routes */}
           {PublicRoutes.map((route) => (
