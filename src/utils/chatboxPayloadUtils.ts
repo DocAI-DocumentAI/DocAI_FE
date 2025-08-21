@@ -1,6 +1,6 @@
 /**
  * Utility function to create chatbox user payload
- * Omits chatbotCharacteristics field if user hasn't selected any characteristics
+ * Always includes chatbotCharacteristics field, even when empty
  */
 
 interface CustomizeSettings {
@@ -12,7 +12,7 @@ interface CustomizeSettings {
 interface ChatboxUserPayload {
   userName: string;
   additionalInfo: string;
-  chatbotCharacteristics?: string[];
+  chatbotCharacteristics: string[];
 }
 
 export function createChatboxUserPayload(
@@ -21,9 +21,10 @@ export function createChatboxUserPayload(
   const payload: ChatboxUserPayload = {
     userName: customizeSettings.userName || "",
     additionalInfo: customizeSettings.additionalInfo || "",
+    chatbotCharacteristics: [], // Always include this field
   };
 
-  // Chỉ thêm chatbotCharacteristics nếu người dùng đã chọn (tối đa 2)
+  // Luôn thêm chatbotCharacteristics, ngay cả khi rỗng
   if (
     customizeSettings.chatbotCharacteristics &&
     customizeSettings.chatbotCharacteristics.length > 0
@@ -33,6 +34,7 @@ export function createChatboxUserPayload(
       customizeSettings.chatbotCharacteristics.slice(0, 2);
     payload.chatbotCharacteristics = [...limitedCharacteristics];
   }
+  // Nếu không có characteristics nào được chọn, chatbotCharacteristics sẽ là mảng rỗng []
 
   return payload;
 }
@@ -58,6 +60,10 @@ export function testChatboxPayloadLogic() {
     "Has chatbotCharacteristics field:",
     "chatbotCharacteristics" in payloadWithoutCharacteristics
   );
+  console.log(
+    "chatbotCharacteristics value:",
+    payloadWithoutCharacteristics.chatbotCharacteristics
+  );
   console.log("---");
 
   // Test case 2: With characteristics selected
@@ -77,6 +83,10 @@ export function testChatboxPayloadLogic() {
     "Has chatbotCharacteristics field:",
     "chatbotCharacteristics" in payloadWithCharacteristics
   );
+  console.log(
+    "chatbotCharacteristics value:",
+    payloadWithCharacteristics.chatbotCharacteristics
+  );
   console.log("---");
 
   // Test case 3: Empty string userName
@@ -95,6 +105,33 @@ export function testChatboxPayloadLogic() {
   console.log(
     "Has chatbotCharacteristics field:",
     "chatbotCharacteristics" in payloadWithEmptyUserName
+  );
+  console.log(
+    "chatbotCharacteristics value:",
+    payloadWithEmptyUserName.chatbotCharacteristics
+  );
+
+  // Test case 4: More than 2 characteristics (should be limited to 2)
+  const settingsWithManyCharacteristics: CustomizeSettings = {
+    userName: "Bob Wilson",
+    chatbotCharacteristics: [
+      "friendly",
+      "professional",
+      "creative",
+      "analytical",
+    ],
+    additionalInfo: "I work with many projects",
+  };
+
+  const payloadWithManyCharacteristics = createChatboxUserPayload(
+    settingsWithManyCharacteristics
+  );
+  console.log("Test 4 - More than 2 characteristics:");
+  console.log("Input:", settingsWithManyCharacteristics);
+  console.log("Output:", payloadWithManyCharacteristics);
+  console.log(
+    "chatbotCharacteristics length:",
+    payloadWithManyCharacteristics.chatbotCharacteristics.length
   );
 
   console.log("=== End Testing ===");
