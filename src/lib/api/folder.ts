@@ -197,29 +197,7 @@ export async function getFolderTree(
   return result;
 }
 
-export const getPublicFolderTree = async (
-  params?: { maxDepth?: number; includeSystemFolders?: boolean }
-): Promise<FolderTreeResponse> => {
-  const query = new URLSearchParams();
-  if (params?.maxDepth !== undefined) query.append("maxDepth", String(params.maxDepth));
-  if (params?.includeSystemFolders !== undefined) query.append("includeSystemFolders", String(params.includeSystemFolders));
 
-  const response = await api.get(`/document/folders/tree/public?${query.toString()}`);
-  const payload = response.data;
-  const data = payload?.data || payload;
-  const root = Array.isArray(data?.rootFolders) ? data.rootFolders : data?.rootNodes || [];
-  const mapped = root.map((f: any) => mapApiFolderToFolderNode(f));
-  return {
-    success: Boolean(payload?.success ?? true),
-    message: payload?.message || "",
-    data: {
-      rootNodes: mapped,
-      departmentId: data?.departmentId || "",
-      totalFolders: data?.totalFolders ?? 0,
-      totalDocuments: data?.totalDocuments ?? 0,
-    },
-  };
-};
 
 export const getFolderChildren = async (
   parentId?: string
@@ -430,6 +408,36 @@ export const checkUserPermission = async (
   data: CheckUserPermissionRequest
 ): Promise<CheckUserPermissionResponse> => {
   const response = await api.post(`/document/folder-permissions/${folderId}/check`, data);
+  return response.data;
+};
+
+// Get public folder tree
+export const getPublicFolderTree = async (params?: {
+  includeSystemFolders?: boolean;
+}): Promise<FolderTreeResponse> => {
+  const searchParams = new URLSearchParams();
+  if (params?.includeSystemFolders !== undefined) {
+    searchParams.append("includeSystemFolders", String(params.includeSystemFolders));
+  }
+
+  const url = `/document/folders/tree/public${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+  const response = await api.get(url);
+
+  // Transform the response to match our expected format
+  const data = response.data?.data;
+  if (data?.rootFolder) {
+    return {
+      success: true,
+      message: response.data.message || "Public folder tree retrieved successfully",
+      data: {
+        rootNodes: [mapApiFolderToFolderNode(data.rootFolder)],
+        departmentId: null,
+        totalFolders: data.totalFolders || 0,
+        totalDocuments: 0
+      }
+    };
+  }
+
   return response.data;
 };
 

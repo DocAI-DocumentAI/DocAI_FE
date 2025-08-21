@@ -126,14 +126,7 @@ export default function NewChatPage() {
               Creating chat and sending message...
             </div>
           )}
-          {streaming && (
-            <div className="mt-2 text-sm text-center text-gray-500">
-              <div className="flex items-center justify-center gap-2">
-                <div className="w-3 h-3 border border-gray-300 rounded-full animate-spin border-t-blue-600"></div>
-                AI is responding...
-              </div>
-            </div>
-          )}
+
         </div>
       </div>
     </div>

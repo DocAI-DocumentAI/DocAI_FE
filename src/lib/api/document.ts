@@ -170,6 +170,11 @@ export interface MyDocumentItem {
   submittedByName: string;
   isPublic: boolean;
   signedBy: string;
+  // New folder fields for approval workflow
+  folderId?: string;
+  folderName?: string;
+  targetFolderId?: string;
+  targetFolderName?: string;
 }
 
 export const getMyDocuments = async (
@@ -1084,6 +1089,11 @@ export interface ApprovalHistoryItem {
   isPublic: boolean;
   isOfficial: boolean;
   totalDownloads: number;
+  // New folder fields for approval workflow
+  folderId?: string;
+  folderName?: string;
+  targetFolderId?: string;
+  targetFolderName?: string;
 }
 
 export interface ApprovalHistoryResponse {

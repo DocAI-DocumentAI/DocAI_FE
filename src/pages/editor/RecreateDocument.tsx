@@ -520,6 +520,7 @@ export default function RecreateDocument() {
                       allowClear={true}
                       filterPermission="write"
                       disabled={isAnyOperationInProgress}
+                      treeType={isPublicState ? 'public' : 'department'}
                     />
                   </Form.Item>
                 </Col>

@@ -842,6 +842,7 @@ export default function UploadDocument() {
                         placeholder="Select folder (optional)"
                         allowClear={true}
                         filterPermission="write"
+                        treeType={isPublicState ? 'public' : 'department'}
                       />
                     </Form.Item>
                   </Col>

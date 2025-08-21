@@ -215,8 +215,8 @@ const DocumentReplacement: React.FC = () => {
       file: selectedFile,
       replacementDocumentId: selectedDocument.id,
       documentTypeId: values.type || "",
-      isPublic: false, // Add missing IsPublic field
-      folderId: selectedFolderId,
+      isPublic: isPublicState, // Use the actual isPublic state
+      folderId: values.folderId || selectedFolderId || "",
     };
 
     const isSubmitting = action === 'submit';
@@ -518,6 +518,7 @@ const DocumentReplacement: React.FC = () => {
                         placeholder="Select folder (optional)"
                         allowClear={true}
                         filterPermission="write"
+                        treeType={isPublicState ? 'public' : 'department'}
                       />
                     </Form.Item>
                   </Col>

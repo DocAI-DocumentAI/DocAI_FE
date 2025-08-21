@@ -1,6 +1,6 @@
 import { Layout, Typography, Card, Button, Input, Select, DatePicker, Form, Row, Col, Space, Spin, Switch } from "antd"
 import { UploadOutlined, ArrowRightOutlined, FolderOutlined } from "@ant-design/icons"
-import { regenerateSummary, getDocumentTypes, DocumentType, editDocument } from "../../lib/api/document";
+import {  regenerateSummary, getDocumentTypes, DocumentType, editDocument } from "../../lib/api/document";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import WysiwygEditor from 'react-simple-wysiwyg';
@@ -200,7 +200,14 @@ export default function EditDocument() {
     formData.append("ReplacementDocumentId", values.replacementDocumentId || "");
     formData.append("DocumentTypeId", values.type || "");
     formData.append("IsPublic", isPublicState ? "true" : "false");
-    formData.append("FolderId", selectedFolderId || "");
+
+    formData.append("FolderId", values.folderId || selectedFolderId || "");
+
+    // Only append file if a new file is selected
+    if (selectedFile) {
+      formData.append("File", selectedFile);
+    }
+
 
     try {
       setIsUploading(true);
@@ -381,6 +388,36 @@ export default function EditDocument() {
                         <Text>Make this document public</Text>
                       </div>
                     </Form.Item>
+                  </Col>
+                </Row>
+
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      name="folderId"
+                      label={
+                        <span>
+                          <FolderOutlined style={{ marginRight: 4 }} />
+                          Folder Location
+                        </span>
+                      }
+                    >
+                      <FolderSelectorInput
+                        selectedFolderId={selectedFolderId}
+                        onFolderSelect={(folderId) => {
+                          setSelectedFolderId(folderId);
+                          form.setFieldValue('folderId', folderId);
+                        }}
+                        placeholder="Select folder (optional)"
+                        allowClear={true}
+                        filterPermission="write"
+                        disabled={isAnyOperationInProgress}
+                        treeType={isPublicState ? 'public' : 'department'}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    {/* Empty column for spacing */}
                   </Col>
                 </Row>
 
@@ -573,6 +610,7 @@ export default function EditDocument() {
                         allowClear={true}
                         filterPermission="write"
                         disabled={isAnyOperationInProgress}
+                        treeType={isPublicState ? 'public' : 'department'}
                       />
                     </Form.Item>
                   </Col>
@@ -595,6 +633,36 @@ export default function EditDocument() {
                         <Text>Make this document public</Text>
                       </div>
                     </Form.Item>
+                  </Col>
+                </Row>
+
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      name="folderId"
+                      label={
+                        <span>
+                          <FolderOutlined style={{ marginRight: 4 }} />
+                          Folder Location
+                        </span>
+                      }
+                    >
+                      <FolderSelectorInput
+                        selectedFolderId={selectedFolderId}
+                        onFolderSelect={(folderId) => {
+                          setSelectedFolderId(folderId);
+                          form.setFieldValue('folderId', folderId);
+                        }}
+                        placeholder="Select folder (optional)"
+                        allowClear={true}
+                        filterPermission="write"
+                        disabled={isAnyOperationInProgress}
+                        treeType={isPublicState ? 'public' : 'department'}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    {/* Empty column for spacing */}
                   </Col>
                 </Row>
 

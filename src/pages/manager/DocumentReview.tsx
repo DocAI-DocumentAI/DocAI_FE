@@ -10,7 +10,8 @@ import {
     CalendarOutlined,
     CheckOutlined,
     CloseOutlined,
-    EyeOutlined
+    EyeOutlined,
+    FolderOutlined
 } from "@ant-design/icons"
 import { api } from "../../lib/api/api";
 import toast from 'react-hot-toast';
@@ -38,7 +39,12 @@ export default function DocumentReview() {
             setLoading(true);
             try {
                 const res = await api.get(`/document/documents/${id}/versions/${versionId}`);
-                setDocument(res.data.data);
+                const documentData = res.data.data;
+                setDocument(documentData);
+                // Initialize target folder with the document's targetFolderId if available
+                if (documentData.targetFolderId) {
+                    setTargetFolderId(documentData.targetFolderId);
+                }
             } catch (error: any) {
                 toast.error(`Không thể tải chi tiết tài liệu: ${error?.response?.data?.message || error.message}`);
                 setDocument(null);
@@ -232,7 +238,7 @@ export default function DocumentReview() {
                                     </Col>
                                 </Row>
 
-                                <Row gutter={16}>
+                                <Row gutter={16} style={{ marginBottom: 16 }}>
                                     <Col span={12}>
                                         <div>
                                             <Text strong>Ngày nộp</Text>
@@ -251,6 +257,37 @@ export default function DocumentReview() {
                                         </div>
                                     </Col>
                                 </Row>
+
+                                {/* Folder Information */}
+                                {(document.folderName || document.targetFolderName) && (
+                                    <Row gutter={16}>
+                                        {document.folderName && (
+                                            <Col span={12}>
+                                                <div>
+                                                    <Text strong>Thư mục hiện tại</Text>
+                                                    <div style={{ display: "flex", alignItems: "center", marginTop: 4 }}>
+                                                        <FolderOutlined style={{ marginRight: 4, color: "#666" }} />
+                                                        <Text>{document.folderName}</Text>
+                                                    </div>
+                                                </div>
+                                            </Col>
+                                        )}
+                                        {document.targetFolderName && (
+                                            <Col span={12}>
+                                                <div>
+                                                    <Text strong>Thư mục đích</Text>
+                                                    <div style={{ display: "flex", alignItems: "center", marginTop: 4 }}>
+                                                        <FolderOutlined style={{ marginRight: 4, color: "#1890ff" }} />
+                                                        <Text style={{ color: "#1890ff" }}>{document.targetFolderName}</Text>
+                                                    </div>
+                                                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                                                        Tài liệu sẽ được chuyển đến đây khi được duyệt
+                                                    </Text>
+                                                </div>
+                                            </Col>
+                                        )}
+                                    </Row>
+                                )}
                             </Card>
 
                             {/* Document Content */}

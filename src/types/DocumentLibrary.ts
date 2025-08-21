@@ -94,6 +94,9 @@ export interface DocumentDraftResponse {
   folderId?: string;
   folderName?: string;
   folderPath?: string;
+  // New folder fields for approval workflow
+  targetFolderId?: string;
+  targetFolderName?: string;
   // Enhanced fields
   createdBy?: UserInfo;
   documentType?: DocumentTypeResponse;
