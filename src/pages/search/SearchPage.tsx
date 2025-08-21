@@ -163,7 +163,9 @@ export default function SearchPage() {
           departmentId: null, // Can be added later if needed
           fromDate: filter.fromDate ? filter.fromDate.toISOString() : null,
           toDate: filter.toDate ? filter.toDate.toISOString() : null,
-          effectiveFrom: filter.startDate ? filter.startDate.toISOString() : null,
+          effectiveFrom: filter.startDate
+            ? filter.startDate.toISOString()
+            : null,
           effectiveUntil: filter.endDate ? filter.endDate.toISOString() : null,
           folderId: filter.folderId,
           includeSubfolders: filter.includeSubfolders,
@@ -209,7 +211,9 @@ export default function SearchPage() {
   }, [initialQuery, tags.length, documentTypes.length, handleSearch]);
 
   // Auto-search when filters change (debounced)
-  const filterChangeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const filterChangeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
   useEffect(() => {
     // Clear any existing timeout
     if (filterChangeTimeoutRef.current) {
@@ -305,10 +309,10 @@ export default function SearchPage() {
 
                 {/* AI Answer Section */}
                 {isSearched && !loading && hasAnswer && aiAnswer && (
-                  <Card className="border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 mb-6">
+                  <Card className="mb-6 border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
                     <div className="flex items-start space-x-3">
                       <div className="flex-shrink-0">
-                        <BulbOutlined className="text-2xl text-blue-600 mt-1" />
+                        <BulbOutlined className="mt-1 text-2xl text-blue-600" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center mb-3">
@@ -319,7 +323,7 @@ export default function SearchPage() {
                             AI
                           </span>
                         </div>
-                        <div className="text-gray-700 leading-relaxed">
+                        <div className="leading-relaxed text-gray-700">
                           {aiAnswer}
                         </div>
                       </div>
@@ -334,7 +338,9 @@ export default function SearchPage() {
                       <div className="flex items-center mb-6">
                         <FileTextOutlined className="mr-2 text-blue-600" />
                         <span className="text-lg font-medium text-gray-800">
-                          {hasAnswer && aiAnswer ? "Source Documents" : "Search Results"}
+                          {hasAnswer && aiAnswer
+                            ? "Source Documents"
+                            : "Search Results"}
                         </span>
                         <span className="px-2 py-1 ml-2 text-sm text-blue-800 bg-blue-100 rounded-full">
                           {searchResults.length} found

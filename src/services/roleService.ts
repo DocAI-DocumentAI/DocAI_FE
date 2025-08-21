@@ -104,7 +104,7 @@ export const useRoles = () => {
   });
 };
 
-// Hook for table with pagination
+// Hook for table with pagination and filters
 export const useRolesPaginated = (filters: RoleFilters) => {
   return useQuery({
     queryKey: ["roles", "paginated", filters],
@@ -117,8 +117,14 @@ export const useRolesPaginated = (filters: RoleFilters) => {
 export const getRolesApi = fetchRoles;
 
 export const useCreateRole = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: createRole,
+    onSuccess: () => {
+      // Invalidate roles queries to refresh the list
+      queryClient.invalidateQueries({ queryKey: ["roles"] });
+    },
   });
 };
 

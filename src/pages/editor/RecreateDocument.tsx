@@ -1,5 +1,5 @@
 import { Layout, Typography, Card, Button, Input, Select, DatePicker, Upload, Form, Row, Col, Space, Spin, Switch } from "antd"
-import { UploadOutlined, InboxOutlined, ArrowRightOutlined } from "@ant-design/icons"
+import { UploadOutlined, InboxOutlined, FolderOutlined } from "@ant-design/icons"
 import { analyzeDocument, recreateDocument, regenerateSummary, getDocumentTypes, DocumentType } from "../../lib/api/document";
 import { api } from "../../lib/api/api";
 import { useState, useEffect } from "react";
@@ -7,6 +7,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import WysiwygEditor from 'react-simple-wysiwyg';
 import toast from 'react-hot-toast';
 import moment from "moment";
+import { FolderSelectorInput } from "../../components/folder";
 
 const { Title, Text } = Typography
 const { Content } = Layout
@@ -74,8 +75,8 @@ export default function RecreateDocument() {
   const [loadingDocumentTypes, setLoadingDocumentTypes] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isAnalyzed, setIsAnalyzed] = useState(false);
-  const [mode, setMode] = useState<'upload' | 'recreate'>('upload');
   const [isPublicState, setIsPublicState] = useState(false);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const fetchDocumentTypes = async () => {
@@ -84,59 +85,26 @@ export default function RecreateDocument() {
         const types = await getDocumentTypes();
         setDocumentTypes(types);
 
-        // Set form values after document types are loaded
-        if (location.state?.analysisData && location.state?.mode === 'recreate') {
-          const analysisData = location.state.analysisData;
-          setMode('recreate');
-          setSelectedFile(analysisData.file);
-          setHtmlDescription(analysisData.description || "");
-          setHtmlSummary(analysisData.summary || "");
-          setIsAnalyzed(true);
-
-          const isPublicValue = analysisData.isPublic || false;
-          setIsPublicState(isPublicValue);
-
-          const formValues = {
-            title: analysisData.title || "",
-            tags: analysisData.tags || [],
-            effectiveFrom: analysisData.effectiveFrom ? moment(analysisData.effectiveFrom) : null,
-            effectiveTo: analysisData.effectiveUntil ? moment(analysisData.effectiveUntil) : null,
-            signedBy: analysisData.signedBy || "",
-            type: analysisData.documentTypeId || "",
-            isPublic: isPublicValue,
-          };
-
-          form.setFieldsValue(formValues);
-        } else if (location.state?.documentData && location.state?.mode === 'recreate') {
-          // Handle document data from DocumentDetail page
-          console.log('🔍 RecreateDocument: Received document data', location.state);
-
+        // Pre-fill data if coming from document detail page
+        if (location.state?.documentData && location.state?.mode === 'recreate') {
           const documentData = location.state.documentData;
-          // Start in upload mode so user can upload new file, but keep the document data for later
-          setMode('upload');
+
           setHtmlDescription(documentData.description || "");
           setHtmlSummary(documentData.summary || "");
-          setIsAnalyzed(false); // No file uploaded yet, user needs to upload new file
-
-          const isPublicValue = documentData.isPublic || false;
-          setIsPublicState(isPublicValue);
+          setIsPublicState(documentData.isPublic || false);
 
           const formValues = {
             title: documentData.title || "",
             versionName: documentData.versionName || "",
             tags: documentData.tags || [],
             effectiveFrom: documentData.effectiveFrom ? moment(documentData.effectiveFrom) : null,
-            effectiveTo: documentData.effectiveUntil ? moment(documentData.effectiveUntil) : null,
+            effectiveUntil: documentData.effectiveUntil ? moment(documentData.effectiveUntil) : null,
             signedBy: documentData.signedBy || "",
             type: documentData.documentTypeId || "",
-            isPublic: isPublicValue,
+            isPublic: documentData.isPublic || false,
           };
 
-          // Set form values immediately and also with a delay to ensure it sticks
           form.setFieldsValue(formValues);
-          setTimeout(() => {
-            form.setFieldsValue(formValues);
-          }, 500); // Delay to ensure form is ready
         }
       } catch (error) {
         console.error("Failed to fetch document types:", error);
@@ -149,26 +117,6 @@ export default function RecreateDocument() {
     fetchDocumentTypes();
   }, [location.state, form]);
 
-  // Separate effect to ensure form values are set after document types are loaded
-  useEffect(() => {
-    if (!loadingDocumentTypes && documentTypes.length > 0 && location.state?.documentData && location.state?.mode === 'recreate') {
-      const documentData = location.state.documentData;
-
-      const formValues = {
-        title: documentData.title || "",
-        versionName: documentData.versionName || "",
-        tags: documentData.tags || [],
-        effectiveFrom: documentData.effectiveFrom ? moment(documentData.effectiveFrom) : null,
-        effectiveTo: documentData.effectiveUntil ? moment(documentData.effectiveUntil) : null,
-        signedBy: documentData.signedBy || "",
-        type: documentData.documentTypeId || "",
-        isPublic: documentData.isPublic || false,
-      };
-
-      form.setFieldsValue(formValues);
-    }
-  }, [loadingDocumentTypes, documentTypes, location.state, form]);
-
   const handleSwitchChange = (checked: boolean) => {
     setIsPublicState(checked);
     form.setFieldValue('isPublic', checked);
@@ -179,48 +127,45 @@ export default function RecreateDocument() {
       toast.error("Không tìm thấy documentId trên URL!");
       return;
     }
+    console.log(123, values);
 
     // Only require file if we don't have existing document data (i.e., not recreating from rejected document)
     if (!selectedFile && !(location.state?.documentData && location.state?.mode === 'recreate')) {
       toast.error("Please select a file to upload!");
       return;
     }
-
-    // Prepare form data for API call
-    const formData = new FormData();
-    formData.append("Title", values.title || "");
-    formData.append("VersionName", values.versionName || "");
-    formData.append("Summary", htmlSummary || "");
-    formData.append("SignedBy", values.signedBy || "");
-    formData.append("Description", htmlDescription || "");
-    formData.append("EffectiveFrom", values.effectiveFrom ? values.effectiveFrom.toISOString() : "");
-    formData.append("EffectiveUntil", values.effectiveTo ? values.effectiveTo.toISOString() : "");
-    formData.append("Tags", Array.isArray(values.tags) ? values.tags.filter(Boolean).join(",") : "");
-    formData.append("ReplacementDocumentId", values.replacementDocumentId || "");
-    formData.append("DocumentTypeId", values.type || "");
-    formData.append("IsPublic", isPublicState ? "true" : "false");
-
-    // Only append file if a new file is selected
-    if (selectedFile) {
-      formData.append("File", selectedFile);
-    }
+ 
+    const formData = {
+      title: values.title || "",
+      versionName: values.versionName || "",
+      description: htmlDescription || "",
+      summary: htmlSummary || "",
+      tags: values.tags || [],
+      effectiveFrom: values.effectiveFrom ? values.effectiveFrom.toISOString() : null,
+      effectiveUntil: values.effectiveUntil ? values.effectiveUntil.toISOString() : null,
+      signedBy: values.signedBy || "",
+      type: values.type || "",
+      documentTypeId: values.type || "",
+      isPublic: values.isPublic || false,
+      folderId: values.folderId || "",
+    };
 
     try {
       setIsUploading(true);
+      if (selectedFile) {
+        const formData2 = { ...formData, File: selectedFile };
+        await recreateDocument(id, formData2);
+
+      } else {
+        await recreateDocument(id, formData);
+      }
 
       // First, recreate as draft
-      const recreateResponse = await recreateDocument(id, formData);
 
-      if (action === 'submit' && recreateResponse?.versionId) {
+      if (action === 'submit') {
         // If submitting, also call submit API
-        const userStr = localStorage.getItem("user");
-        if (!userStr) {
-          toast.error("User information not found, please login again!");
-          return;
-        }
-        const user = JSON.parse(userStr);
 
-        await api.post(`/document/submit/${recreateResponse.versionId}?userId=${user.userId}`);
+        await api.post(`/document/submit/${id}`);
         toast.success("Document recreated and submitted for approval successfully!");
       } else {
         toast.success("Document recreated as draft successfully!");
@@ -260,10 +205,7 @@ export default function RecreateDocument() {
 
     if (file.status === 'removed') {
       setSelectedFile(null);
-      setHtmlDescription("");
-      setHtmlSummary("");
       setIsAnalyzed(false);
-      form.resetFields();
       return;
     }
 
@@ -272,14 +214,6 @@ export default function RecreateDocument() {
     if (fileObj && fileObj instanceof File) {
       setSelectedFile(fileObj);
       setIsAnalyzed(false);
-      setHtmlDescription("");
-      setHtmlSummary("");
-
-      // Only reset fields if not in recreate mode with existing document data
-      if (!(location.state?.documentData && location.state?.mode === 'recreate')) {
-        form.resetFields();
-      }
-
       toast.success("File uploaded successfully! Click 'Analyze' to extract document information.");
     }
   };
@@ -292,54 +226,45 @@ export default function RecreateDocument() {
 
     setIsAnalyzing(true);
     setAnalysisStep('extracting');
-    setIsAnalyzed(false); // Reset analyzed state when starting new analysis
-
-    // Clear previous analysis data
-    setHtmlDescription("");
-    setHtmlSummary("");
-
-    // Only reset specific fields if not in recreate mode with existing document data
-    if (!(location.state?.documentData && location.state?.mode === 'recreate')) {
-      form.resetFields(['title', 'versionName', 'tags', 'effectiveFrom', 'effectiveTo', 'signedBy']);
-    }
 
     try {
-      // Simulate step progression for better UX - make extracting text longer
+      // Simulate step progression for better UX
       setTimeout(() => setAnalysisStep('analyzing'), 2500);
       setTimeout(() => setAnalysisStep('generating'), 4000);
 
       const analyzeResult = await analyzeDocument(selectedFile);
       const analyzedData = analyzeResult.data;
 
+      // Update HTML editors
       setHtmlDescription(analyzedData.description || "");
       setHtmlSummary(analyzedData.summary || "");
       setIsAnalyzed(true);
 
-      // If in recreate mode with existing document data, merge analyzed data with existing data
-      if (location.state?.documentData && location.state?.mode === 'recreate') {
-        const documentData = location.state.documentData;
-        form.setFieldsValue({
-          title: documentData.title || analyzedData.title || "",
-          versionName: documentData.versionName || analyzedData.versionName || "",
-          tags: documentData.tags?.length > 0 ? documentData.tags : (analyzedData.tags || []),
-          effectiveFrom: documentData.effectiveFrom ? moment(documentData.effectiveFrom) : (analyzedData.effectiveFrom ? moment(analyzedData.effectiveFrom) : null),
-          effectiveTo: documentData.effectiveUntil ? moment(documentData.effectiveUntil) : (analyzedData.effectiveUntil ? moment(analyzedData.effectiveUntil) : null),
-          signedBy: documentData.signedBy || analyzedData.signedBy || "",
-          type: documentData.documentTypeId || "",
-          isPublic: documentData.isPublic || false,
-        });
-      } else {
-        form.setFieldsValue({
-          title: analyzedData.title || "",
-          versionName: analyzedData.versionName || "",
-          tags: analyzedData.tags || [],
-          effectiveFrom: analyzedData.effectiveFrom ? moment(analyzedData.effectiveFrom) : null,
-          effectiveTo: analyzedData.effectiveUntil ? moment(analyzedData.effectiveUntil) : null,
-          signedBy: analyzedData.signedBy || "",
-        });
+      // Get current form values to preserve existing data
+      const currentValues = form.getFieldsValue();
+
+      // Merge analyzed data with existing data (existing data takes priority)
+      const mergedValues = {
+        title: currentValues.title || analyzedData.title || "",
+        versionName: currentValues.versionName || analyzedData.versionName || "",
+        tags: currentValues.tags?.length > 0 ? currentValues.tags : (analyzedData.tags || []),
+        effectiveFrom: currentValues.effectiveFrom || (analyzedData.effectiveFrom ? moment(analyzedData.effectiveFrom) : null),
+        effectiveUntil: currentValues.effectiveUntil || (analyzedData.effectiveUntil ? moment(analyzedData.effectiveUntil) : null),
+        signedBy: currentValues.signedBy || analyzedData.signedBy || "",
+        type: currentValues.type || analyzedData.documentTypeId || "",
+        isPublic: currentValues.isPublic !== undefined ? currentValues.isPublic : (analyzedData.isPublic || false),
+        folderId: currentValues.folderId || "",
+      };
+
+      // Update form with merged values
+      form.setFieldsValue(mergedValues);
+
+      // Update isPublic state if needed
+      if (mergedValues.isPublic !== isPublicState) {
+        setIsPublicState(mergedValues.isPublic);
       }
 
-      toast.success("Document analyzed successfully!");
+      toast.success("Document analyzed successfully! Information has been updated.");
     } catch (error: any) {
       console.error("Analysis error:", error);
 
@@ -381,20 +306,6 @@ export default function RecreateDocument() {
     }
   };
 
-  const handleNext = () => {
-    if (!selectedFile) {
-      toast.error("Please upload a file first!");
-      return;
-    }
-
-    if (!isAnalyzed) {
-      toast.error("Please analyze the document first!");
-      return;
-    }
-
-    setMode('recreate');
-  };
-
   const uploadProps = {
     name: "file",
     multiple: false,
@@ -419,630 +330,333 @@ export default function RecreateDocument() {
           {/* Header */}
           <div style={{ marginBottom: 24 }}>
             <Title level={2} style={{ margin: 0 }}>
-              {mode === 'upload' ? 'Recreate Document - Upload New File' : 'Recreate Document'}
+              Recreate Document
             </Title>
             <Text type="secondary">
-              {mode === 'upload'
-                ? (location.state?.documentData
-                    ? 'Review and modify the document information below. Optionally upload a new file to replace the existing one. You can recreate the document without making any changes.'
-                    : 'Upload a new file to recreate the document and analyze it with AI to extract metadata')
-                : 'Complete your document details to recreate the document'
+              {location.state?.documentData
+                ? 'Review and modify the document information below. Optionally upload a new file to replace the existing one.'
+                : 'Upload a new file and analyze it with AI to extract metadata, then complete the document recreation.'
               }
             </Text>
           </div>
 
-          {/* Step 1: Document Upload */}
-          {mode === 'upload' && (
-            <Row gutter={[24, 24]}>
-              <Col xs={24} lg={16}>
-                <Card
-                  title={
-                    <div style={{ display: "flex", alignItems: "center" }}>
-                      <UploadOutlined style={{ marginRight: 8, color: "#1890ff" }} />
-                      Step 1: Upload New Document File
-                    </div>
-                  }
-                  style={{ marginBottom: 24 }}
-                >
-                  <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
-                    {location.state?.documentData
-                      ? 'Optionally upload a new PDF or DOCX file to replace the rejected document file. If no new file is uploaded, the document will be recreated with the existing file and updated information.'
-                      : 'Upload a new PDF or DOCX file to recreate the document.'
-                    }
-                  </Text>
-
+          {/* Single Form Card */}
+          <Card title="Document Information" style={{ marginBottom: 24 }}>
+            <Form form={form} layout="vertical" onFinish={handleSaveAsDraft}>
+              {/* File Upload Section */}
+              <div style={{ marginBottom: 32 }}>
+                <div style={{ display: "flex", alignItems: "center", marginBottom: 16 }}>
+                  <UploadOutlined style={{ marginRight: 8, color: "#1890ff" }} />
+                  <Text strong>Upload Document File</Text>
                   {location.state?.documentData && (
-                    <div style={{
-                      backgroundColor: '#f6ffed',
-                      border: '1px solid #b7eb8f',
-                      borderRadius: 6,
-                      padding: 12,
-                      marginBottom: 16
-                    }}>
-                      <Text strong style={{ color: '#52c41a' }}>✓ Document Information Preserved</Text>
-                      <div style={{ marginTop: 4 }}>
-                        <Text type="secondary" style={{ fontSize: 12 }}>
-                          Title: {location.state.documentData.title || 'N/A'} |
-                          Type: {location.state.documentData.documentTypeId || 'N/A'} |
-                          Public: {location.state.documentData.isPublic ? 'Yes' : 'No'}
-                        </Text>
-                      </div>
-                    </div>
+                    <Text type="secondary" style={{ marginLeft: 8 }}>(Optional - replace existing file)</Text>
                   )}
+                </div>
 
-                  <Dragger
-                    {...uploadProps}
-                    style={{
-                      padding: "40px 20px",
-                      marginBottom: 16
-                    }}
-                  >
-                    <p className="ant-upload-drag-icon">
-                      <InboxOutlined style={{ fontSize: 48, color: "#d9d9d9" }} />
-                    </p>
-                    <p style={{ fontSize: 16, marginBottom: 8 }}>
-                      Drag and drop your file here, or click to browse
-                    </p>
-                    <Button type="default">
-                      Choose File
-                    </Button>
-                    <p style={{ color: "#999", fontSize: 12, marginTop: 8 }}>
-                      Supported formats: PDF, DOCX (max 3MB)
-                    </p>
-                  </Dragger>
-
-                  {/* Show uploaded file info */}
-                  {selectedFile && (
-                    <Card size="small" style={{ backgroundColor: '#f6ffed', borderColor: '#b7eb8f', marginBottom: 16 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                          <Text strong>Uploaded File:</Text>
-                          <div style={{ marginTop: 4 }}>
-                            <Text>{selectedFile.name}</Text>
-                            <Text type="secondary" style={{ marginLeft: 8 }}>
-                              ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
-                            </Text>
-                          </div>
-                        </div>
-                        <Button
-                          type="primary"
-                          onClick={handleAnalyzeDocument}
-                          loading={isAnalyzing}
-                          disabled={isAnyOperationInProgress}
-                        >
-                          {isAnalyzing ? (
-                            analysisStep === 'extracting' ? 'Extracting text...' :
-                            analysisStep === 'analyzing' ? 'Analyzing document...' :
-                            analysisStep === 'generating' ? 'Generating response...' :
-                            'Processing...'
-                          ) : 'Analyze Document'}
-                        </Button>
-                      </div>
-                    </Card>
-                  )}
-
-                  {/* Analysis Results */}
-                  {isAnalyzed && (
-                    <Card
-                      size="small"
-                      title="Analysis Complete"
-                      style={{ backgroundColor: '#e6f7ff', borderColor: '#91d5ff', marginBottom: 16 }}
-                    >
-                      <Text type="secondary">
-                        Document analyzed successfully! Review the extracted information below and click "Next" to proceed.
-                      </Text>
-                    </Card>
-                  )}
-                </Card>
-              </Col>
-
-              <Col xs={24} lg={8}>
-                <Card
-                  title="Recreation Progress"
-                  style={{ height: "fit-content" }}
-                >
-                  <div style={{ padding: "20px 0" }}>
-                    <div style={{ marginBottom: 16 }}>
-                      <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
-                        <div style={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: "50%",
-                          backgroundColor: selectedFile ? "#52c41a" : "#d9d9d9",
-                          color: "white",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 12,
-                          marginRight: 8
-                        }}>
-                          1
-                        </div>
-                        <Text strong style={{ color: selectedFile ? "#52c41a" : "#999" }}>
-                          Upload File
-                        </Text>
-                      </div>
-                      <Text type="secondary" style={{ marginLeft: 32, fontSize: 12 }}>
-                        {selectedFile ? "✓ File uploaded" : "Upload a new document file"}
-                      </Text>
-                    </div>
-
-                    <div style={{ marginBottom: 16 }}>
-                      <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
-                        <div style={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: "50%",
-                          backgroundColor: isAnalyzed ? "#52c41a" : (isAnalyzing ? "#1890ff" : "#d9d9d9"),
-                          color: "white",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 12,
-                          marginRight: 8
-                        }}>
-                          {isAnalyzing ? <Spin size="small" /> : "2"}
-                        </div>
-                        <Text strong style={{ color: isAnalyzed ? "#52c41a" : (isAnalyzing ? "#1890ff" : "#999") }}>
-                          Analyze Document
-                        </Text>
-                      </div>
-                      <Text type="secondary" style={{ marginLeft: 32, fontSize: 12 }}>
-                        {isAnalyzed ? "✓ Analysis complete" : (
-                          isAnalyzing ? (
-                            analysisStep === 'extracting' ? "📄 Extracting text..." :
-                            analysisStep === 'analyzing' ? "🔍 Analyzing document..." :
-                            analysisStep === 'generating' ? "✨ Generating response..." :
-                            "Processing..."
-                          ) : "Extract document metadata"
-                        )}
-                      </Text>
-                    </div>
-
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
-                        <div style={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: "50%",
-                          backgroundColor: mode !== "upload" ? "#52c41a" : "#d9d9d9",
-                          color: "white",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 12,
-                          marginRight: 8
-                        }}>
-                          3
-                        </div>
-                        <Text strong style={{ color: mode !== 'upload' ? "#52c41a" : "#999" }}>
-                          Recreate Document
-                        </Text>
-                      </div>
-                      <Text type="secondary" style={{ marginLeft: 32, fontSize: 12 }}>
-                        {mode !== 'upload' ? "✓ Ready to recreate" : "Complete document recreation"}
+                {location.state?.documentData && (
+                  <div style={{
+                    backgroundColor: '#f6ffed',
+                    border: '1px solid #b7eb8f',
+                    borderRadius: 6,
+                    padding: 12,
+                    marginBottom: 16
+                  }}>
+                    <Text strong style={{ color: '#52c41a' }}>✓ Original Document Information Preserved</Text>
+                    <div style={{ marginTop: 4 }}>
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        Title: {location.state.documentData.title || 'N/A'} |
+                        Type: {location.state.documentData.documentTypeId || 'N/A'} |
+                        Public: {location.state.documentData.isPublic ? 'Yes' : 'No'}
                       </Text>
                     </div>
                   </div>
-                </Card>
-              </Col>
-            </Row>
-          )}
+                )}
 
-          {/* Document Analysis Results (show when analyzed) */}
-          {isAnalyzed && mode === 'upload' && (
-            <Card
-              title="Step 2: Review Extracted Information"
-              style={{ marginBottom: 24 }}
-            >
-              <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
-                Review the information extracted from your document. You can edit any field before proceeding.
-              </Text>
+                <Dragger
+                  {...uploadProps}
+                  style={{
+                    padding: "40px 20px",
+                    marginBottom: 16
+                  }}
+                >
+                  <p className="ant-upload-drag-icon">
+                    <InboxOutlined style={{ fontSize: 48, color: "#d9d9d9" }} />
+                  </p>
+                  <p style={{ fontSize: 16, marginBottom: 8 }}>
+                    Drag and drop your file here, or click to browse
+                  </p>
+                  <Button type="default">
+                    Choose File
+                  </Button>
+                  <p style={{ color: "#999", fontSize: 12, marginTop: 8 }}>
+                    Supported formats: PDF, DOCX (max 3MB)
+                  </p>
+                </Dragger>
 
-              <Form form={form} layout="vertical">
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="title"
-                      label="Document Title"
-                      rules={[{ required: true, message: "Please enter document title" }]}
-                    >
-                      <Input placeholder="Enter document title" disabled={isAnyOperationInProgress} />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="type"
-                      label="Document Type"
-                      rules={[{ required: true, message: "Please select document type" }]}
-                    >
-                      <Select
-                        placeholder="Select document type"
-                        loading={loadingDocumentTypes}
+                {/* Show uploaded file info */}
+                {selectedFile && (
+                  <Card size="small" style={{ backgroundColor: '#f6ffed', borderColor: '#b7eb8f', marginBottom: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <Text strong>Uploaded File:</Text>
+                        <div style={{ marginTop: 4 }}>
+                          <Text>{selectedFile.name}</Text>
+                          <Text type="secondary" style={{ marginLeft: 8 }}>
+                            ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                          </Text>
+                        </div>
+                      </div>
+                      <Button
+                        type="primary"
+                        onClick={handleAnalyzeDocument}
+                        loading={isAnalyzing}
                         disabled={isAnyOperationInProgress}
                       >
-                        {documentTypes.map(type => (
-                          <Select.Option key={type.id} value={type.id}>
-                            {type.name}
-                          </Select.Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="versionName"
-                      label="Version Name"
-                      rules={[{ required: true, message: "Please enter version name" }]}
-                    >
-                      <Input placeholder="Enter version name" disabled={isAnyOperationInProgress} />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    <Form.Item name="signedBy" label="Signed By">
-                      <Input placeholder="Name of the person who signed the document" disabled={isAnyOperationInProgress} />
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item name="effectiveFrom" label="Effective From">
-                      <DatePicker style={{ width: "100%" }} disabled={isAnyOperationInProgress} />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    <Form.Item name="effectiveTo" label="Effective Until">
-                      <DatePicker style={{ width: "100%" }} disabled={isAnyOperationInProgress} />
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item 
-                      name="isPublic" 
-                      label="Document Visibility"
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Switch 
-                          checked={isPublicState}
-                          onChange={handleSwitchChange}
-                          disabled={isAnyOperationInProgress}
-                        />
-                        <Text>Make this document public</Text>
-                      </div>
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Form.Item label="Description">
-                  <WysiwygEditor
-                    value={htmlDescription}
-                    onChange={(e) => !isAnyOperationInProgress && setHtmlDescription(e.target.value)}
-                    className="wysiwyg-editor"
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  label={
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                      <span>Summary</span>
-                      <Button
-                        type="link"
-                        size="small"
-                        onClick={handleRegenerateSummary}
-                        disabled={!selectedFile || isAnyOperationInProgress}
-                        loading={isRegeneratingSummary}
-                        style={{ padding: "0 8px", fontSize: "12px" }}
-                      >
-                        {isRegeneratingSummary ? (
-                          <>
-                            <Spin size="small" style={{ marginRight: 4 }} />
-                            Regenerating...
-                          </>
-                        ) : (
-                          "🔄 Regenerate Summary"
-                        )}
+                        {isAnalyzing ? (
+                          analysisStep === 'extracting' ? 'Extracting text...' :
+                            analysisStep === 'analyzing' ? 'Analyzing document...' :
+                              analysisStep === 'generating' ? 'Generating response...' :
+                                'Processing...'
+                        ) : 'Analyze Document'}
                       </Button>
                     </div>
-                  }
-                >
-                  <WysiwygEditor
-                    value={htmlSummary}
-                    onChange={(e) => !isAnyOperationInProgress && setHtmlSummary(e.target.value)}
-                    className="wysiwyg-editor"
-                  />
-                </Form.Item>
+                  </Card>
+                )}
 
-                <Form.Item label="Tags">
-                  <Form.List name="tags">
-                    {(fields, { add, remove }) => (
-                      <>
-                        {fields.map((field, index) => (
-                          <Space key={field.key} align="baseline">
-                            <Form.Item
-                              key={field.key}
-                              name={field.name}
-                              rules={[{ required: true, message: "Please enter a tag" }]}
-                              style={{ marginBottom: 0 }}
+                {/* Analysis Results */}
+                {isAnalyzed && (
+                  <Card
+                    size="small"
+                    title="✓ Analysis Complete"
+                    style={{ backgroundColor: '#e6f7ff', borderColor: '#91d5ff', marginBottom: 16 }}
+                  >
+                    <Text type="secondary">
+                      Document analyzed successfully! The form below has been updated with extracted information.
+                    </Text>
+                  </Card>
+                )}
+              </div>
+
+              {/* Document Details Form */}
+              <Row gutter={16}>
+                <Col xs={24} sm={12}>
+                  <Form.Item
+                    name="title"
+                    label="Document Title"
+                    rules={[{ required: true, message: "Please enter document title" }]}
+                  >
+                    <Input placeholder="Enter document title" disabled={isAnyOperationInProgress} />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <Form.Item
+                    name="type"
+                    label="Document Type"
+                    rules={[{ required: true, message: "Please select document type" }]}
+                  >
+                    <Select
+                      placeholder="Select document type"
+                      loading={loadingDocumentTypes}
+                      disabled={isAnyOperationInProgress}
+                    >
+                      {documentTypes.map((type) => (
+                        <Select.Option key={type.id} value={type.id}>
+                          {type.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <Row gutter={16}>
+                <Col xs={24} sm={12}>
+                  <Form.Item
+                    name="versionName"
+                    label="Version Name"
+                    rules={[{ required: true, message: "Please enter version name" }]}
+                  >
+                    <Input placeholder="Enter version name" disabled={isAnyOperationInProgress} />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <Form.Item name="signedBy" label="Signed By">
+                    <Input placeholder="Name of the person who signed the document" disabled={isAnyOperationInProgress} />
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <Row gutter={16}>
+                <Col xs={24} sm={12}>
+                  <Form.Item name="effectiveFrom" label="Effective From">
+                    <DatePicker style={{ width: "100%" }} disabled={isAnyOperationInProgress} />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <Form.Item name="effectiveUntil" label="Effective Until">
+                    <DatePicker style={{ width: "100%" }} disabled={isAnyOperationInProgress} />
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <Row gutter={16}>
+                <Col xs={24} sm={12}>
+                  <Form.Item
+                    name="folderId"
+                    label={
+                      <span>
+                        <FolderOutlined style={{ marginRight: 4 }} />
+                        Folder Location
+                      </span>
+                    }
+                  >
+                    <FolderSelectorInput
+                      selectedFolderId={selectedFolderId}
+                      onFolderSelect={(folderId) => {
+                        setSelectedFolderId(folderId);
+                        form.setFieldValue('folderId', folderId);
+                      }}
+                      placeholder="Select folder (optional)"
+                      allowClear={true}
+                      filterPermission="write"
+                      disabled={isAnyOperationInProgress}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <Form.Item
+                    name="isPublic"
+                    label="Document Visibility"
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Switch
+                        checked={isPublicState}
+                        onChange={handleSwitchChange}
+                        disabled={isAnyOperationInProgress}
+                      />
+                      <Text>Make this document public</Text>
+                    </div>
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <Form.Item label="Description">
+                <WysiwygEditor
+                  value={htmlDescription}
+                  onChange={(e) => !isAnyOperationInProgress && setHtmlDescription(e.target.value)}
+                  placeholder="Brief description of the document"
+                  className="wysiwyg-editor"
+                />
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+                    <span>Summary</span>
+                    <Button
+                      type="link"
+                      size="small"
+                      onClick={handleRegenerateSummary}
+                      disabled={!selectedFile || isAnyOperationInProgress}
+                      loading={isRegeneratingSummary}
+                      style={{ padding: "0 8px", fontSize: "12px" }}
+                    >
+                      {isRegeneratingSummary ? (
+                        <>
+                          <Spin size="small" style={{ marginRight: 4 }} />
+                          Regenerating...
+                        </>
+                      ) : (
+                        "🔄 Regenerate Summary"
+                      )}
+                    </Button>
+                  </div>
+                }
+              >
+                <WysiwygEditor
+                  value={htmlSummary}
+                  onChange={(e) => !isAnyOperationInProgress && setHtmlSummary(e.target.value)}
+                  placeholder="Document summary"
+                  className="wysiwyg-editor"
+                />
+              </Form.Item>
+
+              <Form.Item label="Tags">
+                <Form.List name="tags">
+                  {(fields, { add, remove }) => (
+                    <>
+                      {fields.map((field, index) => (
+                        <Space key={field.key} align="baseline">
+                          <Form.Item
+                            key={field.key}
+                            name={field.name}
+                            rules={[{ required: true, message: "Please enter a tag" }]}
+                            style={{ marginBottom: 0 }}
+                          >
+                            <Input placeholder={`Tag ${index + 1}`} disabled={isAnyOperationInProgress} />
+                          </Form.Item>
+                          {fields.length > 1 && (
+                            <Button
+                              type="link"
+                              danger
+                              onClick={() => remove(field.name)}
+                              disabled={isAnyOperationInProgress}
                             >
-                              <Input placeholder={`Tag ${index + 1}`} disabled={isAnyOperationInProgress} />
-                            </Form.Item>
-                            {fields.length > 1 && (
-                              <Button 
-                                type="link" 
-                                danger 
-                                onClick={() => remove(field.name)}
-                                disabled={isAnyOperationInProgress}
-                              >
-                                Remove
-                              </Button>
-                            )}
-                          </Space>
-                        ))}
-                        <Button 
-                          type="dashed" 
-                          onClick={() => add()} 
-                          style={{ marginTop: 8 }}
-                          disabled={isAnyOperationInProgress}
-                        >
-                          + Add Tag
-                        </Button>
-                      </>
-                    )}
-                  </Form.List>
-                </Form.Item>
+                              Remove
+                            </Button>
+                          )}
+                        </Space>
+                      ))}
+                      <Button
+                        type="dashed"
+                        onClick={() => add()}
+                        style={{ marginTop: 8 }}
+                        disabled={isAnyOperationInProgress}
+                      >
+                        + Add Tag
+                      </Button>
+                    </>
+                  )}
+                </Form.List>
+              </Form.Item>
 
-                {/* Next Button */}
-                <Form.Item style={{ marginTop: 32, textAlign: "center" }}>
+              {/* Action Buttons */}
+              <Form.Item style={{ marginTop: 32 }}>
+                <Space>
+                  <Button
+                    disabled={isAnyOperationInProgress}
+                    onClick={() => navigate(-1)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => form.submit()}
+                    icon={isUploading ? <Spin size="small" /> : <UploadOutlined />}
+                    loading={isUploading}
+                    disabled={(!selectedFile && !(location.state?.documentData && location.state?.mode === 'recreate')) || isAnyOperationInProgress}
+                  >
+                    {isUploading ? "Saving..." : "Save as Draft"}
+                  </Button>
                   <Button
                     type="primary"
-                    size="large"
-                    icon={<ArrowRightOutlined />}
-                    onClick={handleNext}
-                    disabled={isAnyOperationInProgress}
-                    style={{
-                      height: "48px",
-                      fontSize: "16px",
-                      paddingLeft: "32px",
-                      paddingRight: "32px"
+                    onClick={() => {
+                      form.validateFields().then(values => {
+                        handleSubmitForApproval(values);
+                      }).catch(errorInfo => {
+                        console.log('Form validation failed:', errorInfo);
+                      });
                     }}
+                    loading={isUploading}
+                    disabled={(!selectedFile && !(location.state?.documentData && location.state?.mode === 'recreate')) || isAnyOperationInProgress}
                   >
-                    Next: Recreate Document
+                    {isUploading ? "Submitting..." : "Submit for Approval"}
                   </Button>
-                </Form.Item>
-              </Form>
-            </Card>
-          )}
+                </Space>
+              </Form.Item>
+            </Form>
+          </Card>
 
-          {/* Step 3: Document Recreation Form (show when in recreate mode OR when in upload mode with existing document data) */}
-          {(mode === 'recreate' || (mode === 'upload' && location.state?.documentData)) && (
-            <Card
-              title={mode === 'upload' && location.state?.documentData
-                ? "Step 2: Review Document Information"
-                : "Recreate Document"
-              }
-              style={{ marginBottom: 24 }}
-            >
-              {mode === 'upload' && location.state?.documentData && (
-                <div style={{ marginBottom: 16 }}>
-                  <Text type="secondary">
-                    Review and modify the document information below. This data was preserved from your original document.
-                    Upload a new file above to replace the rejected document.
-                  </Text>
-
-
-                </div>
-              )}
-
-              <Form form={form} layout="vertical" onFinish={handleSaveAsDraft}>
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="title"
-                      label="Document Title"
-                      rules={[{ required: true, message: "Please enter document title" }]}
-                    >
-                      <Input placeholder="Enter document title" disabled={isAnyOperationInProgress} />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="type"
-                      label="Document Type"
-                      rules={[{ required: true, message: "Please select document type" }]}
-                    >
-                      <Select
-                        placeholder="Select document type"
-                        loading={loadingDocumentTypes}
-                        disabled={isAnyOperationInProgress}
-                      >
-                        {documentTypes.map((type) => (
-                          <Select.Option key={type.id} value={type.id}>
-                            {type.name}
-                          </Select.Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="versionName"
-                      label="Version Name"
-                      rules={[{ required: true, message: "Please enter version name" }]}
-                    >
-                      <Input placeholder="Enter version name" disabled={isAnyOperationInProgress} />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    <Form.Item name="signedBy" label="Signed By">
-                      <Input placeholder="Name of the person who signed the document" disabled={isAnyOperationInProgress} />
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item name="effectiveFrom" label="Effective From">
-                      <DatePicker style={{ width: "100%" }} disabled={isAnyOperationInProgress} />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    <Form.Item name="effectiveTo" label="Effective Until">
-                      <DatePicker style={{ width: "100%" }} disabled={isAnyOperationInProgress} />
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item 
-                      name="isPublic" 
-                      label="Document Visibility"
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Switch 
-                          checked={isPublicState}
-                          onChange={handleSwitchChange}
-                          disabled={isAnyOperationInProgress}
-                        />
-                        <Text>Make this document public</Text>
-                      </div>
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Form.Item label="Description">
-                  <WysiwygEditor
-                    value={htmlDescription}
-                    onChange={(e) => !isAnyOperationInProgress && setHtmlDescription(e.target.value)}
-                    placeholder="Brief description of the document"
-                    className="wysiwyg-editor"
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  label={
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                      <span>Summary</span>
-                      <Button
-                        type="link"
-                        size="small"
-                        onClick={handleRegenerateSummary}
-                        disabled={!selectedFile || isAnyOperationInProgress}
-                        loading={isRegeneratingSummary}
-                        style={{ padding: "0 8px", fontSize: "12px" }}
-                      >
-                        {isRegeneratingSummary ? (
-                          <>
-                            <Spin size="small" style={{ marginRight: 4 }} />
-                            Regenerating...
-                          </>
-                        ) : (
-                          "🔄 Regenerate Summary"
-                        )}
-                      </Button>
-                    </div>
-                  }
-                >
-                  <WysiwygEditor
-                    value={htmlSummary}
-                    onChange={(e) => !isAnyOperationInProgress && setHtmlSummary(e.target.value)}
-                    placeholder="Document summary"
-                    className="wysiwyg-editor"
-                  />
-                </Form.Item>
-
-                <Form.Item label="Tags">
-                  <Form.List name="tags">
-                    {(fields, { add, remove }) => (
-                      <>
-                        {fields.map((field, index) => (
-                          <Space key={field.key} align="baseline">
-                            <Form.Item
-                              key={field.key}
-                              name={field.name}
-                              rules={[{ required: true, message: "Please enter a tag" }]}
-                              style={{ marginBottom: 0 }}
-                            >
-                              <Input placeholder={`Tag ${index + 1}`} disabled={isAnyOperationInProgress} />
-                            </Form.Item>
-                            {fields.length > 1 && (
-                              <Button 
-                                type="link" 
-                                danger 
-                                onClick={() => remove(field.name)}
-                                disabled={isAnyOperationInProgress}
-                              >
-                                Remove
-                              </Button>
-                            )}
-                          </Space>
-                        ))}
-                        <Button 
-                          type="dashed" 
-                          onClick={() => add()} 
-                          style={{ marginTop: 8 }}
-                          disabled={isAnyOperationInProgress}
-                        >
-                          + Add Tag
-                        </Button>
-                      </>
-                    )}
-                  </Form.List>
-                </Form.Item>
-
-                {/* Action Buttons */}
-                <Form.Item style={{ marginTop: 32 }}>
-                  <Space>
-                    <Button
-                      disabled={isAnyOperationInProgress}
-                      onClick={() => {
-                        if (mode === 'recreate') {
-                          setMode('upload');
-                        } else {
-                          navigate(-1);
-                        }
-                      }}
-                    >
-                      {mode === 'recreate' ? 'Back' : 'Cancel'}
-                    </Button>
-                    <Button
-                      onClick={() => form.submit()}
-                      icon={isUploading ? <Spin size="small" /> : <UploadOutlined />}
-                      loading={isUploading}
-                      disabled={(!selectedFile && !(location.state?.documentData && location.state?.mode === 'recreate')) || isAnyOperationInProgress}
-                    >
-                      {isUploading ? "Saving..." : "Save as Draft"}
-                    </Button>
-                    <Button
-                      type="primary"
-                      onClick={() => {
-                        form.validateFields().then(values => {
-                          handleSubmitForApproval(values);
-                        }).catch(errorInfo => {
-                          console.log('Form validation failed:', errorInfo);
-                        });
-                      }}
-                      loading={isUploading}
-                      disabled={(!selectedFile && !(location.state?.documentData && location.state?.mode === 'recreate')) || isAnyOperationInProgress}
-                    >
-                      {isUploading ? "Submitting..." : "Submit for Approval"}
-                    </Button>
-                  </Space>
-                </Form.Item>
-              </Form>
-            </Card>
-          )}
-
-          {/* Loading overlay khi đang upload */}
+          {/* Loading overlay */}
           {isUploading && (
             <div style={{
               position: "fixed",

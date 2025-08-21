@@ -9,6 +9,8 @@ import {
   LogOut,
   MessageSquare,
   Settings,
+  Bell,
+  Activity,
 } from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -70,6 +72,18 @@ const SIDEBAR_ITEMS: {
     color: "#60A5FA", // blue-400
     href: "/admin/document-types",
   },
+  {
+    name: "Notification Configuration",
+    icon: Bell,
+    color: "#FB923C", // orange-400
+    href: "/admin/config-notification",
+  },
+  {
+    name: "Notification Dashboard",
+    icon: Activity,
+    color: "#10B981", // emerald-500
+    href: "/admin/notification-dashboard",
+  },
 ];
 
 const Sidebar: React.FC = () => {
@@ -94,57 +108,63 @@ const Sidebar: React.FC = () => {
   return (
     <motion.div
       className={`relative z-10 transition-all duration-300 ease-in-out flex-shrink-0 ${
-        isSidebarOpen ? "w-64" : "w-20"
+        isSidebarOpen ? "w-72" : "w-20"
       }`}
-      animate={{ width: isSidebarOpen ? 256 : 80 }}
+      animate={{ width: isSidebarOpen ? 280 : 80 }}
     >
-      <div className="flex flex-col h-full p-4 bg-gray-800 bg-opacity-50 border-r border-gray-700 backdrop-blur-md">
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="p-2 transition-colors rounded-full hover:bg-gray-700 max-w-fit"
-        >
-          <Menu size={24} />
-        </motion.button>
+      <div className="flex flex-col h-full min-h-screen p-4 bg-gray-800 bg-opacity-50 border-r border-gray-700 backdrop-blur-md">
+        {/* Header with Menu Toggle */}
+        <div className="flex-shrink-0">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="p-2 transition-colors rounded-full hover:bg-gray-700 max-w-fit"
+          >
+            <Menu size={24} />
+          </motion.button>
+        </div>
 
-        <nav className="flex-grow mt-8">
-          {SIDEBAR_ITEMS.map((item) => (
-            <Link key={item.href} to={item.href}>
-              <motion.div className="flex items-center p-4 mb-2 text-sm font-medium transition-colors rounded-lg hover:bg-gray-700">
-                <item.icon
-                  size={20}
-                  style={{ color: item.color, minWidth: "20px" }}
-                />
-                <AnimatePresence>
-                  {isSidebarOpen && (
-                    <motion.span
-                      className="ml-4 whitespace-nowrap"
-                      initial={{ opacity: 0, width: 0 }}
-                      animate={{ opacity: 1, width: "auto" }}
-                      exit={{ opacity: 0, width: 0 }}
-                      transition={{ duration: 0.2, delay: 0.3 }}
-                    >
-                      {item.name}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            </Link>
-          ))}
+        {/* Navigation Menu - Scrollable */}
+        <nav className="flex-1 mt-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+          <div className="space-y-1">
+            {SIDEBAR_ITEMS.map((item) => (
+              <Link key={item.href} to={item.href}>
+                <motion.div className="flex items-center px-4 py-3 text-base font-medium transition-colors rounded-lg hover:bg-gray-700">
+                  <item.icon
+                    size={20}
+                    style={{ color: item.color, minWidth: "20px" }}
+                  />
+                  <AnimatePresence>
+                    {isSidebarOpen && (
+                      <motion.span
+                        className="ml-4 text-gray-200 whitespace-nowrap"
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: "auto" }}
+                        exit={{ opacity: 0, width: 0 }}
+                        transition={{ duration: 0.2, delay: 0.3 }}
+                      >
+                        {item.name}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              </Link>
+            ))}
+          </div>
         </nav>
 
-        {/* Logout Button */}
-        <div className="mt-auto">
+        {/* Logout Button - Always at bottom */}
+        <div className="flex-shrink-0 pt-3 border-t border-gray-700">
           <motion.button
             onClick={handleLogout}
             disabled={logoutMutation.isPending}
-            className="flex items-center w-full p-4 text-sm font-medium transition-colors rounded-lg hover:bg-red-900 hover:bg-opacity-20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center w-full px-4 py-3 text-base font-medium transition-colors rounded-lg hover:bg-red-900 hover:bg-opacity-20 disabled:opacity-50 disabled:cursor-not-allowed"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
             {logoutMutation.isPending ? (
-              <div className="w-5 h-5 border-2 border-red-400 rounded-full border-t-transparent animate-spin" />
+              <div className="w-[20px] h-[20px] border-2 border-red-400 rounded-full border-t-transparent animate-spin" />
             ) : (
               <LogOut
                 size={20}

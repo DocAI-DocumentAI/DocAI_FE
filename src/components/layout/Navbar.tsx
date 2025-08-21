@@ -8,7 +8,7 @@ export function Navbar() {
   //   const { user, logout } = useAuth()
   const [showDropdown, setShowDropdown] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const userStr = localStorage.getItem("user");
   if (!userStr) {
@@ -27,7 +27,7 @@ export function Navbar() {
   };
 
   return (
-    <nav className="flex h-16 items-center justify-between bg-blue-800 px-6">
+    <nav className="flex items-center justify-between h-16 px-6 bg-blue-800">
       <div className="flex items-center">
         <Link to="/" className="text-2xl font-medium text-white">
           Docs<span className="text-blue-300">+</span>AI
@@ -35,24 +35,30 @@ export function Navbar() {
       </div>
 
       <div className="flex items-center gap-4">
-        <button onClick={() => navigate("/notifications")} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-blue-800">
-          <BellRing className="h-5 w-5" />
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => navigate("/notifications")}
+            className="flex items-center justify-center w-8 h-8 text-blue-800 transition-colors bg-white rounded-full hover:bg-gray-100"
+            title="Notifications"
+          >
+            <BellRing className="w-5 h-5" />
+          </button>
+        </div>
         <div className="relative max-w-64 ">
           {/* Mobile search button */}
           <button
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-blue-800 sm:hidden"
+            className="flex items-center justify-center w-8 h-8 text-blue-800 bg-white rounded-full sm:hidden"
             onClick={() => setShowSearch(!showSearch)}
             aria-label="Open search"
             type="button"
           >
-            <Search className="h-5 w-5" />
+            <Search className="w-5 h-5" />
           </button>
           {/* Mobile search input */}
           {showSearch && (
-            <div className="absolute  right-0 top-10 z-10 w-64 rounded-md bg-white p-2 shadow-lg sm:hidden">
-              <div className="flex items-center rounded-md bg-white pl-2">
-                <Search className="h-5 w-5 text-gray-500" />
+            <div className="absolute right-0 z-10 w-64 p-2 bg-white rounded-md shadow-lg top-10 sm:hidden">
+              <div className="flex items-center pl-2 bg-white rounded-md">
+                <Search className="w-5 h-5 text-gray-500" />
                 <input
                   type="text"
                   placeholder="Search feature"
@@ -62,8 +68,8 @@ export function Navbar() {
               </div>
             </div>
           )}
-          <div className="hidden sm:flex items-center rounded-md bg-white pl-2">
-            <Search className="h-5 w-5 text-gray-500" />
+          <div className="items-center hidden pl-2 bg-white rounded-md sm:flex">
+            <Search className="w-5 h-5 text-gray-500" />
             <input
               type="text"
               placeholder="Search feature"
@@ -75,24 +81,27 @@ export function Navbar() {
         <div className="relative">
           <button
             onClick={toggleDropdown}
-            className="h-8 w-8 overflow-hidden rounded-full"
+            className="w-8 h-8 overflow-hidden rounded-full"
           >
             {user?.avatar ? (
               <img
-                src={user.avatar || "https://hoanghamobile.com/tin-tuc/wp-content/uploads/2023/07/hinh-dep-19.jpg"}
+                src={
+                  user.avatar ||
+                  "https://hoanghamobile.com/tin-tuc/wp-content/uploads/2023/07/hinh-dep-19.jpg"
+                }
                 alt={user.fullName}
-                className="h-full w-full object-cover"
+                className="object-cover w-full h-full"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center rounded-full bg-gray-200 text-blue-800">
+              <div className="flex items-center justify-center w-full h-full text-blue-800 bg-gray-200 rounded-full">
                 {user?.fullName?.charAt(0).toUpperCase() || "U"}
               </div>
             )}
           </button>
 
           {showDropdown && (
-            <div className="absolute z-10 right-0 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5">
-              <div className="border-b border-gray-100 px-4 py-2">
+            <div className="absolute right-0 z-10 w-48 py-1 mt-2 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5">
+              <div className="px-4 py-2 border-b border-gray-100">
                 <p className="text-sm font-medium text-gray-900">
                   {user?.fullName}
                 </p>
@@ -104,16 +113,17 @@ export function Navbar() {
                     navigate(`/${user?.role?.roleName}`);
                     setShowDropdown(false);
                   }}
-                  className="block w-full px-4 py-2 text-left text-sm text-black-600 hover:bg-gray-100"
+                  className="block w-full px-4 py-2 text-sm text-left text-black-600 hover:bg-gray-100"
                 >
                   Dashboard
-                </button>)}
+                </button>
+              )}
               <button
                 onClick={() => {
                   navigate("/settings/account");
                   setShowDropdown(false);
                 }}
-                className="block w-full px-4 py-2 text-left text-sm text-black-600 hover:bg-gray-100"
+                className="block w-full px-4 py-2 text-sm text-left text-black-600 hover:bg-gray-100"
               >
                 Settings
               </button>
@@ -122,7 +132,7 @@ export function Navbar() {
                   navigate("/bookmarks");
                   setShowDropdown(false);
                 }}
-                className="block w-full px-4 py-2 text-left text-sm text-black-600 hover:bg-gray-100"
+                className="block w-full px-4 py-2 text-sm text-left text-black-600 hover:bg-gray-100"
               >
                 Book mark
               </button>
@@ -131,7 +141,7 @@ export function Navbar() {
                   logout();
                   setShowDropdown(false);
                 }}
-                className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
+                className="block w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-gray-100"
               >
                 Logout
               </button>

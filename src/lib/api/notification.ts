@@ -50,7 +50,7 @@ export const getNotificationLogs = async (
   filters: NotificationFilters = {}
 ) => {
   let url = `/notification/logs?Page=${pageNumber}&Size=${pageSize}`;
-  
+
   // Add filters to URL
   if (filters.documentId) {
     url += `&DocumentId=${encodeURIComponent(filters.documentId)}`;
@@ -73,7 +73,7 @@ export const getNotificationLogs = async (
   if (filters.toDate) {
     url += `&ToDate=${encodeURIComponent(filters.toDate)}`;
   }
-  
+
   const response = await api.get(url);
   return response.data.data as NotificationResponse;
 };
@@ -105,7 +105,7 @@ export const getUserNotifications = async (
   if (filters.search) {
     url += `&Search=${encodeURIComponent(filters.search)}`;
   }
-  
+
   const response = await api.get(url);
   return response.data as NotificationResponse;
 };
@@ -113,4 +113,15 @@ export const getUserNotifications = async (
 export const markNotificationAsRead = async (id: string) => {
   const response = await api.patch(`/notification/${id}/read`);
   return response.data;
+};
+
+// Get unread notification count
+export const getUnreadNotificationCount = async (): Promise<number> => {
+  try {
+    const response = await getUserNotifications(1, 1, { isRead: false });
+    return response.total || 0;
+  } catch (error) {
+    console.error("Failed to get unread notification count:", error);
+    return 0;
+  }
 };

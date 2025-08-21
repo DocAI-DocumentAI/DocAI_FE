@@ -1,11 +1,15 @@
 import { api } from "./api";
 
-
 // Move a document (by document version) to another folder
-export const moveDocument = async (documentVersionId: string, targetFolderId: string) => {
+export const moveDocument = async (
+  documentVersionId: string,
+  targetFolderId: string
+) => {
   const params = new URLSearchParams();
-  params.append('targetFolderId', targetFolderId);
-  const response = await api.put(`/document/folder-documents/${documentVersionId}/move?${params.toString()}`);
+  params.append("targetFolderId", targetFolderId);
+  const response = await api.put(
+    `/document/folder-documents/${documentVersionId}/move?${params.toString()}`
+  );
   return response.data;
 };
 
@@ -45,10 +49,7 @@ export const analyzeDocument = async (file: File) => {
   });
   return response.data;
 };
-export const recreateDocument = async (
-  id: string,
-  data: any,
-) => {
+export const recreateDocument = async (id: string, data: any) => {
   const formData = new FormData();
 
   // Add all the standard fields
@@ -58,12 +59,18 @@ export const recreateDocument = async (
   if (data.signedBy) formData.append("SignedBy", data.signedBy);
   if (data.description) formData.append("Description", data.description);
   if (data.effectiveFrom) formData.append("EffectiveFrom", data.effectiveFrom);
-  if (data.effectiveUntil) formData.append("EffectiveUntil", data.effectiveUntil);
+  if (data.effectiveUntil)
+    formData.append("EffectiveUntil", data.effectiveUntil);
   if (data.tags) {
-    formData.append("Tags", Array.isArray(data.tags) ? data.tags.join(",") : data.tags);
+    formData.append(
+      "Tags",
+      Array.isArray(data.tags) ? data.tags.join(",") : data.tags
+    );
   }
-  if (data.replacementDocumentId) formData.append("ReplacementDocumentId", data.replacementDocumentId);
-  if (data.documentTypeId) formData.append("DocumentTypeId", data.documentTypeId);
+  if (data.replacementDocumentId)
+    formData.append("ReplacementDocumentId", data.replacementDocumentId);
+  if (data.documentTypeId)
+    formData.append("DocumentTypeId", data.documentTypeId);
   formData.append("IsPublic", data.isPublic ? "true" : "false");
   formData.append("FolderId", data.folderId || ""); // Add folder ID field
 
@@ -71,13 +78,15 @@ export const recreateDocument = async (
     formData.append("File", data.file);
   }
 
-  const response = await api.put(
-    `/document/drafts/${id}`,
-    formData,
-    {
-      headers: { "Content-Type": "multipart/form-data" },
-    }
-  );
+  const response = await api.put(`/document/drafts/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+};
+export const editDocument = async (id: string, data: any) => {
+  const response = await api.put(`/document/drafts/${id}`, data, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return response.data;
 };
 export const getDocuments = async (
@@ -192,17 +201,21 @@ export const getMyDocumentsWithStats = async (
 ): Promise<MyDocumentsResponse> => {
   const params = new URLSearchParams();
 
-  if (filters.title) params.append('title', filters.title);
-  if (filters.isPublic !== undefined) params.append('isPublic', filters.isPublic.toString());
-  if (filters.from) params.append('from', filters.from);
-  if (filters.to) params.append('to', filters.to);
-  if (filters.status) params.append('status', filters.status);
-  if (filters.documentTypeId) params.append('documentTypeId', filters.documentTypeId);
+  if (filters.title) params.append("title", filters.title);
+  if (filters.isPublic !== undefined)
+    params.append("isPublic", filters.isPublic.toString());
+  if (filters.from) params.append("from", filters.from);
+  if (filters.to) params.append("to", filters.to);
+  if (filters.status) params.append("status", filters.status);
+  if (filters.documentTypeId)
+    params.append("documentTypeId", filters.documentTypeId);
 
-  params.append('pageNumber', (filters.pageNumber || 1).toString());
-  params.append('pageSize', (filters.pageSize || 10).toString());
+  params.append("pageNumber", (filters.pageNumber || 1).toString());
+  params.append("pageSize", (filters.pageSize || 10).toString());
 
-  const response = await api.get(`/document/my-documents/with-stats?${params.toString()}`);
+  const response = await api.get(
+    `/document/my-documents/with-stats?${params.toString()}`
+  );
   return response.data;
 };
 
@@ -223,17 +236,21 @@ export const getApprovalQueue = async (
   filters: ApprovalQueueFilters = {}
 ) => {
   const params = new URLSearchParams();
-  params.append('pageNumber', String(page));
-  params.append('pageSize', String(pageSize));
+  params.append("pageNumber", String(page));
+  params.append("pageSize", String(pageSize));
 
-  if (filters.status) params.append('Status', filters.status);
-  if (filters.fromDate) params.append('FromDate', filters.fromDate);
-  if (filters.toDate) params.append('ToDate', filters.toDate);
-  if (filters.documentTypeId) params.append('DocumentTypeId', filters.documentTypeId);
-  if (filters.isPublic !== undefined) params.append('IsPublic', String(filters.isPublic));
-  if (filters.title) params.append('Title', filters.title);
+  if (filters.status) params.append("Status", filters.status);
+  if (filters.fromDate) params.append("FromDate", filters.fromDate);
+  if (filters.toDate) params.append("ToDate", filters.toDate);
+  if (filters.documentTypeId)
+    params.append("DocumentTypeId", filters.documentTypeId);
+  if (filters.isPublic !== undefined)
+    params.append("IsPublic", String(filters.isPublic));
+  if (filters.title) params.append("Title", filters.title);
 
-  const response = await api.get(`/document/approval-queue?${params.toString()}`);
+  const response = await api.get(
+    `/document/approval-queue?${params.toString()}`
+  );
   return response.data.data;
 };
 
@@ -415,18 +432,32 @@ export const enhancedSemanticSearchDocuments = async (
 
   // Add query parameters
   searchParams.append("query", params.query);
-  if (params.minRelevance !== undefined) searchParams.append("minRelevance", params.minRelevance.toString());
-  if (params.maxResults !== undefined) searchParams.append("maxResults", params.maxResults.toString());
-  if (params.enableHybridScoring !== undefined) searchParams.append("enableHybridScoring", params.enableHybridScoring.toString());
+  if (params.minRelevance !== undefined)
+    searchParams.append("minRelevance", params.minRelevance.toString());
+  if (params.maxResults !== undefined)
+    searchParams.append("maxResults", params.maxResults.toString());
+  if (params.enableHybridScoring !== undefined)
+    searchParams.append(
+      "enableHybridScoring",
+      params.enableHybridScoring.toString()
+    );
   if (params.scope !== undefined) searchParams.append("scope", params.scope);
-  if (params.documentTypeId) searchParams.append("documentTypeId", params.documentTypeId);
-  if (params.departmentId) searchParams.append("departmentId", params.departmentId);
+  if (params.documentTypeId)
+    searchParams.append("documentTypeId", params.documentTypeId);
+  if (params.departmentId)
+    searchParams.append("departmentId", params.departmentId);
   if (params.fromDate) searchParams.append("fromDate", params.fromDate);
   if (params.toDate) searchParams.append("toDate", params.toDate);
-  if (params.effectiveFrom) searchParams.append("effectiveFrom", params.effectiveFrom);
-  if (params.effectiveUntil) searchParams.append("effectiveUntil", params.effectiveUntil);
+  if (params.effectiveFrom)
+    searchParams.append("effectiveFrom", params.effectiveFrom);
+  if (params.effectiveUntil)
+    searchParams.append("effectiveUntil", params.effectiveUntil);
   if (params.folderId) searchParams.append("folderId", params.folderId);
-  if (params.includeSubfolders !== undefined) searchParams.append("includeSubfolders", params.includeSubfolders.toString());
+  if (params.includeSubfolders !== undefined)
+    searchParams.append(
+      "includeSubfolders",
+      params.includeSubfolders.toString()
+    );
 
   const response = await api.get(
     `/document/enhanced-semantic-search?${searchParams.toString()}`
@@ -662,7 +693,9 @@ export const submitDocumentForApproval = async (
   targetFolderId?: string
 ): Promise<any> => {
   const url = targetFolderId
-    ? `/document/folder-approval/${versionId}/submit?targetFolderId=${encodeURIComponent(targetFolderId)}`
+    ? `/document/folder-approval/${versionId}/submit?targetFolderId=${encodeURIComponent(
+        targetFolderId
+      )}`
     : `/document/folder-approval/${versionId}/submit`;
   const response = await api.post(url);
   return response.data;
@@ -702,14 +735,20 @@ export const getDocumentRecommendations = async (
   documentId: string,
   count: number = 10,
   includeSameDepartmentOnly: boolean = false
-): Promise<{ data: DocumentRecommendation[]; meta?: RecommendationResponse }> => {
+): Promise<{
+  data: DocumentRecommendation[];
+  meta?: RecommendationResponse;
+}> => {
   try {
-    const response = await api.get(`/document/documents/${documentId}/recommendations`, {
-      params: {
-        count,
-        includeSameDepartmentOnly
+    const response = await api.get(
+      `/document/documents/${documentId}/recommendations`,
+      {
+        params: {
+          count,
+          includeSameDepartmentOnly,
+        },
       }
-    });
+    );
 
     console.log("Raw API response:", response.data);
 
@@ -719,10 +758,10 @@ export const getDocumentRecommendations = async (
 
     return {
       data: Array.isArray(recommendations) ? recommendations : [],
-      meta: responseData // Include full response data for additional info
+      meta: responseData, // Include full response data for additional info
     };
   } catch (error) {
-    console.error('Error fetching recommendations:', error);
+    console.error("Error fetching recommendations:", error);
     return { data: [], meta: undefined };
   }
 };
@@ -794,7 +833,10 @@ export const getOfficialDocuments = async (
     if (cleanedParams.isPublic !== undefined)
       searchParams.append("isPublic", cleanedParams.isPublic.toString());
     if (cleanedParams.departmentOnly !== undefined)
-      searchParams.append("departmentOnly", cleanedParams.departmentOnly.toString());
+      searchParams.append(
+        "departmentOnly",
+        cleanedParams.departmentOnly.toString()
+      );
 
     // Folder Organization Filters
     if (cleanedParams.folderId)
@@ -1014,7 +1056,7 @@ export interface ApprovalHistoryRequest {
   signedBy?: string;
   reviewedBy?: string;
   pageNumber?: number; // default 1
-  pageSize?: number;   // default 10
+  pageSize?: number; // default 10
 }
 
 export interface ApprovalHistoryItem {
@@ -1070,29 +1112,38 @@ export const getMyApprovalHistory = async (
   request: ApprovalHistoryRequest = {}
 ): Promise<ApprovalHistoryResponse> => {
   const params = new URLSearchParams();
-  if (request.title) params.append('title', request.title);
-  if (request.keyword) params.append('keyword', request.keyword);
-  if (request.status) params.append('status', request.status);
-  if (request.fromDate) params.append('fromDate', request.fromDate);
-  if (request.toDate) params.append('toDate', request.toDate);
-  if (request.isPublic !== undefined) params.append('isPublic', String(request.isPublic));
-  if (request.effectiveFrom) params.append('effectiveFrom', request.effectiveFrom);
-  if (request.effectiveUntil) params.append('effectiveUntil', request.effectiveUntil);
-  if (request.documentTypeId) params.append('documentTypeId', request.documentTypeId);
-  if (request.tags && request.tags.length > 0) request.tags.forEach(t => params.append('tags', t));
-  if (request.signedBy) params.append('signedBy', request.signedBy);
-  if (request.reviewedBy) params.append('reviewedBy', request.reviewedBy);
-  params.append('pageNumber', String(request.pageNumber ?? 1));
-  params.append('pageSize', String(request.pageSize ?? 10));
+  if (request.title) params.append("title", request.title);
+  if (request.keyword) params.append("keyword", request.keyword);
+  if (request.status) params.append("status", request.status);
+  if (request.fromDate) params.append("fromDate", request.fromDate);
+  if (request.toDate) params.append("toDate", request.toDate);
+  if (request.isPublic !== undefined)
+    params.append("isPublic", String(request.isPublic));
+  if (request.effectiveFrom)
+    params.append("effectiveFrom", request.effectiveFrom);
+  if (request.effectiveUntil)
+    params.append("effectiveUntil", request.effectiveUntil);
+  if (request.documentTypeId)
+    params.append("documentTypeId", request.documentTypeId);
+  if (request.tags && request.tags.length > 0)
+    request.tags.forEach((t) => params.append("tags", t));
+  if (request.signedBy) params.append("signedBy", request.signedBy);
+  if (request.reviewedBy) params.append("reviewedBy", request.reviewedBy);
+  params.append("pageNumber", String(request.pageNumber ?? 1));
+  params.append("pageSize", String(request.pageSize ?? 10));
 
-  const response = await api.get(`/document/my-documents/approval-history?${params.toString()}`);
+  const response = await api.get(
+    `/document/my-documents/approval-history?${params.toString()}`
+  );
   return response.data as ApprovalHistoryResponse;
 };
 
 export const getApprovalHistoryItemById = async (
   id: string
 ): Promise<ApprovalHistoryItem> => {
-  const response = await api.get(`/documents/my-documents/approval-history/${id}`);
+  const response = await api.get(
+    `/documents/my-documents/approval-history/${id}`
+  );
   return response.data.data as ApprovalHistoryItem;
 };
 
@@ -1180,10 +1231,7 @@ export const getDocumentStats = async (): Promise<
 /**
  * Create a new version of an existing document
  */
-export const createNewVersion = async (
-  id: string,
-  data: any,
-) => {
+export const createNewVersion = async (id: string, data: any) => {
   const formData = new FormData();
 
   // Add all the standard fields with proper naming
@@ -1193,12 +1241,18 @@ export const createNewVersion = async (
   if (data.signedBy) formData.append("SignedBy", data.signedBy);
   if (data.description) formData.append("Description", data.description);
   if (data.effectiveFrom) formData.append("EffectiveFrom", data.effectiveFrom);
-  if (data.effectiveUntil) formData.append("EffectiveUntil", data.effectiveUntil);
+  if (data.effectiveUntil)
+    formData.append("EffectiveUntil", data.effectiveUntil);
   if (data.tags) {
-    formData.append("Tags", Array.isArray(data.tags) ? data.tags.join(",") : data.tags);
+    formData.append(
+      "Tags",
+      Array.isArray(data.tags) ? data.tags.join(",") : data.tags
+    );
   }
-  if (data.replacementDocumentId) formData.append("ReplacementDocumentId", data.replacementDocumentId);
-  if (data.documentTypeId) formData.append("DocumentTypeId", data.documentTypeId);
+  if (data.replacementDocumentId)
+    formData.append("ReplacementDocumentId", data.replacementDocumentId);
+  if (data.documentTypeId)
+    formData.append("DocumentTypeId", data.documentTypeId);
   formData.append("IsPublic", data.isPublic ? "true" : "false");
   formData.append("FolderId", data.folderId || ""); // Add folder ID field
 
@@ -1206,11 +1260,15 @@ export const createNewVersion = async (
     formData.append("File", data.file);
   }
 
-  const response = await api.post(`/document/documents/${id}/versions`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+  const response = await api.post(
+    `/document/documents/${id}/versions`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
 
   return response.data;
 };

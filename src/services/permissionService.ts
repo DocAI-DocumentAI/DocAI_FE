@@ -106,7 +106,7 @@ export const usePermissions = () => {
   });
 };
 
-// Hook for table with pagination
+// Hook for table with pagination and filters
 export const usePermissionsPaginated = (filters: PermissionFilters) => {
   return useQuery({
     queryKey: ["permissions", "paginated", filters],
@@ -119,8 +119,14 @@ export const usePermissionsPaginated = (filters: PermissionFilters) => {
 export const getPermissionsApi = fetchPermissions;
 
 export const useCreatePermission = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: createPermission,
+    onSuccess: () => {
+      // Invalidate permissions queries to refresh the list
+      queryClient.invalidateQueries({ queryKey: ["permissions"] });
+    },
   });
 };
 

@@ -185,8 +185,14 @@ const fetchDocumentTypeById = async (
 };
 
 export const useCreateDocumentType = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: createDocumentType,
+    onSuccess: () => {
+      // Invalidate document types queries to refresh the list
+      queryClient.invalidateQueries({ queryKey: ["documentTypes"] });
+    },
   });
 };
 
