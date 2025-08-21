@@ -55,15 +55,14 @@ const formatContent = (content: string): string => {
 
 
 
-// Streaming indicator component
+// Improved streaming indicator component - appears inline with AI message
 const StreamingIndicator: React.FC = () => (
-  <div className="flex items-center space-x-1 mt-2">
+  <div className="flex items-center py-2">
     <div className="flex space-x-1">
-      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+      <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-bounce shadow-sm" style={{ animationDelay: '0ms' }}></div>
+      <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-bounce shadow-sm" style={{ animationDelay: '200ms' }}></div>
+      <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-bounce shadow-sm" style={{ animationDelay: '400ms' }}></div>
     </div>
-    <span className="text-xs text-gray-500 ml-2">AI is responding...</span>
   </div>
 );
 
@@ -178,7 +177,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   };
 
   return (
-    <div className={`mb-6 flex ${messageRole === "user" ? "justify-end" : "justify-start"}`}>
+    <div className={`mb-3 flex ${messageRole === "user" ? "justify-end" : "justify-start"}`}>
       <div className={`flex max-w-[80%] ${messageRole === "user" ? "flex-row-reverse" : "flex-row"}`}>
         {/* Avatar */}
         <div className={`flex-shrink-0 ${messageRole === "user" ? "ml-3" : "mr-3"}`}>
@@ -202,10 +201,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
               <div className="whitespace-pre-wrap break-words">{content}</div>
             ) : (
               <>
-                <div
-                  className="prose prose-base max-w-none prose-headings:text-gray-900 prose-p:text-gray-800 prose-strong:text-gray-900 prose-blockquote:border-l-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:text-gray-700 prose-code:text-pink-600 prose-code:bg-gray-100 prose-pre:bg-gray-100"
-                  dangerouslySetInnerHTML={{ __html: formatContent(content) }}
-                />
+                {content ? (
+                  <div
+                    className="prose prose-base max-w-none prose-headings:text-gray-900 prose-p:text-gray-800 prose-strong:text-gray-900 prose-blockquote:border-l-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:text-gray-700 prose-code:text-pink-600 prose-code:bg-gray-100 prose-pre:bg-gray-100"
+                    dangerouslySetInnerHTML={{ __html: formatContent(content) }}
+                  />
+                ) : null}
                 {isStreaming && <StreamingIndicator />}
               </>
             )}
