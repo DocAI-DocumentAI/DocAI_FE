@@ -15,11 +15,13 @@ import {
   X,
   HelpCircle,
   Trash2,
+  Edit3,
 } from "lucide-react";
 import {
   getChatSessions,
   ChatSession,
   deleteChatSession,
+  renameChatSession,
 } from "../lib/api/chat";
 import { useChat } from "../context/chat-context";
 import { toast } from "react-toastify";
@@ -58,6 +60,13 @@ function ChatSidebar() {
   const [customizeLoading, setCustomizeLoading] = useState(false);
   const [showChatMenu, setShowChatMenu] = useState<string | null>(null);
   const [deletingChatId, setDeletingChatId] = useState<string | null>(null);
+  
+  // Rename chat popup states
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [renamingChatId, setRenamingChatId] = useState<string | null>(null);
+  const [newChatTitle, setNewChatTitle] = useState("");
+  const [isRenaming, setIsRenaming] = useState(false);
+  
   const [customizeSettings, setCustomizeSettings] = useState({
     userName: "",
     chatbotCharacteristics: [] as string[],
@@ -122,6 +131,81 @@ function ChatSidebar() {
       console.error("Failed to fetch chat sessions:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle rename chat session - Open popup
+  const handleRenameChat = async (sessionId: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const chatToRename = chatSessions.find((chat) => chat.id === sessionId);
+    if (!chatToRename) return;
+
+    setRenamingChatId(sessionId);
+    setNewChatTitle(chatToRename.title);
+    setShowRenameModal(true);
+    setShowChatMenu(null);
+  };
+
+  // Handle save rename from popup
+  const handleSaveRename = async () => {
+    if (!newChatTitle.trim()) {
+      toast.error("Tên đoạn chat không được để trống");
+      return;
+    }
+
+    if (newChatTitle.length > 100) {
+      toast.error("Tên đoạn chat không được quá 100 ký tự");
+      return;
+    }
+
+    if (!renamingChatId) return;
+
+    try {
+      setIsRenaming(true);
+
+      await renameChatSession(renamingChatId, newChatTitle.trim());
+
+      // Update local state
+      setChatSessions((prev) =>
+        prev.map((chat) =>
+          chat.id === renamingChatId
+            ? { ...chat, title: newChatTitle.trim() }
+            : chat
+        )
+      );
+
+      setShowRenameModal(false);
+      setRenamingChatId(null);
+      setNewChatTitle("");
+      toast.success("Đã đổi tên đoạn chat thành công");
+    } catch (error: any) {
+      console.error("Failed to rename chat session:", error);
+      toast.error(
+        `Đổi tên thất bại: ${
+          error?.response?.data?.message || error.message
+        }`
+      );
+    } finally {
+      setIsRenaming(false);
+    }
+  };
+
+  // Handle cancel rename
+  const handleCancelRename = () => {
+    setShowRenameModal(false);
+    setRenamingChatId(null);
+    setNewChatTitle("");
+  };
+
+  // Handle rename key press (Enter to save, Escape to cancel)
+  const handleRenameKeyPress = (event: React.KeyboardEvent) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      handleSaveRename();
+    } else if (event.key === "Escape") {
+      handleCancelRename();
     }
   };
 
@@ -512,6 +596,13 @@ function ChatSidebar() {
                           {showChatMenu === chat.id && (
                             <div className="absolute right-0 z-50 py-1 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg top-full min-w-32">
                               <button
+                                onClick={(e) => handleRenameChat(chat.id, e)}
+                                className="flex items-center w-full gap-2 px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                              >
+                                <Edit3 size={14} />
+                                Đổi tên
+                              </button>
+                              <button
                                 onClick={(e) => handleDeleteChat(chat.id, e)}
                                 className="flex items-center w-full gap-2 px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50"
                                 disabled={deletingChatId === chat.id}
@@ -617,6 +708,76 @@ function ChatSidebar() {
           )}
         </div>
       </aside>
+
+      {/* Rename Chat Modal */}
+      {showRenameModal && (
+        <>
+          {/* Modal Overlay */}
+          <div className="fixed inset-0 z-[110] bg-black bg-opacity-50 flex items-center justify-center p-4">
+            {/* Modal Content */}
+            <div className="bg-white rounded-lg max-w-md w-full">
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Đổi tên cuộc trò chuyện
+                </h3>
+                <button
+                  onClick={handleCancelRename}
+                  className="p-1 rounded-md hover:bg-gray-100 transition-colors"
+                  disabled={isRenaming}
+                >
+                  <X size={20} className="text-gray-500" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-4">
+                <div className="mb-4">
+                  <label htmlFor="chatTitle" className="block text-sm font-medium text-gray-700 mb-2">
+                    Tên mới
+                  </label>
+                  <input
+                    id="chatTitle"
+                    type="text"
+                    value={newChatTitle}
+                    onChange={(e) => setNewChatTitle(e.target.value)}
+                    onKeyDown={handleRenameKeyPress}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                    placeholder="Nhập tên mới cho cuộc trò chuyện"
+                    maxLength={100}
+                    disabled={isRenaming}
+                    autoFocus
+                  />
+                  <div className="mt-1 text-xs text-gray-500">
+                    {newChatTitle.length}/100 ký tự
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-end gap-3 p-4 border-t border-gray-200">
+                <button
+                  onClick={handleCancelRename}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  disabled={isRenaming}
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleSaveRename}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  disabled={isRenaming || !newChatTitle.trim()}
+                >
+                  {isRenaming && (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  )}
+                  {isRenaming ? "Đang lưu..." : "Lưu"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Customize ChatGPT Modal */}
       {showCustomizeModal && (
@@ -741,34 +902,6 @@ function ChatSidebar() {
                         placeholder="Hãy mô tả thêm về bản thân hoặc cách bạn muốn ChatGPT phản hồi..."
                       />
                     </div>
-
-                    {/* Toggle for new chats */}
-                    {/* <div className="flex items-center justify-between">
-                      <span className="text-sm">
-                        Áp dụng cho các đoạn chat mới
-                      </span>
-                      <button
-                        onClick={() =>
-                          setCustomizeSettings({
-                            ...customizeSettings,
-                            applyToNewChats: !customizeSettings.applyToNewChats,
-                          })
-                        }
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          customizeSettings.applyToNewChats
-                            ? "bg-blue-600"
-                            : "bg-gray-600"
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            customizeSettings.applyToNewChats
-                              ? "translate-x-6"
-                              : "translate-x-1"
-                          }`}
-                        />
-                      </button>
-                    </div> */}
                   </>
                 )}
               </div>
@@ -783,7 +916,7 @@ function ChatSidebar() {
                   Hủy bỏ
                 </button>
                 <button
-                  onClick={validateAndSave} // Thay vì handleSaveCustomize
+                  onClick={validateAndSave}
                   className="px-6 py-2 font-medium text-gray-900 transition-colors bg-white rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={customizeLoading}
                 >
