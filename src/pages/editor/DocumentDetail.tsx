@@ -14,6 +14,7 @@ import {
     GlobalOutlined,
     LockOutlined,
     DeleteOutlined,
+    FolderOutlined,
 } from "@ant-design/icons"
 import { api } from "../../lib/api/api";
 import toast from 'react-hot-toast';
@@ -297,6 +298,33 @@ export default function DocumentDetail({ onViewChange, }: any) {
                                 </Button>
                             </Col>
                         </Row>
+
+                        {/* Folder Information */}
+                        {(document.folderName || document.targetFolderName) && (
+                            <>
+                                <Divider />
+                                <Row gutter={[16, 16]}>
+                                    {document.folderName && (
+                                        <Col xs={24} sm={12} md={8}>
+                                            <Text strong>Current Folder:</Text>
+                                            <br />
+                                            <Text><FolderOutlined /> {document.folderName}</Text>
+                                        </Col>
+                                    )}
+                                    {document.targetFolderName && (
+                                        <Col xs={24} sm={12} md={8}>
+                                            <Text strong>Target Folder:</Text>
+                                            <br />
+                                            <Text><FolderOutlined /> {document.targetFolderName}</Text>
+                                            <br />
+                                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                                                Document will be moved here upon approval
+                                            </Text>
+                                        </Col>
+                                    )}
+                                </Row>
+                            </>
+                        )}
 
                         <Divider />
 

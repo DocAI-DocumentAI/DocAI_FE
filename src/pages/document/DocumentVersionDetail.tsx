@@ -32,6 +32,7 @@ import {
   Calendar,
   Edit3
 } from "lucide-react";
+import { FolderOutlined } from "@ant-design/icons";
 import { api } from "../../lib/api/api";
 import toast from 'react-hot-toast';
 import { Navbar } from "../../components/layout/Navbar";
@@ -74,6 +75,11 @@ interface DocumentVersion {
   replacementDocument?: string;
   replacementDocumentName?: string;
   replacementId?: string;
+  // New folder fields
+  folderId?: string;
+  folderName?: string;
+  targetFolderId?: string;
+  targetFolderName?: string;
 }
 
 export default function DocumentVersionDetail() {
@@ -363,6 +369,27 @@ export default function DocumentVersionDetail() {
                         <div className="flex-1">
                           <Text className="block font-medium">{document.documentTypeName}</Text>
                           <Text type="secondary" className="text-sm">Loại tài liệu</Text>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Folder Information */}
+                    {document.folderName && (
+                      <div className="flex items-start gap-3">
+                        <FolderOutlined style={{ fontSize: 16, color: '#666', marginTop: 4 }} />
+                        <div className="flex-1">
+                          <Text className="block font-medium">{document.folderName}</Text>
+                          <Text type="secondary" className="text-sm">Thư mục hiện tại</Text>
+                        </div>
+                      </div>
+                    )}
+
+                    {document.targetFolderName && (
+                      <div className="flex items-start gap-3">
+                        <FolderOutlined style={{ fontSize: 16, color: '#1890ff', marginTop: 4 }} />
+                        <div className="flex-1">
+                          <Text className="block font-medium" style={{ color: '#1890ff' }}>{document.targetFolderName}</Text>
+                          <Text type="secondary" className="text-sm">Thư mục đích</Text>
                         </div>
                       </div>
                     )}

@@ -14,7 +14,7 @@ import type {
   DocumentTypeItem,
 } from "../../components/Search-filter";
 
-import { Card, Spin, Typography, Row, Col, Alert } from "antd";
+import { Card, Spin, Typography, Row, Col } from "antd";
 import {
   RobotOutlined,
   SearchOutlined,

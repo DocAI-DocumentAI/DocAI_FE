@@ -21,7 +21,7 @@ import {
   ReloadOutlined
 } from '@ant-design/icons';
 import type { FolderNode, FolderPermissionLevel } from '../../types/folder';
-import { getFolderTree, createFolder } from '../../lib/api/folder';
+import { getFolderTree, getPublicFolderTree, createFolder } from '../../lib/api/folder';
 
 const { Search } = Input;
 const { Text } = Typography;
@@ -38,6 +38,7 @@ export interface ModernFolderSelectorProps {
   showSearch?: boolean;
   title?: string;
   allowCreateFolder?: boolean;
+  treeType?: 'department' | 'public';
 }
 
 // Removed FolderBreadcrumb interface - not needed for simple list
@@ -51,7 +52,8 @@ const ModernFolderSelector: React.FC<ModernFolderSelectorProps> = ({
   height = 400,
   showSearch = true,
   title = "Select Folder",
-  allowCreateFolder = false
+  allowCreateFolder = false,
+  treeType = 'department'
 }) => {
   // State management
   const [loading, setLoading] = useState(true);
@@ -82,7 +84,9 @@ const ModernFolderSelector: React.FC<ModernFolderSelectorProps> = ({
       setLoading(true);
       setError(null);
 
-      const response = await getFolderTree();
+      const response = treeType === 'public'
+        ? await getPublicFolderTree()
+        : await getFolderTree();
 
       if (response.success && response.data?.rootNodes) {
         setAllFolders(flattenFolders(response.data.rootNodes));
@@ -182,7 +186,7 @@ const ModernFolderSelector: React.FC<ModernFolderSelectorProps> = ({
 
   useEffect(() => {
     loadFolders();
-  }, []);
+  }, [treeType]);
 
   if (loading) {
     return (
@@ -246,7 +250,7 @@ const ModernFolderSelector: React.FC<ModernFolderSelectorProps> = ({
       {/* Simple folder list - no navigation needed */}
 
       {/* Create New Folder */}
-      {allowCreateFolder && (
+      {allowCreateFolder && treeType === 'department' && (
         <div style={{ marginBottom: 16 }}>
           <Space.Compact style={{ width: '100%' }}>
             <Input

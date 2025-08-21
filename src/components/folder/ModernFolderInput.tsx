@@ -3,7 +3,7 @@ import { Input, Button, Typography, Space, Drawer } from 'antd';
 import { FolderOutlined, ClearOutlined, EditOutlined } from '@ant-design/icons';
 import ModernFolderSelector from './ModernFolderSelector';
 import type { FolderPermissionLevel, FolderNode } from '../../types/folder';
-import { getFolderTree } from '../../lib/api/folder';
+import { getFolderTree, getPublicFolderTree } from '../../lib/api/folder';
 
 const { Text } = Typography;
 
@@ -18,6 +18,7 @@ export interface ModernFolderInputProps {
   className?: string;
   size?: 'small' | 'middle' | 'large';
   style?: React.CSSProperties;
+  treeType?: 'department' | 'public';
 }
 
 const ModernFolderInput: React.FC<ModernFolderInputProps> = ({
@@ -30,7 +31,8 @@ const ModernFolderInput: React.FC<ModernFolderInputProps> = ({
   excludeFolderIds = [],
   className,
   size = 'middle',
-  style
+  style,
+  treeType = 'department'
 }) => {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedFolderName, setSelectedFolderName] = useState<string>('');
@@ -41,7 +43,7 @@ const ModernFolderInput: React.FC<ModernFolderInputProps> = ({
   // Load folders to get folder names
   useEffect(() => {
     loadFolders();
-  }, []);
+  }, [treeType]);
 
   // Update display when selectedFolderId changes
   useEffect(() => {
@@ -60,7 +62,9 @@ const ModernFolderInput: React.FC<ModernFolderInputProps> = ({
 
   const loadFolders = async () => {
     try {
-      const response = await getFolderTree();
+      const response = treeType === 'public'
+        ? await getPublicFolderTree()
+        : await getFolderTree();
       if (response.success && response.data?.rootNodes) {
         setFolders(response.data.rootNodes);
       }
@@ -190,6 +194,7 @@ const ModernFolderInput: React.FC<ModernFolderInputProps> = ({
           showSearch={true}
           title=""
           allowCreateFolder={true}
+          treeType={treeType}
         />
 
         {tempSelectedFolderId && (

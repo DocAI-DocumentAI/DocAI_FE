@@ -15,6 +15,7 @@ export interface FolderSelectorModalProps {
   filterPermission?: FolderPermissionLevel;
   excludeFolderIds?: string[];
   allowClear?: boolean;
+  treeType?: 'department' | 'public';
 }
 
 const FolderSelectorModal: React.FC<FolderSelectorModalProps> = ({
@@ -26,7 +27,8 @@ const FolderSelectorModal: React.FC<FolderSelectorModalProps> = ({
   placeholder = "Choose a folder location",
   filterPermission = 'read',
   excludeFolderIds = [],
-  allowClear = true
+  allowClear = true,
+  treeType = 'department'
 }) => {
   const [tempSelectedFolderId, setTempSelectedFolderId] = useState<string | undefined>(selectedFolderId);
 
@@ -72,6 +74,7 @@ const FolderSelectorModal: React.FC<FolderSelectorModalProps> = ({
         height={400}
         showSearch={true}
         title=""
+        treeType={treeType}
       />
 
       {allowClear && tempSelectedFolderId && (
