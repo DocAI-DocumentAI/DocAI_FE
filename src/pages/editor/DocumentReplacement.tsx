@@ -49,6 +49,10 @@ const DocumentReplacement: React.FC = () => {
   const [replacementSuggestions, setReplacementSuggestions] = useState<ReplacementSuggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
+  // Replacement suggestion filters
+  const [minSimilarityThreshold, setMinSimilarityThreshold] = useState<number>(0.45);
+  const [sameDepartmentOnly, setSameDepartmentOnly] = useState<boolean>(false);
+
   // Folder selection
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(undefined);
 
@@ -106,8 +110,8 @@ const DocumentReplacement: React.FC = () => {
         documentTypeId: analysisData.documentTypeId,
         isPublic: false,
         maxSuggestions: 10,
-        minSimilarityThreshold: 0.45,
-        sameDepartmentOnly: false
+        minSimilarityThreshold: minSimilarityThreshold,
+        sameDepartmentOnly: sameDepartmentOnly
       });
       setReplacementSuggestions(suggestions.suggestions || []);
     } catch (error) {
@@ -115,6 +119,13 @@ const DocumentReplacement: React.FC = () => {
       toast.error("Failed to load replacement suggestions");
     } finally {
       setLoadingSuggestions(false);
+    }
+  };
+
+  // Refresh suggestions with current filters
+  const refreshSuggestions = () => {
+    if (location.state?.analysisData) {
+      loadReplacementSuggestions(location.state.analysisData);
     }
   };
 
@@ -312,6 +323,44 @@ const DocumentReplacement: React.FC = () => {
                 Based on your document content, we found these similar documents that might be candidates for replacement.
               </Text>
 
+              {/* Filter Controls */}
+              <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#f5f5f5', borderRadius: 6 }}>
+                <Text strong style={{ display: 'block', marginBottom: 8 }}>Filter Options</Text>
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  <div>
+                    <Text style={{ display: 'block', marginBottom: 4, fontSize: '12px' }}>
+                      Minimum Similarity: {Math.round(minSimilarityThreshold * 100)}%
+                    </Text>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={minSimilarityThreshold}
+                      onChange={(e) => setMinSimilarityThreshold(parseFloat(e.target.value))}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Text style={{ fontSize: '12px' }}>Same Department Only</Text>
+                    <Switch
+                      size="small"
+                      checked={sameDepartmentOnly}
+                      onChange={setSameDepartmentOnly}
+                    />
+                  </div>
+                  <Button
+                    type="primary"
+                    size="small"
+                    onClick={refreshSuggestions}
+                    loading={loadingSuggestions}
+                    style={{ width: '100%' }}
+                  >
+                    Update Suggestions
+                  </Button>
+                </Space>
+              </div>
+
               {loadingSuggestions ? (
                 <div style={{ textAlign: "center", padding: "40px 0" }}>
                   <Spin size="large" />
@@ -321,6 +370,12 @@ const DocumentReplacement: React.FC = () => {
                 </div>
               ) : replacementSuggestions.length > 0 ? (
                 <div style={{ marginBottom: 24 }}>
+                  <div style={{ marginBottom: 12, padding: 8, backgroundColor: '#e6f7ff', borderRadius: 4, border: '1px solid #91d5ff' }}>
+                    <Text style={{ fontSize: '11px', color: '#1890ff' }}>
+                      Showing {replacementSuggestions.length} suggestions with ≥{Math.round(minSimilarityThreshold * 100)}% similarity
+                      {sameDepartmentOnly ? ' (same department only)' : ' (all departments)'}
+                    </Text>
+                  </div>
                   {replacementSuggestions.slice(0, 5).map((suggestion) => (
                     <Card 
                       key={suggestion.documentId}
@@ -366,7 +421,7 @@ const DocumentReplacement: React.FC = () => {
                             <FileTextOutlined style={{ marginRight: 8, color: '#1890ff' }} />
                             <Text strong>{suggestion.title}</Text>
                             <Tag color="blue" style={{ marginLeft: 8 }}>
-                              {Math.round(suggestion.relevanceScore * 100)}% match
+                              {Math.round((suggestion.similarityScore || 0) * 100)}% match
                             </Tag>
                           </div>
                           <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: 4 }}>
@@ -382,10 +437,19 @@ const DocumentReplacement: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <Empty 
-                  description="No similar documents found for replacement"
-                  style={{ margin: "20px 0" }}
-                />
+                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                  <Empty
+                    description={
+                      <div>
+                        <div>No similar documents found for replacement</div>
+                        <Text type="secondary" style={{ fontSize: '11px', marginTop: 8, display: 'block' }}>
+                          Try lowering the similarity threshold (currently {Math.round(minSimilarityThreshold * 100)}%)
+                          {sameDepartmentOnly && ' or include other departments'}
+                        </Text>
+                      </div>
+                    }
+                  />
+                </div>
               )}
 
               <Button 

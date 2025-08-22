@@ -608,15 +608,35 @@ export interface ReplacementSuggestion {
   documentId: string;
   title: string;
   description: string;
-  documentName: string;
+  documentName?: string;
   documentTypeName: string;
   departmentName: string;
-  ownerName: string;
+  ownerName?: string;
   status: string;
   createdTime: string;
   createdByName: string;
-  relevanceScore: number;
-  matchReason: string;
+  similarityScore: number;
+  semanticScore?: number;
+  metadataScore?: number;
+  contextScore?: number;
+  reasons?: string[];
+  canReplace?: boolean;
+  departmentId?: string;
+  documentTypeId?: string;
+  createdBy?: string;
+  lastUpdatedBy?: string;
+  lastUpdatedByName?: string;
+  lastUpdatedTime?: string;
+  tags?: string[];
+  sharedTagCount?: number;
+  isPublic?: boolean;
+  fileSize?: number;
+  fileType?: string;
+  effectiveFrom?: string;
+  effectiveUntil?: string;
+  signedBy?: string;
+  summary?: string;
+  matchReason?: string;
 }
 
 export interface ReplacementSuggestionsRequest {
