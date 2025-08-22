@@ -11,6 +11,7 @@ import {
   Settings,
   Bell,
   Activity,
+  Cpu,
 } from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -41,6 +42,12 @@ const SIDEBAR_ITEMS: {
     icon: Settings,
     color: "#06B6D4", // cyan-500
     href: "/admin/config-ai",
+  },
+  {
+    name: "AI Analyze Configuration",
+    icon: Cpu,
+    color: "#10B981", // emerald-500
+    href: "/admin/document-ai-analyze",
   },
   {
     name: "Users",

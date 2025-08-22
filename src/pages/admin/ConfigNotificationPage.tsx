@@ -21,6 +21,9 @@ const formatDate = (dateString: string) => {
 
 // Format cron expression for display
 const formatCronExpression = (cronExpression: string) => {
+  if (!cronExpression) {
+    return "Not set";
+  }
   // Basic cron expression formatting - you can enhance this
   const parts = cronExpression.split(" ");
   if (parts.length >= 6) {
