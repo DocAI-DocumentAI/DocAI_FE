@@ -11,11 +11,14 @@ import {
     CheckOutlined,
     CloseOutlined,
     EyeOutlined,
-    FolderOutlined
+    FolderOutlined,
+    FolderOpenOutlined
 } from "@ant-design/icons"
 import { api } from "../../lib/api/api";
 import toast from 'react-hot-toast';
-import { FolderSelectorInput } from "../../components/folder";
+import { FolderSelectorInput, FolderTree, FolderBreadcrumb } from "../../components/folder";
+import type { FolderNode } from "../../types/folder";
+import { getFolderTree } from "../../lib/api/folder";
 
 const { Title, Text, Paragraph } = Typography
 const { Content } = Layout
@@ -34,6 +37,11 @@ export default function DocumentReview() {
     // Optional target folder after approval
     const [targetFolderId, setTargetFolderId] = useState<string | undefined>(undefined);
 
+    // Folder state for public documents
+    const [folders, setFolders] = useState<FolderNode[]>([]);
+    const [folderLoading, setFolderLoading] = useState(false);
+    const [showFolderTree, setShowFolderTree] = useState(false);
+
     useEffect(() => {
         const fetchDocument = async () => {
             setLoading(true);
@@ -45,6 +53,10 @@ export default function DocumentReview() {
                 if (documentData.targetFolderId) {
                     setTargetFolderId(documentData.targetFolderId);
                 }
+                // Fetch public folder tree if the document is public
+                if (documentData.isPublic) {
+                    loadFolders();
+                }
             } catch (error: any) {
                 toast.error(`Không thể tải chi tiết tài liệu: ${error?.response?.data?.message || error.message}`);
                 setDocument(null);
@@ -54,6 +66,29 @@ export default function DocumentReview() {
         };
         if (id && versionId) fetchDocument();
     }, [id, versionId]);
+
+    const loadFolders = async () => {
+        try {
+            setFolderLoading(true);
+            const response = await getFolderTree(undefined, true);
+            if (response.success) {
+                setFolders(response.data.rootNodes);
+            }
+        } catch (error) {
+            console.error('Failed to load folders:', error);
+            toast.error('Failed to load public folder tree.');
+        } finally {
+            setFolderLoading(false);
+        }
+    };
+
+    const handleFolderSelect = (folder: FolderNode) => {
+        setTargetFolderId(folder.id);
+    };
+
+    const handleFolderNavigation = (folderId: string | null) => {
+        setTargetFolderId(folderId || undefined);
+    };
 
     const handleReview = async (isApproved: boolean) => {
         if (!document?.versionId) {
@@ -328,6 +363,7 @@ export default function DocumentReview() {
                                         placeholder="Select target folder after approval (optional)"
                                         allowClear={true}
                                         filterPermission="write"
+                                        treeType={document.isPublic ? 'public' : 'department'}
                                     />
                                 </div>
                                 <div style={{ marginBottom: 16 }}>
@@ -351,6 +387,47 @@ export default function DocumentReview() {
                                         Reject Document
                                     </Button>
                                 </Space>
+
+                                {/* Public Folder Tree for Public Documents */}
+                                {document.isPublic && (
+                                    <div style={{ marginTop: 24 }}>
+                                        <Button
+                                            icon={<FolderOpenOutlined />}
+                                            onClick={() => setShowFolderTree(!showFolderTree)}
+                                            type={showFolderTree ? 'primary' : 'default'}
+                                            style={{ width: "100%", marginBottom: 16 }}
+                                        >
+                                            {showFolderTree ? 'Hide Public Folders' : 'Show Public Folders'}
+                                        </Button>
+                                        {showFolderTree && (
+                                            <Card size="small" title="Public Folder Navigation">
+                                                {folderLoading ? (
+                                                    <Spin />
+                                                ) : (
+                                                    <>
+                                                        {targetFolderId && (
+                                                            <div style={{ marginBottom: 12 }}>
+                                                                <FolderBreadcrumb
+                                                                    folderId={targetFolderId}
+                                                                    folders={folders}
+                                                                    onFolderClick={handleFolderNavigation}
+                                                                />
+                                                            </div>
+                                                        )}
+                                                        <FolderTree
+                                                            folders={folders}
+                                                            selectedFolderId={targetFolderId}
+                                                            onFolderSelect={handleFolderSelect}
+                                                            allowSelection={true}
+                                                            showContextMenu={false}
+                                                            className="max-h-64 overflow-auto"
+                                                        />
+                                                    </>
+                                                )}
+                                            </Card>
+                                        )}
+                                    </div>
+                                )}
                             </Card>
 
                             <Card style={{ marginTop: 16 }}>

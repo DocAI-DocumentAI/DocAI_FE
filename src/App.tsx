@@ -36,6 +36,12 @@ import UpdateConfigAI from "./pages/admin/UpdateConfigAI";
 import ConfigNotificationPage from "./pages/admin/ConfigNotificationPage";
 import UpdateConfigNotificationPage from "./pages/admin/UpdateConfigNotificationPage";
 import NotificationDashboardPage from "./pages/admin/NotificationDashboardPage";
+import ConfigAIAnalyzePage from "./pages/admin/ConfigAIAnalyzePage";
+import CreateAIAnalyzeConfigPage from "./pages/admin/CreateAIAnalyzeConfigPage";
+import UpdateAIAnalyzeConfigPage from "./pages/admin/UpdateAIAnalyzeConfigPage";
+import DocumentAIAnalyzePage from "./pages/admin/DocumentAIAnalyzePage";
+import CreateDocumentAIAnalyzePage from "./pages/admin/CreateDocumentAIAnalyzePage";
+import UpdateDocumentAIAnalyzePage from "./pages/admin/UpdateDocumentAIAnalyzePage";
 
 const App: React.FC = () => {
   const dispatch = useDispatch();
@@ -113,6 +119,12 @@ const App: React.FC = () => {
                 path="chatbox-dashboard"
                 element={<ChatboxDashboardPage />}
               />
+              <Route path="config-ai-analyze" element={<ConfigAIAnalyzePage />} />
+              <Route path="config-ai-analyze/create" element={<CreateAIAnalyzeConfigPage />} />
+              <Route path="config-ai-analyze/update/:id" element={<UpdateAIAnalyzeConfigPage />} />
+              <Route path="document-ai-analyze" element={<DocumentAIAnalyzePage />} />
+              <Route path="document-ai-analyze/create" element={<CreateDocumentAIAnalyzePage />} />
+              <Route path="document-ai-analyze/update/:id" element={<UpdateDocumentAIAnalyzePage />} />
               <Route path="config-ai" element={<ConfigAIPage />} />
               <Route path="config-ai/create" element={<CreateConfigAI />} />
               <Route path="config-ai/update/:id" element={<UpdateConfigAI />} />
@@ -212,6 +224,12 @@ const App: React.FC = () => {
               path="chatbox-dashboard"
               element={<ChatboxDashboardPage />}
             />
+              <Route path="config-ai-analyze" element={<ConfigAIAnalyzePage />} />
+              <Route path="config-ai-analyze/create" element={<CreateAIAnalyzeConfigPage />} />
+              <Route path="config-ai-analyze/update/:id" element={<UpdateAIAnalyzeConfigPage />} />
+              <Route path="document-ai-analyze" element={<DocumentAIAnalyzePage />} />
+              <Route path="document-ai-analyze/create" element={<CreateDocumentAIAnalyzePage />} />
+              <Route path="document-ai-analyze/update/:id" element={<UpdateDocumentAIAnalyzePage />} />
             <Route path="config-ai" element={<ConfigAIPage />} />
             <Route path="config-ai/create" element={<CreateConfigAI />} />
             <Route path="config-ai/update/:id" element={<UpdateConfigAI />} />
