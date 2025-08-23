@@ -322,25 +322,25 @@ const UserManagerPage: React.FC = () => {
         </div>
       ),
     },
-    {
-      title: "Actions",
-      key: "actions",
-      render: () => {
-        const items: MenuProps["items"] = [
-          {
-            key: "view",
-            label: "View Details",
-            icon: <EyeOutlined />,
-          },
-        ];
+    // {
+    //   title: "Actions",
+    //   key: "actions",
+    //   render: () => {
+    //     const items: MenuProps["items"] = [
+    //       {
+    //         key: "view",
+    //         label: "View Details",
+    //         icon: <EyeOutlined />,
+    //       },
+    //     ];
 
-        return (
-          <Dropdown menu={{ items }} trigger={["click"]}>
-            <Button type="text" icon={<MoreOutlined />} />
-          </Dropdown>
-        );
-      },
-    },
+    //     return (
+    //       <Dropdown menu={{ items }} trigger={["click"]}>
+    //         <Button type="text" icon={<MoreOutlined />} />
+    //       </Dropdown>
+    //     );
+    //   },
+    // },
   ];
 
   return (
