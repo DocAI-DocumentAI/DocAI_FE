@@ -73,6 +73,11 @@ interface ApprovalQueueItem {
   isApproachingExpiration: boolean;
   resubmissionCount: number;
   previousRejectionReason: string | null;
+  // New folder fields for approval workflow
+  folderId?: string;
+  folderName?: string;
+  targetFolderId?: string;
+  targetFolderName?: string;
 }
 
 interface ApprovalQueueStatistics {
@@ -209,6 +214,29 @@ export default function ApprovalQueue() {
       dataIndex: "departmentName",
       key: "departmentName",
       render: (departmentName: string) => <Tag color="blue">{departmentName || '-'}</Tag>,
+    },
+    {
+      title: "Folder Location",
+      key: "folder",
+      render: (record: ApprovalQueueItem) => (
+        <div>
+          {record.folderName && (
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
+              <FolderOutlined style={{ marginRight: 4, color: "#666" }} />
+              <Text style={{ fontSize: "12px" }}>{record.folderName}</Text>
+            </div>
+          )}
+          {record.targetFolderName && (
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <FolderOutlined style={{ marginRight: 4, color: "#1890ff" }} />
+              <Text style={{ fontSize: "12px", color: "#1890ff" }}>→ {record.targetFolderName}</Text>
+            </div>
+          )}
+          {!record.folderName && !record.targetFolderName && (
+            <Text type="secondary" style={{ fontSize: "12px" }}>No folder</Text>
+          )}
+        </div>
+      ),
     },
     {
       title: "Submitted By",

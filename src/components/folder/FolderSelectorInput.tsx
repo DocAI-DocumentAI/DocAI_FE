@@ -3,7 +3,7 @@ import { Input, Button, Typography, Space } from 'antd';
 import { FolderOutlined, ClearOutlined } from '@ant-design/icons';
 import FolderSelectorModal from './FolderSelectorModal';
 import type { FolderPermissionLevel, FolderNode } from '../../types/folder';
-import { getFolderTree } from '../../lib/api/folder';
+import { getFolderTree, getPublicFolderTree } from '../../lib/api/folder';
 
 const { Text } = Typography;
 
@@ -16,6 +16,7 @@ export interface FolderSelectorInputProps {
   filterPermission?: FolderPermissionLevel;
   excludeFolderIds?: string[];
   className?: string;
+  treeType?: 'department' | 'public'; // New prop to determine which tree to show
 }
 
 const FolderSelectorInput: React.FC<FolderSelectorInputProps> = ({
@@ -26,7 +27,8 @@ const FolderSelectorInput: React.FC<FolderSelectorInputProps> = ({
   allowClear = true,
   filterPermission = 'read',
   excludeFolderIds = [],
-  className
+  className,
+  treeType = 'department' // Default to department tree
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedFolderName, setSelectedFolderName] = useState<string>('');
@@ -36,7 +38,7 @@ const FolderSelectorInput: React.FC<FolderSelectorInputProps> = ({
   // Load folders to get folder names
   useEffect(() => {
     loadFolders();
-  }, []);
+  }, [treeType]); // Reload when tree type changes
 
   // Update folder name when selectedFolderId changes
   useEffect(() => {
@@ -54,7 +56,9 @@ const FolderSelectorInput: React.FC<FolderSelectorInputProps> = ({
 
   const loadFolders = async () => {
     try {
-      const response = await getFolderTree();
+      const response = treeType === 'public'
+        ? await getPublicFolderTree()
+        : await getFolderTree();
       if (response.success) {
         setFolders(response.data?.rootNodes || []);
       }
@@ -147,11 +151,12 @@ const FolderSelectorInput: React.FC<FolderSelectorInputProps> = ({
         onCancel={handleModalCancel}
         onConfirm={handleModalConfirm}
         selectedFolderId={selectedFolderId}
-        title="Select Folder Location"
+        title={`Select ${treeType === 'public' ? 'Public' : 'Department'} Folder Location`}
         placeholder="Choose where to store this document"
         filterPermission={filterPermission}
         excludeFolderIds={excludeFolderIds}
         allowClear={allowClear}
+        treeType={treeType}
       />
     </>
   );

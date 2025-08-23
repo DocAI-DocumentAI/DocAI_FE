@@ -184,14 +184,7 @@ export default function ChatPage() {
                 </div>
               </div>
             )}
-            {streaming && (
-              <div className="text-center text-xs sm:text-sm text-gray-500 mt-2 sm:mt-3">
-                <div className="flex items-center justify-center gap-2">
-                  <div className="animate-spin h-3 w-3 border border-gray-300 border-t-blue-600 rounded-full"></div>
-                  AI is responding...
-                </div>
-              </div>
-            )}
+
           </div>
         </div>
       </div>

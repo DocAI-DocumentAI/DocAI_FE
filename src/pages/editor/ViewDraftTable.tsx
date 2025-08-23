@@ -246,6 +246,29 @@ const ViewDraftTable = () => {
       )
     },
     {
+      title: 'Folder Location',
+      key: 'folder',
+      render: (record: MyDocumentItem) => (
+        <div className="space-y-1">
+          {record.folderName && (
+            <div className="flex items-center space-x-1">
+              <FolderOutlined className="text-gray-400" />
+              <Text className="text-sm">{record.folderName}</Text>
+            </div>
+          )}
+          {record.targetFolderName && (
+            <div className="flex items-center space-x-1">
+              <FolderOutlined className="text-blue-500" />
+              <Text className="text-sm text-blue-600">→ {record.targetFolderName}</Text>
+            </div>
+          )}
+          {!record.folderName && !record.targetFolderName && (
+            <Text type="secondary" className="text-xs">No folder</Text>
+          )}
+        </div>
+      )
+    },
+    {
       title: 'Status & Access',
       key: 'status',
       // width removed to avoid horizontal scrollbar

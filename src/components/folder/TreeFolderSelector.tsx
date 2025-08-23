@@ -3,7 +3,7 @@ import { Card, Tree, Spin, Empty, Input, Typography } from 'antd';
 import { FolderOutlined, FolderOpenOutlined, SearchOutlined } from '@ant-design/icons';
 import type { TreeProps, DataNode } from 'antd/es/tree';
 import type { FolderNode, FolderPermissionLevel } from '../../types/folder';
-import { getFolderTree } from '../../lib/api/folder';
+import { getFolderTree, getPublicFolderTree } from '../../lib/api/folder';
 
 const { Search } = Input;
 const { Text } = Typography;
@@ -19,6 +19,7 @@ export interface TreeFolderSelectorProps {
   height?: number;
   showSearch?: boolean;
   title?: string;
+  treeType?: 'department' | 'public';
 }
 
 const TreeFolderSelector: React.FC<TreeFolderSelectorProps> = ({
@@ -31,7 +32,8 @@ const TreeFolderSelector: React.FC<TreeFolderSelectorProps> = ({
   className,
   height = 300,
   showSearch = true,
-  title = "Select Folder"
+  title = "Select Folder",
+  treeType = 'department'
 }) => {
   const [loading, setLoading] = useState(true);
   // mark unused props as intentionally unused to satisfy TS6133
@@ -42,10 +44,10 @@ const TreeFolderSelector: React.FC<TreeFolderSelectorProps> = ({
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
   const [selectedKeys, setSelectedKeys] = useState<string[]>(selectedFolderId ? [selectedFolderId] : []);
 
-  // Load folders on component mount
+  // Load folders on component mount and when tree type changes
   useEffect(() => {
     loadFolders();
-  }, []);
+  }, [treeType]);
 
   // Update selected keys when selectedFolderId prop changes
   useEffect(() => {
@@ -59,8 +61,10 @@ const TreeFolderSelector: React.FC<TreeFolderSelectorProps> = ({
       setError(null);
       console.log('TreeFolderSelector - Loading folders...');
 
-      const response = await getFolderTree();
-      console.log('TreeFolderSelector - Full API Response:', response);
+      const response = treeType === 'public'
+        ? await getPublicFolderTree()
+        : await getFolderTree();
+      console.log(`TreeFolderSelector - Full API Response (${treeType}):`, response);
 
       if (response.success && response.data?.rootNodes) {
         const rootNodes = response.data.rootNodes;

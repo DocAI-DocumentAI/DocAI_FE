@@ -334,3 +334,12 @@ export const sendMessageStream = async (
     );
   }
 };
+
+export const renameChatSession = async (sessionId: string, newTitle: string): Promise<void> => {
+  const response = await api.put(`/chatbox/session/${sessionId}/title`, newTitle, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+  return response.data;
+};

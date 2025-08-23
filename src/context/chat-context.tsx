@@ -251,6 +251,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
                   : (
                       placeholderAssistantMessage.timestamp as Date
                     ).toISOString(),
+              isStreaming: true,
             };
             updatedChat = {
               ...prev,
@@ -296,6 +297,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
                   messages[lastMessageIndex] = {
                     ...messages[lastMessageIndex],
                     content: chunk.content,
+                    isStreaming: !chunk.isComplete,
                     documentSources: chunk.documentSources,
                     hasDocumentContext: chunk.hasDocumentContext,
                   };
@@ -344,6 +346,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
                   messages[lastMessageIndex] = {
                     ...messages[lastMessageIndex],
                     content: finalMessage.message,
+                    isStreaming: false,
                     timestamp: finalMessage.timestamp,
                     tokenCount: finalMessage.tokenCount,
                   };

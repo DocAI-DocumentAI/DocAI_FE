@@ -161,7 +161,7 @@ export default function NewVersionDocument() {
         documentTypeId: values.type || "",
         file: selectedFile,
         isPublic: isPublicState,
-        folderId: selectedFolderId,
+        folderId: values.folderId || selectedFolderId || "",
       };
 
       setIsUploading(true);
@@ -766,6 +766,7 @@ export default function NewVersionDocument() {
                         allowClear={true}
                         filterPermission="write"
                         disabled={isAnyOperationInProgress}
+                        treeType={isPublicState ? 'public' : 'department'}
                       />
                     </Form.Item>
                   </Col>

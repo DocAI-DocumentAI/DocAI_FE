@@ -1,5 +1,7 @@
 import React from "react";
 import { User, Bot, FileText, Calendar, Tag } from "lucide-react";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export interface DocumentSource {
   documentId: string;
@@ -17,7 +19,7 @@ export interface DocumentSource {
 }
 
 type ChatMessageProps = {
-  role: "user" | "assistant" | number; // Support both string and number
+  role: "user" | "assistant" | number;
   content: string;
   timestamp?: Date | string;
   isStreaming?: boolean;
@@ -25,45 +27,16 @@ type ChatMessageProps = {
   hasDocumentContext?: boolean;
 };
 
-// Simple content formatter for basic markdown-like formatting
-const formatContent = (content: string): string => {
-  return content
-    // Convert **bold** to <strong>
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    // Convert *italic* to <em>
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    // Convert ### headers to h3
-    .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-    // Convert ## headers to h2
-    .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-    // Convert # headers to h1
-    .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-    // Convert > blockquotes
-    .replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>')
-    // Convert `code` to <code>
-    .replace(/`(.*?)`/g, '<code>$1</code>')
-    // Convert line breaks to <br> for better formatting
-    .replace(/\n/g, '<br>')
-    // Convert numbered lists (1. item)
-    .replace(/^(\d+)\. (.*$)/gm, '<ol><li>$2</li></ol>')
-    // Convert bullet lists (- item or * item)
-    .replace(/^[-*] (.*$)/gm, '<ul><li>$1</li></ul>')
-    // Clean up consecutive list tags
-    .replace(/<\/ol>\s*<ol>/g, '')
-    .replace(/<\/ul>\s*<ul>/g, '');
-};
 
 
-
-// Streaming indicator component
+// Improved streaming indicator component - appears inline with AI message
 const StreamingIndicator: React.FC = () => (
-  <div className="flex items-center space-x-1 mt-2">
+  <div className="flex items-center py-2">
     <div className="flex space-x-1">
-      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+      <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-bounce shadow-sm" style={{ animationDelay: '0ms' }}></div>
+      <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-bounce shadow-sm" style={{ animationDelay: '200ms' }}></div>
+      <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-bounce shadow-sm" style={{ animationDelay: '400ms' }}></div>
     </div>
-    <span className="text-xs text-gray-500 ml-2">AI is responding...</span>
   </div>
 );
 
@@ -98,7 +71,7 @@ const DocumentSources: React.FC<{ sources: DocumentSource[] }> = ({ sources }) =
   );
 
   return (
-    <div className="mt-3 border-t border-gray-200 pt-3 hidden">
+    <div className="mt-3 border-t border-gray-200 pt-3">
       <div className="flex items-center gap-2 mb-2">
         <FileText size={14} className="text-gray-500" />
         <span className="text-sm font-medium text-gray-700">Best Matching Document</span>
@@ -178,7 +151,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   };
 
   return (
-    <div className={`mb-6 flex ${messageRole === "user" ? "justify-end" : "justify-start"}`}>
+    <div className={`mb-3 flex ${messageRole === "user" ? "justify-end" : "justify-start"}`}>
       <div className={`flex max-w-[80%] ${messageRole === "user" ? "flex-row-reverse" : "flex-row"}`}>
         {/* Avatar */}
         <div className={`flex-shrink-0 ${messageRole === "user" ? "ml-3" : "mr-3"}`}>
@@ -202,10 +175,14 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
               <div className="whitespace-pre-wrap break-words">{content}</div>
             ) : (
               <>
-                <div
-                  className="prose prose-base max-w-none prose-headings:text-gray-900 prose-p:text-gray-800 prose-strong:text-gray-900 prose-blockquote:border-l-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:text-gray-700 prose-code:text-pink-600 prose-code:bg-gray-100 prose-pre:bg-gray-100"
-                  dangerouslySetInnerHTML={{ __html: formatContent(content) }}
-                />
+                {content ? (
+                  <div className="prose prose-base max-w-none prose-headings:text-gray-900 prose-p:text-gray-800 prose-strong:text-gray-900 prose-blockquote:border-l-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:text-gray-700 prose-code:text-pink-600 prose-code:bg-gray-100 prose-pre:bg-gray-100">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {content}
+                    </ReactMarkdown>
+                  </div>
+                ) : null}
+
                 {isStreaming && <StreamingIndicator />}
               </>
             )}

@@ -12,7 +12,8 @@ import {
   Input,
   Select,
   Modal,
-  Form
+  Form,
+  Tabs
 } from 'antd';
 import {
   FolderOutlined,
@@ -21,7 +22,6 @@ import {
   SearchOutlined,
   FilterOutlined,
   SortAscendingOutlined,
-  HomeOutlined,
   InfoCircleOutlined,
   EditOutlined,
   DeleteOutlined,
@@ -30,13 +30,16 @@ import {
   FolderOpenOutlined,
   FilePdfOutlined,
   FileWordOutlined,
-  MenuOutlined as Menu
+  MenuOutlined as Menu,
+  TeamOutlined,
+  GlobalOutlined
 } from '@ant-design/icons';
 import { FolderTree, FolderSelectorModal } from '../../components/folder';
 import { getFolderDocumentsList } from '../../lib/api/folder';
 import type { FolderNode } from '../../types/folder';
 import {
   getFolderTree,
+  getPublicFolderTree,
   createFolder,
   updateFolder,
   deleteFolder,
@@ -69,6 +72,8 @@ const GoogleDriveFolder: React.FC = () => {
   // State management
   const [loading, setLoading] = useState(false);
   const [folders, setFolders] = useState<FolderNode[]>([]);
+  const [publicFolders, setPublicFolders] = useState<FolderNode[]>([]);
+  const [activeTreeType, setActiveTreeType] = useState<'department' | 'public'>('department');
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [currentFolderContents, setCurrentFolderContents] = useState<FolderItem[]>([]);
   const [breadcrumbPath, setBreadcrumbPath] = useState<FolderNode[]>([]);
@@ -107,9 +112,10 @@ const GoogleDriveFolder: React.FC = () => {
 
 
 
-  // Load folder tree on mount
+  // Load folder trees on mount
   useEffect(() => {
     loadFolderTree();
+    loadPublicFolderTree();
   }, []);
 
   // Handle mobile responsiveness
@@ -140,6 +146,18 @@ const GoogleDriveFolder: React.FC = () => {
     }
   }, [currentFolderId]);
 
+  // Handle tree type changes - reload content for current context
+  useEffect(() => {
+    if (currentFolderId) {
+      // If we have a current folder, try to load it in the new tree context
+      loadFolderContents(currentFolderId);
+      updateBreadcrumbPath(currentFolderId);
+    } else {
+      // Load root contents for the new tree
+      loadRootContents();
+    }
+  }, [activeTreeType]);
+
   const loadFolderTree = async () => {
     try {
       setLoading(true);
@@ -155,13 +173,28 @@ const GoogleDriveFolder: React.FC = () => {
     }
   };
 
+  const loadPublicFolderTree = async () => {
+    try {
+      setLoading(true);
+      const response = await getPublicFolderTree({ includeSystemFolders: true });
+      setPublicFolders(response.data.rootNodes);
+      return response.data.rootNodes; // Return the fresh data
+    } catch (error: any) {
+      console.error('Failed to load public folder tree:', error);
+      toast.error('Failed to load public folders');
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const loadFolderContents = async (folderId: string, freshFolders?: FolderNode[]) => {
     try {
       setLoading(true);
       setSelectedFolder(null);
 
-      // Use fresh folders if provided, otherwise use current state
-      const foldersToUse = freshFolders || folders;
+      // Use fresh folders if provided, otherwise use current state based on active tree
+      const foldersToUse = freshFolders || getCurrentFolders();
 
       // 1) Always fetch subfolders (from our local tree if available)
       const folder = findFolderById(foldersToUse, folderId);
@@ -216,12 +249,12 @@ const GoogleDriveFolder: React.FC = () => {
     try {
       setLoading(true);
 
-      // Use fresh folders if provided, otherwise use current state
-      const foldersToUse = freshFolders || folders;
+      // Use fresh folders if provided, otherwise use current state based on active tree
+      const foldersToUse = freshFolders || getCurrentFolders();
 
       // Show the root folder's children (subfolders) when no specific folder is selected
       if (foldersToUse.length > 0) {
-        const rootFolder = foldersToUse[0]; // The main department folder
+        const rootFolder = foldersToUse[0]; // The main root folder (department or public)
         const contents: FolderItem[] = rootFolder.children.map(folder => ({
           id: folder.id,
           name: folder.name,
@@ -267,18 +300,35 @@ const GoogleDriveFolder: React.FC = () => {
       }
       return false;
     };
-    findPath(folders, folderId, []);
+    // Use current active folders based on tree type
+    findPath(getCurrentFolders(), folderId, []);
     setBreadcrumbPath(path);
+  };
+
+  // Get current active folders based on tree type
+  const getCurrentFolders = () => {
+    return activeTreeType === 'department' ? folders : publicFolders;
   };
 
   const handleFolderSelect = (folder: FolderNode) => {
     // Select and open the folder from the tree
     setSelectedFolder(folder);
     setCurrentFolderId(folder.id);
+    // Load folder contents and update breadcrumb
+    loadFolderContents(folder.id);
+    updateBreadcrumbPath(folder.id);
   };
 
   const handleBreadcrumbClick = (folderId: string | null) => {
     setCurrentFolderId(folderId);
+    if (folderId) {
+      loadFolderContents(folderId);
+      updateBreadcrumbPath(folderId);
+    } else {
+      // Load root contents for current tree
+      loadRootContents();
+      setBreadcrumbPath([]);
+    }
   };
 
   const handleFolderDoubleClick = (item: FolderItem) => {
@@ -390,7 +440,7 @@ const GoogleDriveFolder: React.FC = () => {
           icon: <EditOutlined />,
           label: 'Rename',
           onClick: () => {
-            const folder = findFolderById(folders, item.id);
+            const folder = findFolderById(getCurrentFolders(), item.id);
             if (folder) {
               setSelectedFolder(folder);
               renameForm.setFieldsValue({ name: folder.name });
@@ -406,7 +456,7 @@ const GoogleDriveFolder: React.FC = () => {
           icon: <FolderOpenOutlined />,
           label: 'Move',
           onClick: () => {
-            const folder = findFolderById(folders, item.id);
+            const folder = findFolderById(getCurrentFolders(), item.id);
             if (folder) {
               setSelectedFolder(folder);
               setMovingFolder(folder);
@@ -420,7 +470,7 @@ const GoogleDriveFolder: React.FC = () => {
           label: 'Delete',
           danger: true,
           onClick: () => {
-            const folder = findFolderById(folders, item.id);
+            const folder = findFolderById(getCurrentFolders(), item.id);
             if (folder) {
               setSelectedFolder(folder);
               setDeleteModalVisible(true);
@@ -456,16 +506,19 @@ const GoogleDriveFolder: React.FC = () => {
 
   // Render breadcrumb
   const renderBreadcrumb = () => {
+    const rootTitle = activeTreeType === 'department' ? 'Department Drive' : 'Public Drive';
+    const rootIcon = activeTreeType === 'department' ? <TeamOutlined /> : <GlobalOutlined />;
+
     const items = [
       {
         key: 'root',
         title: (
           <Button
             type="text"
-            icon={<HomeOutlined />}
+            icon={rootIcon}
             onClick={() => handleBreadcrumbClick(null)}
           >
-            My Drive
+            {rootTitle}
           </Button>
         )
       }
@@ -577,7 +630,7 @@ const GoogleDriveFolder: React.FC = () => {
               onDragEnd={handleDragEnd}
               onClick={() => {
                 // Single click selects and loads details without opening
-                const folder = findFolderById(folders, item.id);
+                const folder = findFolderById(getCurrentFolders(), item.id);
                 if (folder) {
                   setSelectedFolder(folder);
                 }
@@ -704,6 +757,8 @@ const GoogleDriveFolder: React.FC = () => {
               icon={<PlusOutlined />}
               className="new-folder-btn"
               onClick={() => setCreateModalVisible(true)}
+              disabled={activeTreeType === 'public'}
+              title={activeTreeType === 'public' ? 'Cannot create folders in public tree' : 'Create new folder'}
             >
               New
             </Button>
@@ -712,31 +767,80 @@ const GoogleDriveFolder: React.FC = () => {
 
         {!sidebarCollapsed && (
           <div className="sidebar-content">
-            <FolderTree
-              folders={folders}
-              selectedFolderId={currentFolderId || undefined}
-              onFolderSelect={handleFolderSelect}
-              showContextMenu={false}
-              allowSelection={true}
-              allowDragDrop={true}
-              onMoveFolder={async (dragFolder, newParentId) => {
-                try {
-                  setLoading(true);
-                  await moveFolder(dragFolder.id, { newParentFolderId: newParentId });
-                  toast.success('Folder moved successfully');
-                  const freshFolders = await loadFolderTree();
-                  if (currentFolderId) {
-                    await loadFolderContents(currentFolderId, freshFolders);
-                  } else {
-                    await loadRootContents(freshFolders);
-                  }
-                } catch (e: any) {
-                  toast.error(e?.response?.data?.message || 'Failed to move folder');
-                } finally {
-                  setLoading(false);
-                }
+            <Tabs
+              activeKey={activeTreeType}
+              onChange={(key) => {
+                setActiveTreeType(key as 'department' | 'public');
+                // Reset current folder when switching trees
+                setCurrentFolderId(null);
+                setSelectedFolder(null);
+                setBreadcrumbPath([]);
               }}
-              loading={loading}
+              size="small"
+              items={[
+                {
+                  key: 'department',
+                  label: (
+                    <span>
+                      <TeamOutlined />
+                      Department
+                    </span>
+                  ),
+                  children: (
+                    <FolderTree
+                      folders={folders}
+                      selectedFolderId={activeTreeType === 'department' ? currentFolderId || undefined : undefined}
+                      onFolderSelect={handleFolderSelect}
+                      showContextMenu={false}
+                      allowSelection={true}
+                      allowDragDrop={true}
+                      onMoveFolder={async (dragFolder, newParentId) => {
+                        // Prevent moving between trees
+                        if (activeTreeType !== 'department') {
+                          toast.error('Cannot move folders between different trees');
+                          return;
+                        }
+                        try {
+                          setLoading(true);
+                          await moveFolder(dragFolder.id, { newParentFolderId: newParentId });
+                          toast.success('Folder moved successfully');
+                          const freshFolders = await loadFolderTree();
+                          if (currentFolderId) {
+                            await loadFolderContents(currentFolderId, freshFolders);
+                          } else {
+                            await loadRootContents(freshFolders);
+                          }
+                        } catch (e: any) {
+                          toast.error(e?.response?.data?.message || 'Failed to move folder');
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      loading={loading}
+                    />
+                  )
+                },
+                {
+                  key: 'public',
+                  label: (
+                    <span>
+                      <GlobalOutlined />
+                      Public
+                    </span>
+                  ),
+                  children: (
+                    <FolderTree
+                      folders={publicFolders}
+                      selectedFolderId={activeTreeType === 'public' ? currentFolderId || undefined : undefined}
+                      onFolderSelect={handleFolderSelect}
+                      showContextMenu={false}
+                      allowSelection={true}
+                      allowDragDrop={false} // Disable drag and drop for public folders
+                      loading={loading}
+                    />
+                  )
+                }
+              ]}
             />
           </div>
         )}

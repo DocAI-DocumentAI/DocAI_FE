@@ -27,7 +27,7 @@ export interface FolderNode {
 
 export interface FolderTreeData {
   rootNodes: FolderNode[];
-  departmentId: string;
+  departmentId: string | null;
   totalFolders: number;
   totalDocuments: number;
 }
