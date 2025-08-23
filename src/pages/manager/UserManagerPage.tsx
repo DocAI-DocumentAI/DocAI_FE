@@ -15,8 +15,6 @@ import {
   Select,
   DatePicker,
   Badge,
-  Dropdown,
-  MenuProps,
 } from "antd";
 import {
   UserOutlined,
@@ -26,8 +24,6 @@ import {
   FallOutlined,
   SearchOutlined,
   FilterOutlined,
-  EyeOutlined,
-  MoreOutlined,
   CalendarOutlined,
   PhoneOutlined,
   MailOutlined,
