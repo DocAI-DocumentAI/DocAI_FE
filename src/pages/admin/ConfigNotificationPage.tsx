@@ -8,6 +8,11 @@ import {
   XCircle,
   Edit,
   Zap,
+  Bell,
+  BellRing,
+  ToggleLeft,
+  ToggleRight,
+  Info,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/common/Header";
@@ -141,7 +146,7 @@ const ConfigNotificationPage: React.FC = () => {
             </div>
 
             {/* Configuration Details Grid */}
-            <div className="grid grid-cols-1 gap-6 mb-6 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 mb-6 md:grid-cols-2 lg:grid-cols-3">
               {/* Warning Threshold */}
               <div className="p-4 bg-gray-900 bg-opacity-50 rounded-lg">
                 <div className="flex items-center gap-3 mb-2">
@@ -170,22 +175,6 @@ const ConfigNotificationPage: React.FC = () => {
                 <p className="text-sm text-gray-400">days</p>
               </div>
 
-              {/* Scan Schedule */}
-              <div className="p-4 bg-gray-900 bg-opacity-50 rounded-lg">
-                <div className="flex items-center gap-3 mb-2">
-                  <Calendar className="w-5 h-5 text-purple-400" />
-                  <h4 className="text-sm font-medium text-gray-300">
-                    Scan Schedule
-                  </h4>
-                </div>
-                <p className="text-lg font-semibold text-gray-100">
-                  {formatCronExpression(configData.scanCronExpression)}
-                </p>
-                <p className="font-mono text-sm text-gray-400">
-                  {configData.scanCronExpression}
-                </p>
-              </div>
-
               {/* Quartz Status */}
               <div className="p-4 bg-gray-900 bg-opacity-50 rounded-lg">
                 <div className="flex items-center gap-3 mb-2">
@@ -210,6 +199,126 @@ const ConfigNotificationPage: React.FC = () => {
                       </span>
                     </>
                   )}
+                </div>
+              </div>
+
+              {/* Expired Notification Cron */}
+              <div className="p-4 bg-gray-900 bg-opacity-50 rounded-lg">
+                <div className="flex items-center gap-3 mb-2">
+                  <Calendar className="w-5 h-5 text-red-400" />
+                  <h4 className="text-sm font-medium text-gray-300">
+                    Expired Notification Cron
+                  </h4>
+                </div>
+                <p className="font-mono text-sm text-gray-100">
+                  {configData.expiredNotificationCron}
+                </p>
+              </div>
+
+              {/* Near Expired Notification Cron */}
+              <div className="p-4 bg-gray-900 bg-opacity-50 rounded-lg">
+                <div className="flex items-center gap-3 mb-2">
+                  <Calendar className="w-5 h-5 text-yellow-400" />
+                  <h4 className="text-sm font-medium text-gray-300">
+                    Near Expired Notification Cron
+                  </h4>
+                </div>
+                <p className="font-mono text-sm text-gray-100">
+                  {configData.nearExpiredNotificationCron}
+                </p>
+              </div>
+
+              {/* Near Expired Mode */}
+              <div className="p-4 bg-gray-900 bg-opacity-50 rounded-lg">
+                <div className="flex items-center gap-3 mb-2">
+                  <Info className="w-5 h-5 text-blue-400" />
+                  <h4 className="text-sm font-medium text-gray-300">
+                    Near Expired Mode
+                  </h4>
+                </div>
+                <p className="text-lg font-semibold text-gray-100">
+                  {configData.nearExpiredModeDescription}
+                </p>
+              </div>
+
+              {/* Enable Expired Notifications */}
+              <div className="p-4 bg-gray-900 bg-opacity-50 rounded-lg">
+                <div className="flex items-center gap-3 mb-2">
+                  <Bell className="w-5 h-5 text-purple-400" />
+                  <h4 className="text-sm font-medium text-gray-300">
+                    Expired Notifications
+                  </h4>
+                </div>
+                <div className="flex items-center gap-2">
+                  {configData.enableExpiredNotifications ? (
+                    <>
+                      <ToggleRight className="w-6 h-6 text-green-400" />{" "}
+                      <span className="font-semibold text-green-400">
+                        Enabled
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <ToggleLeft className="w-6 h-6 text-gray-500" />{" "}
+                      <span className="font-semibold text-gray-500">
+                        Disabled
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Enable Near Expired Notifications */}
+              <div className="p-4 bg-gray-900 bg-opacity-50 rounded-lg">
+                <div className="flex items-center gap-3 mb-2">
+                  <BellRing className="w-5 h-5 text-purple-400" />
+                  <h4 className="text-sm font-medium text-gray-300">
+                    Near-Expired Notifications
+                  </h4>
+                </div>
+                <div className="flex items-center gap-2">
+                  {configData.enableNearExpiredNotifications ? (
+                    <>
+                      <ToggleRight className="w-6 h-6 text-green-400" />{" "}
+                      <span className="font-semibold text-green-400">
+                        Enabled
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <ToggleLeft className="w-6 h-6 text-gray-500" />{" "}
+                      <span className="font-semibold text-gray-500">
+                        Disabled
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Next Execution Times */}
+            <div className="py-4 border-t border-gray-700">
+              <h4 className="mb-4 text-lg font-medium text-gray-200">
+                Next Scheduled Notifications
+              </h4>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-400">
+                    Next Expired Check:{" "}
+                    <span className="text-gray-300">
+                      {formatDate(configData.nextExpiredNotificationTime)}
+                    </span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-400">
+                    Next Near-Expired Check:{" "}
+                    <span className="text-gray-300">
+                      {formatDate(configData.nextNearExpiredNotificationTime)}
+                    </span>
+                  </span>
                 </div>
               </div>
             </div>
