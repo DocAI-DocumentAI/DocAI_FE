@@ -24,18 +24,18 @@ const formatDate = (dateString: string) => {
   return date.toLocaleDateString() + " " + date.toLocaleTimeString();
 };
 
-// Format cron expression for display
-const formatCronExpression = (cronExpression: string) => {
-  // Basic cron expression formatting - you can enhance this
-  const parts = cronExpression.split(" ");
-  if (parts.length >= 6) {
-    const [second, minute, hour] = parts;
-    if (hour === "7" && minute === "0" && second === "0") {
-      return "Daily at 7:00 AM";
-    }
-  }
-  return cronExpression;
-};
+// // Format cron expression for display
+// const formatCronExpression = (cronExpression: string) => {
+//   // Basic cron expression formatting - you can enhance this
+//   const parts = cronExpression.split(" ");
+//   if (parts.length >= 6) {
+//     const [second, minute, hour] = parts;
+//     if (hour === "7" && minute === "0" && second === "0") {
+//       return "Daily at 7:00 AM";
+//     }
+//   }
+//   return cronExpression;
+// };
 
 const ConfigNotificationPage: React.FC = () => {
   const navigate = useNavigate();
