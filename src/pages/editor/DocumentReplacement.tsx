@@ -773,7 +773,7 @@ const DocumentReplacement: React.FC = () => {
           <Table
             dataSource={replaceableDocuments}
             loading={loadingDocuments}
-            rowKey={(record) => (record.documentId || record.id)}
+            rowKey="id"
             pagination={{
               current: currentPage,
               total: totalDocuments,
