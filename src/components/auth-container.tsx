@@ -8,7 +8,7 @@ interface AuthContainerProps {
 export function AuthContainer({ children }: AuthContainerProps) {
   return (
     <div className="w-full max-w-md">
-      <Logo />
+      <Logo variant="black" />
       {children}
     </div>
   )

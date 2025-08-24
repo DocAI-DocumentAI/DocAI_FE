@@ -11,7 +11,7 @@ export default function PersonalizationSettings() {
 
       <div className="mb-6">
         <label htmlFor="name" className="mb-2 block font-medium">
-          What DocsAI should call you
+          What Docs+AI should call you
         </label>
         <input
           type="text"
@@ -24,7 +24,7 @@ export default function PersonalizationSettings() {
 
       <div className="mb-6">
         <label htmlFor="response" className="mb-2 block font-medium">
-          How do you want DocsAI to response
+          How do you want Docs+AI to response
         </label>
         <input
           type="text"

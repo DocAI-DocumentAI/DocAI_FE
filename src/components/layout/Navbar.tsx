@@ -29,8 +29,12 @@ export function Navbar() {
   return (
     <nav className="flex items-center justify-between h-16 px-6 bg-blue-800">
       <div className="flex items-center">
-        <Link to="/" className="text-2xl font-medium text-white">
-          Docs<span className="text-blue-300">+</span>AI
+        <Link to="/" className="flex items-center">
+          <img
+            src="/LOGO.png"
+            alt="Docs+AI"
+            className="h-10 w-auto"
+          />
         </Link>
       </div>
 

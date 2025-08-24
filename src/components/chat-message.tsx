@@ -1,5 +1,5 @@
 import React from "react";
-import { User, Bot, FileText, Calendar, Tag } from "lucide-react";
+import { User, FileText, Calendar, Tag } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -158,9 +158,13 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
             messageRole === "user"
               ? "bg-blue-600 text-white shadow-sm"
-              : "bg-gradient-to-br from-purple-500 to-blue-600 text-white shadow-sm"
+              : "bg-white border border-gray-200 shadow-sm"
           }`}>
-            {messageRole === "user" ? <User size={16} /> : <Bot size={16} />}
+            {messageRole === "user" ? (
+              <User size={16} />
+            ) : (
+              <img src="/LOGO_SMALL.png" alt="AI" className="w-full h-full p-1 rounded-full" />
+            )}
           </div>
         </div>
         

@@ -11,7 +11,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="mb-8">
             <h1 className="mb-2 text-3xl font-bold">
-              Welcome to DocsAI, How can I help you today?
+              Welcome to Docs+AI, How can I help you today?
             </h1>
             <p className="text-gray-600">
               Train your documents, chat with your documents, and create
@@ -58,7 +58,7 @@ export default function HomePage() {
             <FeatureCard
               icon={<BarChart3 className="w-8 h-8 text-blue-500" />}
               title="Dashboard"
-              description="Get your overall stats if you manage several properties on DocsAI."
+              description="Get your overall stats if you manage several properties on Docs+AI."
               href="/stats"
             /> */}
           </div>
