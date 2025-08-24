@@ -450,6 +450,8 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
                     content={message.content}
                     timestamp={message.timestamp}
                     isStreaming={message.isStreaming}
+                    documentSources={message.documentSources as any}
+                    hasDocumentContext={message.hasDocumentContext}
                   />
                 ))}
 

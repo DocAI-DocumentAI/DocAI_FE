@@ -23,8 +23,74 @@ type ChatMessageProps = {
   content: string;
   timestamp?: Date | string;
   isStreaming?: boolean;
-  documentSources?: DocumentSource[];
+  // Can be array or JSON string from server; we'll normalize in component
+  documentSources?: any;
   hasDocumentContext?: boolean;
+};
+
+// Normalize various documentSources shapes (array or JSON string) into DocumentSource[]
+const normalizeDocumentSources = (input: any): DocumentSource[] => {
+  try {
+    let arr: any[] = [];
+    if (!input) return [];
+    if (Array.isArray(input)) arr = input;
+    else if (typeof input === "string") {
+      const parsed = JSON.parse(input);
+      if (Array.isArray(parsed)) arr = parsed;
+      else if (parsed && Array.isArray(parsed.sources)) arr = parsed.sources;
+      else return [];
+    } else if (typeof input === "object" && input !== null) {
+      if (Array.isArray((input as any).sources)) arr = (input as any).sources;
+      else if (Array.isArray((input as any).items)) arr = (input as any).items;
+      else if (Array.isArray((input as any).data)) arr = (input as any).data;
+      else if (Array.isArray((input as any).Documents)) arr = (input as any).Documents;
+      else return [];
+    }
+
+    // Map fields to our DocumentSource interface
+    const mapped: DocumentSource[] = arr
+      .map((it: any) => {
+        const documentId = it.documentId || it.DocumentId || it.id || it.ID || "";
+        const title = it.title || it.Title || "";
+        const versionId = it.versionId || it.VersionId || it.VersionID || "";
+        const versionName = it.versionName || it.VersionName || "";
+        const departmentId = it.departmentId || it.DepartmentId || "";
+        const description = it.description ?? it.Description ?? null;
+        const tags = it.tags ?? it.Tags ?? null;
+        const effectiveFrom = it.effectiveFrom || it.EffectiveFrom || "";
+        const effectiveUntil = it.effectiveUntil || it.EffectiveUntil || "";
+        const relevanceScore =
+          typeof it.relevanceScore === "number"
+            ? it.relevanceScore
+            : typeof it.RelevanceScore === "number"
+            ? it.RelevanceScore
+            : 0;
+        const summary = it.summary || it.Summary || "";
+        const approvalDate = it.approvalDate || it.ApprovalDate || null;
+
+        if (!documentId) return null; // skip invalid
+
+        return {
+          documentId,
+          title,
+          versionId,
+          versionName,
+          departmentId,
+          description,
+          tags,
+          effectiveFrom,
+          effectiveUntil,
+          relevanceScore,
+          summary,
+          approvalDate,
+        } as DocumentSource;
+      })
+      .filter(Boolean) as DocumentSource[];
+
+    return mapped;
+  } catch {
+    return [];
+  }
 };
 
 // Improved streaming indicator component - appears inline with AI message
@@ -48,8 +114,12 @@ const StreamingIndicator: React.FC = () => (
 );
 
 // Document Sources Component
-const DocumentSources: React.FC<{ sources: DocumentSource[] }> = ({
+// New logic: pick exact document by parsing [Id]<docId> from AI response content,
+// then match it against the provided documentSources. If not found, fall back to
+// highest relevance score. Clicking the card opens the document in a new tab.
+const DocumentSources: React.FC<{ sources: DocumentSource[]; aiContent?: string }> = ({
   sources,
+  aiContent,
 }) => {
   const formatDate = (dateString: string) => {
     try {
@@ -63,21 +133,31 @@ const DocumentSources: React.FC<{ sources: DocumentSource[] }> = ({
     }
   };
 
-  const getRelevanceColor = (score: number) => {
-    if (score >= 0.7) return "text-green-600 bg-green-50";
-    if (score >= 0.5) return "text-yellow-600 bg-yellow-50";
-    return "text-red-600 bg-red-50";
-  };
+
 
   // Validate sources is an array and has content
   if (!Array.isArray(sources) || sources.length === 0) {
     return null;
   }
 
-  // Get the best matching document (highest relevance score)
-  const bestMatch = sources.reduce((best, current) =>
-    current.relevanceScore > best.relevanceScore ? current : best
-  );
+  // Try to extract document id from AI content: pattern [Id]xxxxx (allow spaces, case-insensitive)
+  let bestMatch: DocumentSource | null = null;
+  let extractedId: string | undefined;
+  if (typeof aiContent === "string" && aiContent.length > 0) {
+    const idMatch = aiContent.match(/\[\s*Id\s*\]\s*([A-Za-z0-9-]+)/i);
+    extractedId = idMatch?.[1]?.trim();
+    if (extractedId) {
+      const exact = sources.find((s) => s.documentId === extractedId);
+      if (exact) {
+        bestMatch = exact;
+      }
+    }
+  }
+
+  // If no [Id] is present or no exact match found, do not render anything
+  if (!bestMatch) return null;
+
+  const docUrl = `https://docai.asia/document/${bestMatch.documentId}`;
 
   return (
     <div className="pt-3 mt-3 border-t border-gray-200">
@@ -87,7 +167,12 @@ const DocumentSources: React.FC<{ sources: DocumentSource[] }> = ({
           Best Matching Document
         </span>
       </div>
-      <div className="p-3 text-sm bg-white border border-gray-200 rounded-lg">
+      <a
+        href={docUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block p-3 text-sm bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition"
+      >
         <div className="flex items-start justify-between gap-2 mb-2">
           <h4
             className="flex-1 overflow-hidden font-medium text-gray-900"
@@ -99,13 +184,7 @@ const DocumentSources: React.FC<{ sources: DocumentSource[] }> = ({
           >
             {bestMatch.title}
           </h4>
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${getRelevanceColor(
-              bestMatch.relevanceScore
-            )}`}
-          >
-            {Math.round(bestMatch.relevanceScore * 100)}%
-          </span>
+
         </div>
 
         <div className="space-y-1 text-xs text-gray-600">
@@ -144,7 +223,7 @@ const DocumentSources: React.FC<{ sources: DocumentSource[] }> = ({
             </p>
           )}
         </div>
-      </div>
+      </a>
     </div>
   );
 };
@@ -169,6 +248,21 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       hour12: false,
     });
   };
+
+  // Normalize document sources to ensure we render even if API gives a JSON string
+  const normalizedSources: DocumentSource[] = normalizeDocumentSources(documentSources);
+
+
+  // Hide [Id]... tag in assistant message display, but keep original content for matching
+  const displayContent =
+    messageRole === "assistant"
+      ? (content || "")
+          // hide inline document id tag
+          .replace(/\[\s*Id\s*\]\s*[A-Za-z0-9-]+/gi, "")
+          // remove trailing backticks like `, `` or ``` left by the model
+          .replace(/\s*`{1,3}\s*$/g, "")
+          .trim()
+      : content;
 
   return (
     <div
@@ -212,7 +306,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                 {content ? (
                   <div className="prose prose-base max-w-none prose-headings:text-gray-900 prose-p:text-gray-800 prose-strong:text-gray-900 prose-blockquote:border-l-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:text-gray-700 prose-code:text-pink-600 prose-code:bg-gray-100 prose-pre:bg-gray-100">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {content}
+                      {displayContent}
                     </ReactMarkdown>
                   </div>
                 ) : null}
@@ -224,9 +318,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 
           {/* Document Sources - only for assistant messages */}
           {messageRole === "assistant" &&
-            Array.isArray(documentSources) &&
-            documentSources.length > 0 && (
-              <DocumentSources sources={documentSources} />
+            normalizedSources.length > 0 && (
+              <DocumentSources sources={normalizedSources} aiContent={content} />
             )}
 
           {/* Timestamp */}
