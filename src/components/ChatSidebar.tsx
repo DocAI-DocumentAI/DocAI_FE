@@ -473,8 +473,12 @@ function ChatSidebar() {
             }`}
           >
             {!isCollapsed && (
-              <Link to="/" className="text-2xl font-medium">
-                Docs<span className="text-blue-300">+</span>AI
+              <Link to="/" className="flex items-center">
+                <img
+                  src="/LOGO.png"
+                  alt="Docs+AI"
+                  className="h-10 w-auto"
+                />
               </Link>
             )}
           </div>
@@ -790,7 +794,7 @@ function ChatSidebar() {
               <div className="flex items-center justify-between p-6 border-b border-gray-700">
                 <div className="flex items-center gap-3">
                   <h2 className="text-xl font-semibold">
-                    Tùy chỉnh Chat DocAI
+                    Tùy chỉnh Chat Docs+AI
                   </h2>
                   <HelpCircle size={20} className="text-gray-400" />
                 </div>
@@ -820,7 +824,7 @@ function ChatSidebar() {
                     {/* Name Field */}
                     <div>
                       <label className="block mb-2 text-sm font-medium">
-                        Chat DocAI nên gọi bạn là gì?
+                        Chat Docs+AI nên gọi bạn là gì?
                       </label>
                       <input
                         type="text"
@@ -840,7 +844,7 @@ function ChatSidebar() {
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <label className="block text-sm font-medium">
-                          Chat DocAI nên có những đặc điểm gì?
+                          Chat Docs+AI nên có những đặc điểm gì?
                         </label>
                         <HelpCircle size={16} className="text-gray-400" />
                       </div>
