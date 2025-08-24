@@ -4,18 +4,29 @@ export interface NotificationConfig {
   id: string;
   configKey: string;
   warningThresholdDays: number;
-  scanCronExpression: string;
-  quartzEnabled: boolean;
   logRetentionDays: number;
+  quartzEnabled: boolean;
+  expiredNotificationCron: string;
+  nearExpiredNotificationCron: string;
+  enableExpiredNotifications: boolean;
+  enableNearExpiredNotifications: boolean;
+  nearExpiredMode: number;
   createAt: string;
   updateAt: string;
+  nextExpiredNotificationTime: string;
+  nextNearExpiredNotificationTime: string;
+  nearExpiredModeDescription: string;
 }
 
 export interface UpdateNotificationConfigRequest {
   warningThresholdDays: number;
-  scanCronExpression: string;
-  quartzEnabled: boolean;
   logRetentionDays: number;
+  quartzEnabled: boolean;
+  expiredNotificationCron: string;
+  nearExpiredNotificationCron: string;
+  enableExpiredNotifications: boolean;
+  enableNearExpiredNotifications: boolean;
+  nearExpiredMode: number;
 }
 
 export interface NotificationLog {

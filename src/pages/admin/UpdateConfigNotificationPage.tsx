@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
   Save,
@@ -8,6 +9,9 @@ import {
   Database,
   Calendar,
   Zap,
+  Bell,
+  BellRing,
+  Info,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Header from "../../components/common/Header";
@@ -64,12 +68,17 @@ const Switch: React.FC<SwitchProps> = ({
 
 const UpdateConfigNotificationPage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState<UpdateNotificationConfigRequest>({
     warningThresholdDays: 7,
-    scanCronExpression: "0 0 7 * * ?",
-    quartzEnabled: true,
     logRetentionDays: 90,
+    quartzEnabled: true,
+    expiredNotificationCron: "0 0 8 * * ?",
+    nearExpiredNotificationCron: "0 0 9 * * MON",
+    enableExpiredNotifications: true,
+    enableNearExpiredNotifications: true,
+    nearExpiredMode: 1,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -83,9 +92,14 @@ const UpdateConfigNotificationPage: React.FC = () => {
     if (configData) {
       setFormData({
         warningThresholdDays: configData.warningThresholdDays,
-        scanCronExpression: configData.scanCronExpression,
-        quartzEnabled: configData.quartzEnabled,
         logRetentionDays: configData.logRetentionDays,
+        quartzEnabled: configData.quartzEnabled,
+        expiredNotificationCron: configData.expiredNotificationCron,
+        nearExpiredNotificationCron: configData.nearExpiredNotificationCron,
+        enableExpiredNotifications: configData.enableExpiredNotifications,
+        enableNearExpiredNotifications:
+          configData.enableNearExpiredNotifications,
+        nearExpiredMode: configData.nearExpiredMode,
       });
     }
   }, [configData]);
@@ -108,16 +122,23 @@ const UpdateConfigNotificationPage: React.FC = () => {
         "Log retention must be between 1 and 3650 days";
     }
 
-    // Basic cron expression validation
-    if (!formData.scanCronExpression.trim()) {
-      newErrors.scanCronExpression = "Scan cron expression is required";
-    } else {
-      const cronParts = formData.scanCronExpression.trim().split(/\s+/);
-      if (cronParts.length !== 6) {
-        newErrors.scanCronExpression =
-          "Cron expression must have 6 parts (second minute hour day month dayOfWeek)";
+    // Validate cron expressions
+    const validateCron = (cron: string, fieldName: string) => {
+      if (!cron.trim()) {
+        newErrors[fieldName] = `Cron expression for ${fieldName} is required`;
+      } else {
+        const cronParts = cron.trim().split(/\s+/);
+        if (cronParts.length < 5 || cronParts.length > 7) {
+          newErrors[fieldName] = "Cron expression must have 5 to 7 parts";
+        }
       }
-    }
+    };
+
+    validateCron(formData.expiredNotificationCron, "expiredNotificationCron");
+    validateCron(
+      formData.nearExpiredNotificationCron,
+      "nearExpiredNotificationCron"
+    );
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -132,19 +153,29 @@ const UpdateConfigNotificationPage: React.FC = () => {
     }
 
     try {
-      await updateMutation.mutateAsync(formData);
-      toast.success("Notification configuration updated successfully!");
-      navigate("/admin/config-notification");
-    } catch (error: any) {
-      toast.error(
-        error.message || "Failed to update notification configuration"
-      );
+      await updateMutation.mutateAsync(formData, {
+        onSuccess: () => {
+          toast.success("Notification configuration updated successfully!");
+          queryClient.invalidateQueries({
+            queryKey: ["notificationConfig"],
+          });
+          navigate("/admin/config-notification");
+        },
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(
+          error.message || "Failed to update notification configuration"
+        );
+      } else {
+        toast.error("Failed to update notification configuration");
+      }
     }
   };
 
   const handleInputChange = (
     field: keyof UpdateNotificationConfigRequest,
-    value: any
+    value: string | number | boolean
   ) => {
     setFormData((prev) => ({
       ...prev,
@@ -232,122 +263,235 @@ const UpdateConfigNotificationPage: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Warning Threshold Days */}
-            <div>
-              <label className="flex items-center gap-2 mb-2 text-sm font-medium text-gray-300">
-                <AlertTriangle className="w-4 h-4 text-yellow-400" />
-                Warning Threshold Days
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="365"
-                value={formData.warningThresholdDays}
-                onChange={(e) =>
-                  handleInputChange(
-                    "warningThresholdDays",
-                    parseInt(e.target.value) || 0
-                  )
-                }
-                className={`w-full px-3 py-2 bg-gray-700 border rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.warningThresholdDays
-                    ? "border-red-500"
-                    : "border-gray-600"
-                }`}
-                placeholder="Enter warning threshold in days"
-              />
-              {errors.warningThresholdDays && (
-                <p className="mt-1 text-sm text-red-400">
-                  {errors.warningThresholdDays}
-                </p>
-              )}
-              <p className="mt-1 text-xs text-gray-500">
-                Number of days before sending warning notifications (1-365)
-              </p>
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+              {/* Left Column */}
+              <div className="space-y-6">
+                {/* Warning Threshold Days */}
+                <div>
+                  <label className="flex items-center gap-2 mb-2 text-sm font-medium text-gray-300">
+                    <AlertTriangle className="w-4 h-4 text-yellow-400" />
+                    Warning Threshold Days
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="365"
+                    value={formData.warningThresholdDays}
+                    onChange={(e) =>
+                      handleInputChange(
+                        "warningThresholdDays",
+                        parseInt(e.target.value) || 0
+                      )
+                    }
+                    className={`w-full px-3 py-2 bg-gray-700 border rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.warningThresholdDays
+                        ? "border-red-500"
+                        : "border-gray-600"
+                    }`}
+                    placeholder="Enter warning threshold in days"
+                  />
+                  {errors.warningThresholdDays && (
+                    <p className="mt-1 text-sm text-red-400">
+                      {errors.warningThresholdDays}
+                    </p>
+                  )}
+                  <p className="mt-1 text-xs text-gray-500">
+                    Number of days before sending warning notifications (1-365)
+                  </p>
+                </div>
 
-            {/* Log Retention Days */}
-            <div>
-              <label className="flex items-center gap-2 mb-2 text-sm font-medium text-gray-300">
-                <Database className="w-4 h-4 text-blue-400" />
-                Log Retention Days
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="3650"
-                value={formData.logRetentionDays}
-                onChange={(e) =>
-                  handleInputChange(
-                    "logRetentionDays",
-                    parseInt(e.target.value) || 0
-                  )
-                }
-                className={`w-full px-3 py-2 bg-gray-700 border rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.logRetentionDays ? "border-red-500" : "border-gray-600"
-                }`}
-                placeholder="Enter log retention in days"
-              />
-              {errors.logRetentionDays && (
-                <p className="mt-1 text-sm text-red-400">
-                  {errors.logRetentionDays}
-                </p>
-              )}
-              <p className="mt-1 text-xs text-gray-500">
-                Number of days to retain logs (1-3650)
-              </p>
-            </div>
+                {/* Log Retention Days */}
+                <div>
+                  <label className="flex items-center gap-2 mb-2 text-sm font-medium text-gray-300">
+                    <Database className="w-4 h-4 text-blue-400" />
+                    Log Retention Days
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    value={formData.logRetentionDays}
+                    onChange={(e) =>
+                      handleInputChange(
+                        "logRetentionDays",
+                        parseInt(e.target.value) || 0
+                      )
+                    }
+                    className={`w-full px-3 py-2 bg-gray-700 border rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.logRetentionDays
+                        ? "border-red-500"
+                        : "border-gray-600"
+                    }`}
+                    placeholder="Enter log retention in days"
+                  />
+                  {errors.logRetentionDays && (
+                    <p className="mt-1 text-sm text-red-400">
+                      {errors.logRetentionDays}
+                    </p>
+                  )}
+                  <p className="mt-1 text-xs text-gray-500">
+                    Number of days to retain logs (1-3650)
+                  </p>
+                </div>
 
-            {/* Scan Cron Expression */}
-            <div>
-              <label className="flex items-center gap-2 mb-2 text-sm font-medium text-gray-300">
-                <Calendar className="w-4 h-4 text-purple-400" />
-                Scan Cron Expression
-              </label>
-              <input
-                type="text"
-                value={formData.scanCronExpression}
-                onChange={(e) =>
-                  handleInputChange("scanCronExpression", e.target.value)
-                }
-                className={`w-full px-3 py-2 bg-gray-700 border rounded-md text-gray-100 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.scanCronExpression
-                    ? "border-red-500"
-                    : "border-gray-600"
-                }`}
-                placeholder="0 0 7 * * ?"
-              />
-              {errors.scanCronExpression && (
-                <p className="mt-1 text-sm text-red-400">
-                  {errors.scanCronExpression}
-                </p>
-              )}
-              <p className="mt-1 text-xs text-gray-500">
-                Cron expression for scheduling scans (format: second minute hour
-                day month dayOfWeek)
-              </p>
-              <p className="mt-1 text-xs text-gray-400">
-                Example: "0 0 7 * * ?" = Daily at 7:00 AM
-              </p>
-            </div>
+                {/* Expired Notification Cron */}
+                <div>
+                  <label className="flex items-center gap-2 mb-2 text-sm font-medium text-gray-300">
+                    <Calendar className="w-4 h-4 text-red-400" />
+                    Expired Notification Cron
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.expiredNotificationCron}
+                    onChange={(e) =>
+                      handleInputChange(
+                        "expiredNotificationCron",
+                        e.target.value
+                      )
+                    }
+                    className={`w-full px-3 py-2 bg-gray-700 border rounded-md text-gray-100 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.expiredNotificationCron
+                        ? "border-red-500"
+                        : "border-gray-600"
+                    }`}
+                    placeholder="0 0 8 * * ?"
+                  />
+                  {errors.expiredNotificationCron && (
+                    <p className="mt-1 text-sm text-red-400">
+                      {errors.expiredNotificationCron}
+                    </p>
+                  )}
+                  <p className="mt-1 text-xs text-gray-500">
+                    Cron expression for expired notifications.
+                  </p>
+                </div>
 
-            {/* Quartz Enabled */}
-            <div>
-              <label className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-300">
-                <Zap className="w-4 h-4 text-green-400" />
-                Quartz Scheduler
-              </label>
-              <Switch
-                checked={formData.quartzEnabled}
-                onChange={(checked) =>
-                  handleInputChange("quartzEnabled", checked)
-                }
-                label={formData.quartzEnabled ? "Enabled" : "Disabled"}
-              />
-              <p className="mt-2 text-xs text-gray-500">
-                Enable or disable the Quartz scheduler for automated tasks
-              </p>
+                {/* Near Expired Notification Cron */}
+                <div>
+                  <label className="flex items-center gap-2 mb-2 text-sm font-medium text-gray-300">
+                    <Calendar className="w-4 h-4 text-yellow-400" />
+                    Near Expired Notification Cron
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.nearExpiredNotificationCron}
+                    onChange={(e) =>
+                      handleInputChange(
+                        "nearExpiredNotificationCron",
+                        e.target.value
+                      )
+                    }
+                    className={`w-full px-3 py-2 bg-gray-700 border rounded-md text-gray-100 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.nearExpiredNotificationCron
+                        ? "border-red-500"
+                        : "border-gray-600"
+                    }`}
+                    placeholder="0 0 9 * * MON"
+                  />
+                  {errors.nearExpiredNotificationCron && (
+                    <p className="mt-1 text-sm text-red-400">
+                      {errors.nearExpiredNotificationCron}
+                    </p>
+                  )}
+                  <p className="mt-1 text-xs text-gray-500">
+                    Cron expression for near-expired notifications.
+                  </p>
+                </div>
+              </div>
+
+              {/* Right Column */}
+              <div className="space-y-6">
+                {/* Near Expired Mode */}
+                <div>
+                  <label className="flex items-center gap-2 mb-2 text-sm font-medium text-gray-300">
+                    <Info className="w-4 h-4 text-blue-400" />
+                    Near Expired Mode
+                  </label>
+                  <select
+                    value={formData.nearExpiredMode}
+                    onChange={(e) =>
+                      handleInputChange(
+                        "nearExpiredMode",
+                        parseInt(e.target.value)
+                      )
+                    }
+                    className="w-full px-3 py-2 text-gray-100 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value={1}>Weekly</option>
+                    <option value={2}>Daily</option>
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Select the mode for near-expired notifications.
+                  </p>
+                </div>
+
+                {/* Quartz Enabled */}
+                <div>
+                  <label className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-300">
+                    <Zap className="w-4 h-4 text-green-400" />
+                    Quartz Scheduler
+                  </label>
+                  <Switch
+                    checked={formData.quartzEnabled}
+                    onChange={(checked) =>
+                      handleInputChange("quartzEnabled", checked)
+                    }
+                    label={formData.quartzEnabled ? "Enabled" : "Disabled"}
+                  />
+                  <p className="mt-2 text-xs text-gray-500">
+                    Enable or disable the Quartz scheduler.
+                  </p>
+                </div>
+
+                {/* Enable Expired Notifications */}
+                <div>
+                  <label className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-300">
+                    <Bell className="w-4 h-4 text-purple-400" />
+                    Enable Expired Notifications
+                  </label>
+                  <Switch
+                    checked={formData.enableExpiredNotifications}
+                    onChange={(checked) =>
+                      handleInputChange("enableExpiredNotifications", checked)
+                    }
+                    label={
+                      formData.enableExpiredNotifications
+                        ? "Enabled"
+                        : "Disabled"
+                    }
+                  />
+                  <p className="mt-2 text-xs text-gray-500">
+                    Enable or disable notifications for expired documents.
+                  </p>
+                </div>
+
+                {/* Enable Near Expired Notifications */}
+                <div>
+                  <label className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-300">
+                    <BellRing className="w-4 h-4 text-purple-400" />
+                    Enable Near-Expired Notifications
+                  </label>
+                  <Switch
+                    checked={formData.enableNearExpiredNotifications}
+                    onChange={(checked) =>
+                      handleInputChange(
+                        "enableNearExpiredNotifications",
+                        checked
+                      )
+                    }
+                    label={
+                      formData.enableNearExpiredNotifications
+                        ? "Enabled"
+                        : "Disabled"
+                    }
+                  />
+                  <p className="mt-2 text-xs text-gray-500">
+                    Enable or disable notifications for documents nearing
+                    expiration.
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Submit Button */}
