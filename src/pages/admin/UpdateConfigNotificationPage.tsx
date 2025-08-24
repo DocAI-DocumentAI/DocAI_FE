@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
   Save,
@@ -67,6 +68,7 @@ const Switch: React.FC<SwitchProps> = ({
 
 const UpdateConfigNotificationPage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState<UpdateNotificationConfigRequest>({
     warningThresholdDays: 7,
@@ -151,19 +153,29 @@ const UpdateConfigNotificationPage: React.FC = () => {
     }
 
     try {
-      await updateMutation.mutateAsync(formData);
-      toast.success("Notification configuration updated successfully!");
-      navigate("/admin/config-notification");
-    } catch (error: any) {
-      toast.error(
-        error.message || "Failed to update notification configuration"
-      );
+      await updateMutation.mutateAsync(formData, {
+        onSuccess: () => {
+          toast.success("Notification configuration updated successfully!");
+          queryClient.invalidateQueries({
+            queryKey: ["notificationConfig"],
+          });
+          navigate("/admin/config-notification");
+        },
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(
+          error.message || "Failed to update notification configuration"
+        );
+      } else {
+        toast.error("Failed to update notification configuration");
+      }
     }
   };
 
   const handleInputChange = (
     field: keyof UpdateNotificationConfigRequest,
-    value: any
+    value: string | number | boolean
   ) => {
     setFormData((prev) => ({
       ...prev,
@@ -404,10 +416,10 @@ const UpdateConfigNotificationPage: React.FC = () => {
                         parseInt(e.target.value)
                       )
                     }
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-gray-100 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value={1}>Weekly</option>
-                    <option value={2}>Monthly</option>
+                    <option value={2}>Daily</option>
                   </select>
                   <p className="mt-1 text-xs text-gray-500">
                     Select the mode for near-expired notifications.
