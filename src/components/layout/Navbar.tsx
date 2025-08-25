@@ -12,7 +12,7 @@ export function Navbar() {
 
   const userStr = localStorage.getItem("user");
   if (!userStr) {
-    toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
+     
     return <Navigate to="/login" replace />;
   }
   const user = JSON.parse(userStr);

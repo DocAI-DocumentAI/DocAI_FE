@@ -40,7 +40,7 @@ export default function DocumentDetail({ onViewChange, }: any) {
             const res = await api.get(`/document/documents/${id}/versions/${versionId}`);
             setDocument(res.data.data);
         } catch (error: any) {
-            toast.error(`Không thể tải chi tiết tài liệu: ${error?.response?.data?.message || error.message}`);
+            toast.error(`Unable to load document details: ${error?.response?.data?.message || error.message}`);
             setDocument(null);
         } finally {
             setLoading(false);
@@ -56,7 +56,7 @@ export default function DocumentDetail({ onViewChange, }: any) {
 
     const formatDate = (dateStr: string) => {
         if (!dateStr || dateStr.startsWith('0001-01-01')) return 'N/A';
-        return new Date(dateStr).toLocaleString();
+        return new Date(dateStr).toLocaleString('en-US');
     };
 
     const formatFileSize = (bytes: number) => {
@@ -79,12 +79,12 @@ export default function DocumentDetail({ onViewChange, }: any) {
 
     const handleSubmitForApproval = async () => {
         if (!document?.versionId) {
-            toast.error("Không tìm thấy versionId!");
+            toast.error("Version ID not found!");
             return;
         }
         const userStr = localStorage.getItem("user");
         if (!userStr) {
-            toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
+             
             return;
         }
         /* const user = JSON.parse(userStr); */
@@ -97,10 +97,10 @@ export default function DocumentDetail({ onViewChange, }: any) {
               ? `/document/folder-approval/${document.versionId}/submit${targetFolderId ? `?targetFolderId=${encodeURIComponent(targetFolderId)}` : ''}`
               : `/document/folder-approval/${document.versionId}/submit`;
             await api.post(url);
-            toast.success("Đã gửi tài liệu lên quản lý kiểm duyệt!");
+            toast.success("Document submitted for approval successfully!");
             await fetchDocument();
         } catch (error: any) {
-            toast.error(`Gửi tài liệu thất bại: ${error?.response?.data?.message || error.message}`);
+            toast.error(`Failed to submit document: ${error?.response?.data?.message || error.message}`);
         } finally {
             setSubmitting(false);
         }
@@ -108,7 +108,7 @@ export default function DocumentDetail({ onViewChange, }: any) {
 
     const handlePreview = async () => {
         if (!document?.versionId) {
-            toast.error("Không tìm thấy versionId!");
+            toast.error("Version ID not found!");
             return;
         }
 
@@ -136,7 +136,6 @@ export default function DocumentDetail({ onViewChange, }: any) {
         setPreviewUrl("");
     };
 
-
     const handleDeleteDraft = async () => {
         setDeleteLoading(true);
         try {
@@ -145,7 +144,7 @@ export default function DocumentDetail({ onViewChange, }: any) {
             const response = await api.delete(`/document/drafts/${document.documentId}?versionId=${document.versionId}`);
             console.log('Delete response:', response);
 
-            toast.success("Đã xóa document draft thành công!");
+            toast.success("Document draft deleted successfully!");
 
             // Navigate back to queue or previous page
             setTimeout(() => {
@@ -158,7 +157,7 @@ export default function DocumentDetail({ onViewChange, }: any) {
         } catch (error: any) {
             console.error('Delete failed:', error);
             const errorMessage = error?.response?.data?.message || error.message;
-            toast.error(`Xóa document thất bại: ${errorMessage}`);
+            toast.error(`Failed to delete document: ${errorMessage}`);
         } finally {
             setDeleteLoading(false);
         }
@@ -167,12 +166,12 @@ export default function DocumentDetail({ onViewChange, }: any) {
     // Alternative method using custom modal
     const handleDeleteDraftAlternative = () => {
         if (!document?.documentId || !document?.versionId) {
-            toast.error("Không tìm thấy document ID hoặc version ID!");
+            toast.error("Document ID or Version ID not found!");
             return;
         }
 
         // if (document.status?.toLowerCase() !== 'draft') {
-        //     toast.error("Chỉ có thể xóa document ở trạng thái Draft!");
+        //     toast.error("Only documents in Draft status can be deleted!");
         //     return;
         // }
 
@@ -201,7 +200,7 @@ export default function DocumentDetail({ onViewChange, }: any) {
                         </Button>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Title level={2} style={{ margin: 0 }}>
-                                Document Detail
+                                Document Details
                             </Title>
                             <div>
                                 {document.isPublic ? (
@@ -675,23 +674,23 @@ export default function DocumentDetail({ onViewChange, }: any) {
 
             {/* Custom Delete Confirmation Modal */}
             <Modal
-                title="Xác nhận xóa document"
+                title="Confirm Document Deletion"
                 open={deleteModalVisible}
                 onOk={confirmDelete}
                 onCancel={() => setDeleteModalVisible(false)}
-                okText="Xóa"
-                cancelText="Hủy"
+                okText="Delete"
+                cancelText="Cancel"
                 okType="danger"
                 confirmLoading={deleteLoading}
                 width={500}
             >
                 <div>
-                    <p>Bạn có chắc chắn muốn xóa document draft này?</p>
-                    <p><strong>Tài liệu:</strong> {document?.title}</p>
+                    <p>Are you sure you want to delete this document draft?</p>
+                    <p><strong>Document:</strong> {document?.title}</p>
                     <p><strong>File:</strong> {document?.fileName}</p>
                     <Alert
-                        message="Cảnh báo"
-                        description="Hành động này không thể hoàn tác!"
+                        message="Warning"
+                        description="This action cannot be undone!"
                         type="warning"
                         showIcon
                         style={{ marginTop: 16 }}

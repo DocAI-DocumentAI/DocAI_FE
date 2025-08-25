@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { useNavigate } from "react-router-dom";
 
 const statusOptions = [
-  { value: "All", label: "Tất cả" },
+  { value: "All", label: "All" },
   { value: "Draft", label: "Draft" },
   { value: "Submitted", label: "Submitted" },
 ];
@@ -21,10 +21,10 @@ const ViewDraftTable = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Lấy userId từ localStorage
+        // Get userId from localStorage
         const userStr = localStorage.getItem("user");
         if (!userStr) {
-          toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
+           
           return;
         }
         const user = JSON.parse(userStr);
@@ -34,7 +34,7 @@ const ViewDraftTable = () => {
           response.items.map((doc: any) => ({
             key: doc.documentId,
             name: doc.title,
-            date: doc.createdTime ? new Date(doc.createdTime).toLocaleDateString() : "",
+            date: doc.createdTime ? new Date(doc.createdTime).toLocaleDateString('en-US') : "",
             status: doc.status,
             description: doc.description,
             summary: doc.summary,
@@ -46,7 +46,7 @@ const ViewDraftTable = () => {
           }))
         );
       } catch (error: any) {
-        toast.error(`Lỗi khi tải dữ liệu: ${error?.response?.data?.message || error.message}`);
+        toast.error(`Error loading data: ${error?.response?.data?.message || error.message}`);
         setDataSource([]);
       } finally {
         setLoading(false);
@@ -63,17 +63,17 @@ const ViewDraftTable = () => {
 
   const columns = [
     {
-      title: "Tên tài liệu",
+      title: "Document Name",
       dataIndex: "name",
       key: "name",
     },
     {
-      title: "Ngày tạo",
+      title: "Created Date",
       dataIndex: "date",
       key: "date",
     },
     {
-      title: "Trạng thái",
+      title: "Status",
       dataIndex: "status",
       key: "status",
       render: (status: string) => (
@@ -81,12 +81,12 @@ const ViewDraftTable = () => {
       ),
     },
     {
-      title: "Hành động",
+      title: "Actions",
       key: "action",
       render: (_: any, record: any) => (
         <Space>
-          <Button type="link">Chỉnh sửa</Button>
-          <Button type="link" onClick={() => navigate(`/view-draft/${record.documentId}/${record.versionId}`)}>Xem</Button>
+          <Button type="link">Edit</Button>
+          <Button type="link" onClick={() => navigate(`/view-draft/${record.documentId}/${record.versionId}`)}>View</Button>
         </Space>
       ),
     },
@@ -96,7 +96,7 @@ const ViewDraftTable = () => {
     <>
       <Space style={{ marginBottom: 16 }}>
         <Input.Search
-          placeholder="Tìm kiếm tài liệu"
+          placeholder="Search documents"
           value={search}
           onChange={e => setSearch(e.target.value)}
           style={{ width: 240 }}
@@ -117,11 +117,11 @@ const ViewDraftTable = () => {
           pageSize: 10,
           showSizeChanger: true,
           showQuickJumper: true,
-          showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} tài liệu`,
+          showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} documents`,
         }}
       />
     </>
   );
 };
 
-export default ViewDraftTable; 
+export default ViewDraftTable;
