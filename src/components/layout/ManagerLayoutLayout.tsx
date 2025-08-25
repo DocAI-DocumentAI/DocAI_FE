@@ -1,6 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import SidebarManager from "../common/SidebarManager";
-import toast from "react-hot-toast";
+import SidebarManager from "../common/SidebarManager"; 
 
 function ManagerLayoutLayout() {
   const location = useLocation();

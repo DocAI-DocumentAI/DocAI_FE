@@ -1,8 +1,7 @@
 import { useState } from "react";
 // import { useAuth } from "@/context/auth-context"
 import { Search, BellRing } from "lucide-react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
+import { Link, Navigate, useNavigate } from "react-router-dom"; 
 
 export function Navbar() {
   //   const { user, logout } = useAuth()
