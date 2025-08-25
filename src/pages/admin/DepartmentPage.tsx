@@ -1,11 +1,45 @@
 import { motion } from "framer-motion";
 import { Building2 } from "lucide-react";
-import { useDepartments } from "../../services/departmentService";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import {
+  useDepartments,
+  useDeleteDepartment,
+  Department,
+} from "../../services/departmentService";
 import StatCard from "../../components/common/StatCard";
 import DepartmentTable from "../../components/departmentAdmin/DepartmentTable";
+import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
 
 const DepartmentPage = () => {
   const { data: departmentsData } = useDepartments();
+  const deleteDepartmentMutation = useDeleteDepartment();
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    department: Department | null;
+  }>({ isOpen: false, department: null });
+
+  const handleDeleteClick = (department: Department) => {
+    setDeleteModal({ isOpen: true, department });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deleteModal.department) return;
+
+    deleteDepartmentMutation.mutate(deleteModal.department.id, {
+      onSuccess: () => {
+        toast.success("Department deleted successfully!");
+        setDeleteModal({ isOpen: false, department: null });
+      },
+      onError: (error: any) => {
+        toast.error(error.message || "Failed to delete department");
+      },
+    });
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModal({ isOpen: false, department: null });
+  };
 
   return (
     <div className="relative z-10 flex-1 overflow-auto">
@@ -41,8 +75,18 @@ const DepartmentPage = () => {
         </motion.div>
 
         {/* DEPARTMENT TABLE */}
-        <DepartmentTable />
+        <DepartmentTable onDeleteClick={handleDeleteClick} />
       </main>
+
+      <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Department"
+        message="Are you sure you want to delete this department? This action cannot be undone and may affect users assigned to this department."
+        itemName={deleteModal.department?.name}
+        isLoading={deleteDepartmentMutation.isPending}
+      />
     </div>
   );
 };

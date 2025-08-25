@@ -4,26 +4,24 @@ import { Filter, Plus, Trash2 } from "lucide-react";
 import {
   useDepartmentsPaginated,
   Department,
-  useDeleteDepartment,
 } from "../../services/departmentService";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import DeleteConfirmationModal from "../common/DeleteConfirmationModal";
 
 interface Filters {
   name: string;
   description: string;
 }
 
-const DepartmentTable: React.FC = () => {
+interface DepartmentTableProps {
+  onDeleteClick: (department: Department) => void;
+}
+
+const DepartmentTable: React.FC<DepartmentTableProps> = ({ onDeleteClick }) => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [showFilters, setShowFilters] = useState(false);
-  const [deleteModal, setDeleteModal] = useState<{
-    isOpen: boolean;
-    department: Department | null;
-  }>({ isOpen: false, department: null });
 
   const [filters, setFilters] = useState<Filters>({
     name: "",
@@ -44,8 +42,6 @@ const DepartmentTable: React.FC = () => {
     size: pageSize,
   });
 
-  const deleteDepartmentMutation = useDeleteDepartment();
-
   // Handle errors
   if (isError) toast.error(`Error loading departments: ${error?.message}`);
 
@@ -61,29 +57,6 @@ const DepartmentTable: React.FC = () => {
 
   const clearFilters = () => {
     setFilters({ name: "", description: "" });
-  };
-
-  const handleDeleteClick = (department: Department) => {
-    setDeleteModal({ isOpen: true, department });
-  };
-
-  const handleDeleteConfirm = () => {
-    if (!deleteModal.department) return;
-
-    deleteDepartmentMutation.mutate(deleteModal.department.id, {
-      onSuccess: () => {
-        toast.success("Department deleted successfully!");
-        setDeleteModal({ isOpen: false, department: null });
-        // Data will be automatically refreshed via queryClient.invalidateQueries
-      },
-      onError: (error: any) => {
-        toast.error(error.message || "Failed to delete department");
-      },
-    });
-  };
-
-  const handleDeleteCancel = () => {
-    setDeleteModal({ isOpen: false, department: null });
   };
 
   const departments = departmentsData?.items || [];
@@ -238,7 +211,7 @@ const DepartmentTable: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <button
-                      onClick={() => handleDeleteClick(dept)}
+                      onClick={() => onDeleteClick(dept)}
                       className="p-2 text-red-400 transition-colors duration-200 hover:text-red-300 hover:bg-red-900 hover:bg-opacity-20 rounded-lg"
                       title="Delete department"
                     >
@@ -292,17 +265,6 @@ const DepartmentTable: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Delete Confirmation Modal */}
-      <DeleteConfirmationModal
-        isOpen={deleteModal.isOpen}
-        onClose={handleDeleteCancel}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Department"
-        message="Are you sure you want to delete this department? This action cannot be undone and may affect users assigned to this department."
-        itemName={deleteModal.department?.name}
-        isLoading={deleteDepartmentMutation.isPending}
-      />
     </motion.div>
   );
 };

@@ -27,7 +27,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm"
+            className="fixed inset-0 z-[60] bg-black bg-opacity-50 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -36,13 +36,13 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
 
           {/* Modal */}
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4 overflow-y-auto"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="w-full max-w-md p-6 bg-gray-800 border border-gray-700 rounded-xl shadow-xl">
+            <div className="w-full max-w-lg p-6 bg-gray-800 border border-gray-700 rounded-xl shadow-xl">
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -73,7 +73,8 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
                 )}
                 <div className="p-3 mt-3 bg-red-900 bg-opacity-30 border border-red-700 rounded-lg">
                   <p className="text-sm text-red-300">
-                    ⚠️ This action cannot be undone. All associated data will be permanently removed.
+                    ⚠️ This action cannot be undone. All associated data will be
+                    permanently removed.
                   </p>
                 </div>
               </div>

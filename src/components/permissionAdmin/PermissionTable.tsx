@@ -4,26 +4,24 @@ import { Filter, Plus, Trash2 } from "lucide-react";
 import {
   usePermissionsPaginated,
   Permission,
-  useDeletePermission,
 } from "../../services/permissionService";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import DeleteConfirmationModal from "../common/DeleteConfirmationModal";
 
 interface Filters {
   name: string;
   description: string;
 }
 
-const PermissionTable: React.FC = () => {
+interface PermissionTableProps {
+  onDeleteClick: (permission: Permission) => void;
+}
+
+const PermissionTable: React.FC<PermissionTableProps> = ({ onDeleteClick }) => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [showFilters, setShowFilters] = useState(false);
-  const [deleteModal, setDeleteModal] = useState<{
-    isOpen: boolean;
-    permission: Permission | null;
-  }>({ isOpen: false, permission: null });
 
   const [filters, setFilters] = useState<Filters>({
     name: "",
@@ -44,8 +42,6 @@ const PermissionTable: React.FC = () => {
     size: pageSize,
   });
 
-  const deletePermissionMutation = useDeletePermission();
-
   // Handle errors
   if (isError) toast.error(`Error loading permissions: ${error?.message}`);
 
@@ -61,29 +57,6 @@ const PermissionTable: React.FC = () => {
 
   const clearFilters = () => {
     setFilters({ name: "", description: "" });
-  };
-
-  const handleDeleteClick = (permission: Permission) => {
-    setDeleteModal({ isOpen: true, permission });
-  };
-
-  const handleDeleteConfirm = () => {
-    if (!deleteModal.permission) return;
-
-    deletePermissionMutation.mutate(deleteModal.permission.id, {
-      onSuccess: () => {
-        toast.success("Permission deleted successfully!");
-        setDeleteModal({ isOpen: false, permission: null });
-        // Data will be automatically refreshed via queryClient.invalidateQueries
-      },
-      onError: (error: any) => {
-        toast.error(error.message || "Failed to delete permission");
-      },
-    });
-  };
-
-  const handleDeleteCancel = () => {
-    setDeleteModal({ isOpen: false, permission: null });
   };
 
   const permissions = permissionsData?.items || [];
@@ -238,7 +211,7 @@ const PermissionTable: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <button
-                      onClick={() => handleDeleteClick(permission)}
+                      onClick={() => onDeleteClick(permission)}
                       className="p-2 text-red-400 transition-colors duration-200 hover:text-red-300 hover:bg-red-900 hover:bg-opacity-20 rounded-lg"
                       title="Delete permission"
                     >
@@ -292,17 +265,6 @@ const PermissionTable: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Delete Confirmation Modal */}
-      <DeleteConfirmationModal
-        isOpen={deleteModal.isOpen}
-        onClose={handleDeleteCancel}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Permission"
-        message="Are you sure you want to delete this permission? This action cannot be undone and may affect roles that have this permission."
-        itemName={deleteModal.permission?.name}
-        isLoading={deletePermissionMutation.isPending}
-      />
     </motion.div>
   );
 };

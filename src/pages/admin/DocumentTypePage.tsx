@@ -1,11 +1,45 @@
 import { motion } from "framer-motion";
 import { FileText } from "lucide-react";
-import { useDocumentTypes } from "../../services/documentTypeService";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import {
+  useDocumentTypes,
+  useDeleteDocumentType,
+  DocumentType,
+} from "../../services/documentTypeService";
 import StatCard from "../../components/common/StatCard";
 import DocumentTypeTable from "../../components/documentTypeAdmin/DocumentTypeTable";
+import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
 
 const DocumentTypePage = () => {
   const { data: documentTypesData } = useDocumentTypes();
+  const deleteDocumentTypeMutation = useDeleteDocumentType();
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    documentType: DocumentType | null;
+  }>({ isOpen: false, documentType: null });
+
+  const handleDeleteClick = (documentType: DocumentType) => {
+    setDeleteModal({ isOpen: true, documentType });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deleteModal.documentType) return;
+
+    deleteDocumentTypeMutation.mutate(deleteModal.documentType.id, {
+      onSuccess: () => {
+        toast.success("Document type deleted successfully!");
+        setDeleteModal({ isOpen: false, documentType: null });
+      },
+      onError: (error: any) => {
+        toast.error(error.message || "Failed to delete document type");
+      },
+    });
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModal({ isOpen: false, documentType: null });
+  };
 
   return (
     <div className="relative z-10 flex-1 overflow-auto">
@@ -41,8 +75,18 @@ const DocumentTypePage = () => {
         </motion.div>
 
         {/* DOCUMENT TYPE TABLE */}
-        <DocumentTypeTable />
+        <DocumentTypeTable onDeleteClick={handleDeleteClick} />
       </main>
+
+      <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Document Type"
+        message="Are you sure you want to delete this document type? This action cannot be undone and may affect documents using this type."
+        itemName={deleteModal.documentType?.name}
+        isLoading={deleteDocumentTypeMutation.isPending}
+      />
     </div>
   );
 };
