@@ -45,7 +45,7 @@ const ConfigAIAnalyzePage: React.FC = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-                        <ConfigAIAnalyzeTable configs={configs} />
+            <ConfigAIAnalyzeTable configs={configs} />
           </motion.div>
         )}
       </main>
@@ -54,4 +54,3 @@ const ConfigAIAnalyzePage: React.FC = () => {
 };
 
 export default ConfigAIAnalyzePage;
-

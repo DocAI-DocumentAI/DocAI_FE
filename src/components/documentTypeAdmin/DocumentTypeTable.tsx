@@ -4,18 +4,22 @@ import { Filter, Plus, Trash2 } from "lucide-react";
 import {
   getDocumentTypesApi,
   DocumentType,
-  useDeleteDocumentType,
 } from "../../services/documentTypeService";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import DeleteConfirmationModal from "../common/DeleteConfirmationModal";
 
 interface Filters {
   name: string;
   description: string;
 }
 
-const DocumentTypeTable: React.FC = () => {
+interface DocumentTypeTableProps {
+  onDeleteClick: (documentType: DocumentType) => void;
+}
+
+const DocumentTypeTable: React.FC<DocumentTypeTableProps> = ({
+  onDeleteClick,
+}) => {
   const navigate = useNavigate();
   const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([]);
   const [loading, setLoading] = useState(false);
@@ -23,12 +27,6 @@ const DocumentTypeTable: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
-  const [deleteModal, setDeleteModal] = useState<{
-    isOpen: boolean;
-    documentType: DocumentType | null;
-  }>({ isOpen: false, documentType: null });
-
-  const deleteDocumentTypeMutation = useDeleteDocumentType();
 
   const [filters, setFilters] = useState<Filters>({
     name: "",
@@ -71,29 +69,6 @@ const DocumentTypeTable: React.FC = () => {
 
   const clearFilters = () => {
     setFilters({ name: "", description: "" });
-  };
-
-  const handleDeleteClick = (documentType: DocumentType) => {
-    setDeleteModal({ isOpen: true, documentType });
-  };
-
-  const handleDeleteConfirm = () => {
-    if (!deleteModal.documentType) return;
-
-    deleteDocumentTypeMutation.mutate(deleteModal.documentType.id, {
-      onSuccess: () => {
-        toast.success("Document type deleted successfully!");
-        setDeleteModal({ isOpen: false, documentType: null });
-        fetchDocumentTypes(currentPage);
-      },
-      onError: (error: any) => {
-        toast.error(error.message || "Failed to delete document type");
-      },
-    });
-  };
-
-  const handleDeleteCancel = () => {
-    setDeleteModal({ isOpen: false, documentType: null });
   };
 
   return (
@@ -252,7 +227,7 @@ const DocumentTypeTable: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <button
-                      onClick={() => handleDeleteClick(docType)}
+                      onClick={() => onDeleteClick(docType)}
                       className="p-2 text-red-400 transition-colors duration-200 hover:text-red-300 hover:bg-red-900 hover:bg-opacity-20 rounded-lg"
                       title="Delete document type"
                     >
@@ -290,17 +265,6 @@ const DocumentTypeTable: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Delete Confirmation Modal */}
-      <DeleteConfirmationModal
-        isOpen={deleteModal.isOpen}
-        onClose={handleDeleteCancel}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Document Type"
-        message="Are you sure you want to delete this document type? This action cannot be undone and may affect documents using this type."
-        itemName={deleteModal.documentType?.name}
-        isLoading={deleteDocumentTypeMutation.isPending}
-      />
     </motion.div>
   );
 };

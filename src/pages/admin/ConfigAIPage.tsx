@@ -10,7 +10,6 @@ import {
   Thermometer,
   Plus,
   Trash2,
-  AlertTriangle,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -21,7 +20,9 @@ import {
   useActivateAIConfiguration,
   useDeactivateAIConfiguration,
   useSetDefaultAIConfiguration,
+  AIConfigurationData,
 } from "../../services/chatboxService";
+import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
 
 // Format date for display
 const formatDate = (dateString: string) => {
@@ -110,15 +111,10 @@ const ConfigAIPage: React.FC = () => {
   const [expandedPrompts, setExpandedPrompts] = useState<Set<string>>(
     new Set()
   );
-  const [deleteConfirm, setDeleteConfirm] = useState<{
+  const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
-    configId: string;
-    configName: string;
-  }>({
-    isOpen: false,
-    configId: "",
-    configName: "",
-  });
+    config: AIConfigurationData | null;
+  }>({ isOpen: false, config: null });
 
   // Fetch data using React Query
   const { data: configData, isLoading, isError, error } = useAIConfigurations();
@@ -139,30 +135,29 @@ const ConfigAIPage: React.FC = () => {
 
   const handleDeleteClick = (
     e: React.MouseEvent,
-    configId: string,
-    configName: string
+    config: AIConfigurationData
   ) => {
-    e.stopPropagation(); // Prevent card click navigation
-    setDeleteConfirm({
-      isOpen: true,
-      configId,
-      configName,
+    e.stopPropagation();
+    setDeleteModal({ isOpen: true, config });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deleteModal.config) return;
+
+    deleteMutation.mutate(deleteModal.config.id, {
+      onSuccess: () => {
+        toast.success("AI configuration deleted successfully!");
+        setDeleteModal({ isOpen: false, config: null });
+      },
+      onError: (error: any) => {
+        toast.error(error.message || "Failed to delete AI configuration");
+        setDeleteModal({ isOpen: false, config: null });
+      },
     });
   };
 
-  const handleDeleteConfirm = async () => {
-    try {
-      await deleteMutation.mutateAsync(deleteConfirm.configId);
-      toast.success("AI configuration deleted successfully!");
-      setDeleteConfirm({ isOpen: false, configId: "", configName: "" });
-      // Data will be automatically refreshed via queryClient.invalidateQueries
-    } catch (error: any) {
-      toast.error(error.message || "Failed to delete AI configuration");
-    }
-  };
-
   const handleDeleteCancel = () => {
-    setDeleteConfirm({ isOpen: false, configId: "", configName: "" });
+    setDeleteModal({ isOpen: false, config: null });
   };
 
   const handleActivateToggle = async (
@@ -387,9 +382,7 @@ const ConfigAIPage: React.FC = () => {
                   </div>
                   {/* Delete Button */}
                   <button
-                    onClick={(e) =>
-                      handleDeleteClick(e, config.id, config.displayName)
-                    }
+                    onClick={(e) => handleDeleteClick(e, config)}
                     className="p-2 text-gray-400 transition-colors rounded-md hover:text-red-400 hover:bg-red-900 hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
                     title="Delete configuration"
                   >
@@ -520,71 +513,15 @@ const ConfigAIPage: React.FC = () => {
         </motion.div>
 
         {/* Delete Confirmation Modal */}
-        {deleteConfirm.isOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-            <motion.div
-              className="w-full max-w-md p-6 bg-gray-800 border border-gray-700 shadow-xl rounded-xl"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.2 }}
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center justify-center w-10 h-10 bg-red-900 bg-opacity-50 rounded-full">
-                  <AlertTriangle className="w-5 h-5 text-red-400" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-100">
-                    Delete Configuration
-                  </h3>
-                  <p className="text-sm text-gray-400">
-                    This action cannot be undone
-                  </p>
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <p className="text-gray-300">
-                  Are you sure you want to delete the configuration{" "}
-                  <span className="font-semibold text-gray-100">
-                    "{deleteConfirm.configName}"
-                  </span>
-                  ?
-                </p>
-                <p className="mt-2 text-sm text-gray-400">
-                  This will permanently remove the AI model configuration and
-                  cannot be recovered.
-                </p>
-              </div>
-
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={handleDeleteCancel}
-                  disabled={deleteMutation.isPending}
-                  className="px-4 py-2 text-sm font-medium text-gray-300 transition-colors bg-gray-700 border border-gray-600 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDeleteConfirm}
-                  disabled={deleteMutation.isPending}
-                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-white transition-colors bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {deleteMutation.isPending ? (
-                    <>
-                      <div className="w-4 h-4 mr-2 border-2 border-white rounded-full border-t-transparent animate-spin" />
-                      Deleting...
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete
-                    </>
-                  )}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
+        <DeleteConfirmationModal
+          isOpen={deleteModal.isOpen}
+          onClose={handleDeleteCancel}
+          onConfirm={handleDeleteConfirm}
+          title="Delete AI Configuration"
+          message="Are you sure you want to delete this AI configuration? This action cannot be undone."
+          itemName={deleteModal.config?.displayName}
+          isLoading={deleteMutation.isPending}
+        />
       </main>
     </div>
   );
