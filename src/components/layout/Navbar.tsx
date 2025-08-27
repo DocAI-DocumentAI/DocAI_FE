@@ -13,7 +13,7 @@ export function Navbar() {
   // Move user check after all hooks
   const userStr = localStorage.getItem("user");
   const user = userStr ? JSON.parse(userStr) : null;
-        
+
   const logout = () => {
     console.log("Logout");
     localStorage.removeItem("token");
@@ -50,7 +50,7 @@ export function Navbar() {
 
   // Listen for storage events to update count when notifications are read
   useEffect(() => {
-    const handleStorageChange = (e) => {
+    const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "notification_update") {
         getUnreadNotificationCount();
       }
@@ -81,11 +81,7 @@ export function Navbar() {
     <nav className="flex items-center justify-between h-16 px-6 bg-blue-800">
       <div className="flex items-center">
         <Link to="/" className="flex items-center">
-          <img
-            src="/LOGO.png"
-            alt="Docs+AI"
-            className="h-10 w-auto"
-          />
+          <img src="/LOGO.png" alt="Docs+AI" className="w-auto h-10" />
         </Link>
       </div>
 
