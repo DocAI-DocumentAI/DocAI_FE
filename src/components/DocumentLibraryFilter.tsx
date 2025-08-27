@@ -42,7 +42,38 @@ export const DocumentLibraryFilter: React.FC<DocumentLibraryFilterProps> = ({
   tags = [],
 }) => {
   const handleFilterChange = (key: string, value: any) => {
-    onFilterChange({ [key]: value });
+    // Build proper query parameters for the API call
+    const filterParams = {
+      [key]: value,
+      pageNumber: 1,
+      pageSize: 10
+    };
+    
+    onFilterChange(filterParams);
+  };
+
+  // Handle multiple tags selection
+  const handleTagsChange = (selectedTags: string[]) => {
+    console.log(123, selectedTags);
+
+    const filterParams = {
+      tags: selectedTags, // API expects Tags parameter
+      pageNumber: 1,
+      pageSize: 10
+    };
+    
+    onFilterChange(filterParams);
+  };
+
+  // Handle document type change
+  const handleDocumentTypeChange = (documentTypeId: string) => {
+    const filterParams = {
+      documentTypeId: documentTypeId,
+      pageNumber: 1,
+      pageSize: 10
+    };
+    
+    onFilterChange(filterParams);
   };
 
   return (
@@ -96,7 +127,7 @@ export const DocumentLibraryFilter: React.FC<DocumentLibraryFilterProps> = ({
           </div>
           <Select
             placeholder="Select document type..."
-            onChange={(value) => handleFilterChange("documentTypeId", value)}
+            onChange={handleDocumentTypeChange}
             allowClear
             style={{ width: "100%" }}
             className="[&_.ant-select-selector]:border-blue-200 [&_.ant-select-focused_.ant-select-selector]:border-blue-500"
@@ -133,13 +164,13 @@ export const DocumentLibraryFilter: React.FC<DocumentLibraryFilterProps> = ({
           <Select
             mode="multiple"
             placeholder="Select tags..."
-            onChange={(value) => handleFilterChange("selectedTags", value)}
+            onChange={handleTagsChange}
             allowClear
             style={{ width: "100%" }}
             className="[&_.ant-select-selector]:border-blue-200 [&_.ant-select-focused_.ant-select-selector]:border-blue-500"
           >
             {tags.map((tag) => (
-              <Select.Option key={tag.id} value={tag.id}>
+              <Select.Option key={tag.id} value={tag.name}>
                 <div className="flex items-center">
                   <TagsOutlined
                     style={{ color: "#1e40af", marginRight: "8px" }}
@@ -150,8 +181,6 @@ export const DocumentLibraryFilter: React.FC<DocumentLibraryFilterProps> = ({
             ))}
           </Select>
         </div>
-
-        <Divider className="my-3" />
 
         {/* Date Range */}
         <div>
@@ -167,13 +196,20 @@ export const DocumentLibraryFilter: React.FC<DocumentLibraryFilterProps> = ({
             style={{ width: "100%" }}
             className="[&_.ant-picker]:border-blue-200 [&_.ant-picker-focused]:border-blue-500"
             onChange={(dates) => {
+              const filterParams: any = {
+                pageNumber: 1,
+                pageSize: 10
+              };
+              
               if (dates) {
-                handleFilterChange("fromDate", dates[0]?.format("YYYY-MM-DD"));
-                handleFilterChange("toDate", dates[1]?.format("YYYY-MM-DD"));
+                filterParams.fromDate = dates[0]?.format("YYYY-MM-DD");
+                filterParams.toDate = dates[1]?.format("YYYY-MM-DD");
               } else {
-                handleFilterChange("fromDate", "");
-                handleFilterChange("toDate", "");
+                filterParams.fromDate = "";
+                filterParams.toDate = "";
               }
+              
+              onFilterChange(filterParams);
             }}
           />
         </div>

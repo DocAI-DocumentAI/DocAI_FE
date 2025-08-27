@@ -805,6 +805,8 @@ export const getOfficialDocuments = async (
   params: OfficialDocumentsRequest = {}
 ): Promise<DocumentLibraryResponse> => {
   try {
+    console.log(params);
+    
     // Clean and validate parameters
     const cleanedParams = cleanApiParams(params);
     const searchParams = new URLSearchParams();
@@ -840,7 +842,7 @@ export const getOfficialDocuments = async (
     if (cleanedParams.documentTypeId)
       searchParams.append("documentTypeId", cleanedParams.documentTypeId);
     if (cleanedParams.tags && cleanedParams.tags.length > 0) {
-      cleanedParams.tags.forEach((tag) => searchParams.append("tags", tag));
+      cleanedParams.tags.forEach((tag) => searchParams.append("Tags", tag));
     }
     if (cleanedParams.signedBy)
       searchParams.append("signedBy", cleanedParams.signedBy);
