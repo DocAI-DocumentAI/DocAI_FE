@@ -240,17 +240,24 @@ const DocumentChoice: React.FC = () => {
 
               <div style={{ marginBottom: 16 }}>
                 <Text strong style={{ color: "#595959" }}>Summary</Text>
-                <Paragraph 
+                <div 
                   style={{ 
                     margin: "4px 0", 
                     color: "#595959",
-                    maxHeight: "120px",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis"
+                    maxHeight: "200px",
+                    overflow: "auto",
+                    padding: "12px",
+                    border: "1px solid #f0f0f0",
+                    borderRadius: "6px",
+                    backgroundColor: "#fafafa",
+                    lineHeight: "1.6",
+                    fontSize: "14px"
                   }}
-                >
-                  {analysisData.summary || analysisData.description || "No summary available"}
-                </Paragraph>
+                  className="custom-scrollbar"
+                  dangerouslySetInnerHTML={{
+                    __html: analysisData.summary || analysisData.description || "No summary available"
+                  }}
+                />
               </div>
 
               <div style={{ marginBottom: 16 }}>
