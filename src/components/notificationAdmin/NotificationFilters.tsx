@@ -183,7 +183,7 @@ const NotificationFilters: React.FC<NotificationFiltersProps> = ({
       {/* Expanded Filters */}
       {isExpanded && (
         <div className="grid grid-cols-1 gap-4 pt-4 border-t border-gray-700 md:grid-cols-2 lg:grid-cols-3">
-          <div>
+          {/* <div>
             <label className="block mb-1 text-sm font-medium text-gray-300">
               Document ID
             </label>
@@ -199,7 +199,7 @@ const NotificationFilters: React.FC<NotificationFiltersProps> = ({
                 className="w-full py-2 pl-10 pr-3 text-gray-100 placeholder-gray-400 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-          </div>
+          </div> */}
 
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-300">

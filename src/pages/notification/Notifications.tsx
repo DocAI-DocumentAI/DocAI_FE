@@ -71,34 +71,58 @@ interface UnreadCountResponse {
 // Notification type mappings với màu sắc phù hợp
 const notificationTypes = {
   1: {
-    label: "Document Approved",
-    color: "green",
-    icon: <CheckCircleOutlined />,
-    bgColor: "#f6ffed",
+    label: "Nearing Expiration",
+    color: "orange",
+    icon: <ClockCircleOutlined />,
+    bgColor: "#fff7e6",
   },
   2: {
-    label: "Document Rejected",
+    label: "Expired",
     color: "red",
     icon: <CloseCircleOutlined />,
     bgColor: "#fff2f0",
   },
   3: {
-    label: "Document Submitted",
+    label: "Document Update",
     color: "blue",
     icon: <SendOutlined />,
     bgColor: "#f0f5ff",
   },
   4: {
-    label: "Review Reminder",
-    color: "orange",
+    label: "System Maintenance",
+    color: "purple",
     icon: <ExclamationCircleOutlined />,
-    bgColor: "#fff7e6",
+    bgColor: "#f9f0ff",
   },
   5: {
-    label: "Expiration Warning",
-    color: "purple",
-    icon: <ClockCircleOutlined />,
-    bgColor: "#f9f0ff",
+    label: "System Escalation",
+    color: "red",
+    icon: <ExclamationCircleOutlined />,
+    bgColor: "#fff2f0",
+  },
+  6: {
+    label: "General",
+    color: "default",
+    icon: <BellOutlined />,
+    bgColor: "#fafafa",
+  },
+  7: {
+    label: "Document Submitted",
+    color: "green",
+    icon: <SendOutlined />,
+    bgColor: "#f6ffed",
+  },
+  8: {
+    label: "Document Approved",
+    color: "green",
+    icon: <CheckCircleOutlined />,
+    bgColor: "#f6ffed",
+  },
+  9: {
+    label: "Document Rejected",
+    color: "red",
+    icon: <CloseCircleOutlined />,
+    bgColor: "#fff2f0",
   },
 };
 
@@ -198,8 +222,50 @@ export default function UserNotifications() {
     return moment(dateString).format("DD/MM/YYYY HH:mm:ss");
   };
 
-  const handleNotificationClick = (notification: Notification) => {
-    setSelectedNotification(notification);
+  // Updated handleNotificationClick to mark as read automatically
+  const handleNotificationClick = async (notification: Notification) => {
+    // If notification is unread, mark it as read first
+    if (!notification.isRead) {
+      setMarkingAsRead((prev) => new Set([...prev, notification.id]));
+
+      try {
+        await markNotificationAsRead(notification.id);
+
+        // Update local state
+        const updatedNotification = {
+          ...notification,
+          isRead: true,
+          readAt: new Date().toISOString(),
+        };
+
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === notification.id ? updatedNotification : n))
+        );
+
+        // Update selected notification for modal
+        setSelectedNotification(updatedNotification);
+
+        // Refresh unread count
+        await refreshUnreadCount();
+
+        // Trigger event to update navbar badge
+        window.dispatchEvent(new CustomEvent("notification_update"));
+      } catch (error) {
+        console.error("Failed to mark notification as read:", error);
+        message.error("Failed to mark notification as read");
+        setSelectedNotification(notification); // Still show modal even if marking as read fails
+      } finally {
+        setMarkingAsRead((prev) => {
+          const next = new Set(prev);
+          next.delete(notification.id);
+          return next;
+        });
+      }
+    } else {
+      // If already read, just set the selected notification
+      setSelectedNotification(notification);
+    }
+
     setIsModalVisible(true);
   };
 
@@ -406,6 +472,9 @@ export default function UserNotifications() {
                   );
                   const isUnread = !notification.isRead;
                   const plainTextMessage = stripHtml(notification.message);
+                  const isMarkingThisAsRead = markingAsRead.has(
+                    notification.id
+                  );
 
                   return (
                     <List.Item
@@ -419,19 +488,40 @@ export default function UserNotifications() {
                         borderRadius: "8px",
                         marginBottom: "8px",
                         padding: "16px",
-                        cursor: "pointer",
+                        cursor: isMarkingThisAsRead ? "wait" : "pointer",
                         transition: "all 0.2s",
                         position: "relative",
+                        opacity: isMarkingThisAsRead ? 0.7 : 1,
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.boxShadow =
-                          "0 2px 8px rgba(0,0,0,0.1)";
+                        if (!isMarkingThisAsRead) {
+                          e.currentTarget.style.boxShadow =
+                            "0 2px 8px rgba(0,0,0,0.1)";
+                        }
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.boxShadow = "none";
                       }}
-                      onClick={() => handleNotificationClick(notification)}
+                      onClick={() =>
+                        !isMarkingThisAsRead &&
+                        handleNotificationClick(notification)
+                      }
                     >
+                      {/* Loading overlay when marking as read */}
+                      {isMarkingThisAsRead && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "50%",
+                            left: "50%",
+                            transform: "translate(-50%, -50%)",
+                            zIndex: 10,
+                          }}
+                        >
+                          <Spin />
+                        </div>
+                      )}
+
                       {/* Read status indicator */}
                       <div
                         style={{

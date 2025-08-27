@@ -101,10 +101,13 @@ const generateDateRanges = (timeRange: "daily" | "weekly" | "monthly") => {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split("T")[0];
+      const endDate = new Date(date);
+      endDate.setDate(endDate.getDate() + 1);
+      const dateStrEnd = endDate.toISOString().split("T")[0];
       ranges.push({
         date: dateStr,
         createdFrom: dateStr,
-        createdTo: dateStr,
+        createdTo: dateStrEnd,
       });
     }
   } else if (timeRange === "weekly") {
