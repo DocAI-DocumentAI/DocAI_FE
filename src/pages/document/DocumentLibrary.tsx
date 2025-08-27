@@ -27,8 +27,7 @@ import {
   ClockCircleOutlined,
   UserAddOutlined,
   GlobalOutlined,
-  BankOutlined,
-  BookOutlined,
+  BankOutlined, 
   LockOutlined,
   UnlockOutlined,
   UpOutlined,
@@ -157,11 +156,11 @@ const DocumentCard: React.FC<{ document: DocumentDraftResponse }> = ({
     navigate(`/document/${document.documentId}`);
   };
 
-  const handleBookmark = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click
-    // Bookmark functionality would be implemented here
-    console.log("Bookmark document:", document.documentId);
-  };
+  // const handleBookmark = (e: React.MouseEvent) => {
+  //   e.stopPropagation(); // Prevent card click
+  //   // Bookmark functionality would be implemented here
+  //   console.log("Bookmark document:", document.documentId);
+  // };
 
   return (
     <Card
