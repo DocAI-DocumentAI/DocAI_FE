@@ -17,12 +17,12 @@ const transformModelDataToRadar = (modelData: any[]) => {
   if (!modelData || modelData.length === 0) {
     // Return default data structure if no API data
     return [
-      { subject: "Sessions", A: 0, B: 0, fullMark: 150 },
-      { subject: "Messages", A: 0, B: 0, fullMark: 150 },
-      { subject: "Users", A: 0, B: 0, fullMark: 150 },
-      { subject: "Avg Session", A: 0, B: 0, fullMark: 150 },
-      { subject: "Usage %", A: 0, B: 0, fullMark: 150 },
-      { subject: "Recent Activity", A: 0, B: 0, fullMark: 150 },
+      { subject: "Sessions", A: 0, B: 0, fullMark: 100 },
+      { subject: "Messages", A: 0, B: 0, fullMark: 100 },
+      { subject: "Users", A: 0, B: 0, fullMark: 100 },
+      { subject: "Avg Session", A: 0, B: 0, fullMark: 100 },
+      { subject: "Usage %", A: 0, B: 0, fullMark: 100 },
+      { subject: "Recent Activity", A: 0, B: 0, fullMark: 100 },
     ];
   }
 
@@ -63,7 +63,7 @@ const transformModelDataToRadar = (modelData: any[]) => {
   };
 
   return subjects.map((subject) => {
-    const dataPoint: any = { subject, fullMark: 150 };
+    const dataPoint: any = { subject, fullMark: 100 };
 
     topModels.forEach((model, index) => {
       const key = index === 0 ? "A" : "B";
@@ -71,22 +71,22 @@ const transformModelDataToRadar = (modelData: any[]) => {
       switch (subject) {
         case "Sessions":
           dataPoint[key] = Math.round(
-            (model.sessionCount / maxValues.sessions) * 150
+            (model.sessionCount / maxValues.sessions) * 100
           );
           break;
         case "Messages":
           dataPoint[key] = Math.round(
-            (model.messageCount / maxValues.messages) * 150
+            (model.messageCount / maxValues.messages) * 100
           );
           break;
         case "Users":
           dataPoint[key] = Math.round(
-            (model.uniqueUsers / maxValues.users) * 150
+            (model.uniqueUsers / maxValues.users) * 100
           );
           break;
         case "Avg Session":
           dataPoint[key] = Math.round(
-            (model.averageSessionLength / maxValues.avgSession) * 150
+            (model.averageSessionLength / maxValues.avgSession) * 100
           );
           break;
         case "Recent Activity": {
@@ -95,7 +95,7 @@ const transformModelDataToRadar = (modelData: any[]) => {
             (Date.now() - new Date(model.lastUsed).getTime()) /
               (1000 * 60 * 60 * 24)
           );
-          dataPoint[key] = Math.max(0, Math.min(150, 150 - daysSince * 5)); // Recent activity score
+          dataPoint[key] = Math.max(0, Math.min(100, 100 - daysSince * 5)); // Recent activity score
           break;
         }
         default:
@@ -209,7 +209,7 @@ const StatisticsModel: React.FC = () => {
           <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
             <PolarGrid stroke="#374151" />
             <PolarAngleAxis dataKey="subject" stroke="#9CA3AF" />
-            <PolarRadiusAxis angle={30} domain={[0, 150]} stroke="#9CA3AF" />
+            <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#9CA3AF" />
             <Radar
               name={modelNames.modelA}
               dataKey="A"
