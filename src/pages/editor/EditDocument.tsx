@@ -636,7 +636,7 @@ export default function EditDocument() {
                   </Col>
                 </Row>
 
-                <Row gutter={16}>
+                {/* <Row gutter={16}>
                   <Col xs={24} sm={12}>
                     <Form.Item
                       name="folderId"
@@ -661,10 +661,9 @@ export default function EditDocument() {
                       />
                     </Form.Item>
                   </Col>
-                  <Col xs={24} sm={12}>
-                    {/* Empty column for spacing */}
+                  <Col xs={24} sm={12}> 
                   </Col>
-                </Row>
+                </Row> */}
 
                 <Form.Item label="Description">
                   <WysiwygEditor

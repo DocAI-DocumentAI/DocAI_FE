@@ -291,7 +291,7 @@ const DocumentCard: React.FC<{ document: DocumentDraftResponse }> = ({
             >
               View
             </Button>
-            <Button
+            {/* <Button
               type="text"
               icon={<BookOutlined style={{ color: "#059669" }} />}
               onClick={handleBookmark}
@@ -299,7 +299,7 @@ const DocumentCard: React.FC<{ document: DocumentDraftResponse }> = ({
               size="small"
             >
               Bookmark
-            </Button>
+            </Button> */}
           </div>
         </div>
       </div>

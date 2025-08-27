@@ -181,20 +181,20 @@ export default function AccountSettings() {
                 </div>
 
                 <div>
-                    <h2 className="mb-2 font-medium">Profile picture</h2>
+                    <h2 className="mb-2 font-medium text-center">Profile picture</h2>
                     <div className="relative h-40 w-40">
                         <div className="h-40 w-40 overflow-hidden rounded-full bg-gray-100">
                             <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600 text-4xl font-bold text-white">
                                 {fullName ? getInitials(fullName) : "U"}
                             </div>
                         </div>
-                        <button className="absolute bottom-2 right-28 rounded-md bg-white px-3 py-1 text-sm font-medium shadow hover:bg-gray-50 border border-gray-200">
+                        {/* <button className="absolute bottom-2 right-28 rounded-md bg-white px-3 py-1 text-sm font-medium shadow hover:bg-gray-50 border border-gray-200">
                             Edit
-                        </button>
+                        </button> */}
                     </div>
-                    <p className="mt-2 text-xs text-gray-500">
+                    {/* <p className="mt-2 text-xs text-gray-500">
                         Click edit to upload a new profile picture
-                    </p>
+                    </p> */}
                 </div>
             </div>
         </div>
