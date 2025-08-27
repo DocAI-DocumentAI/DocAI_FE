@@ -8,6 +8,44 @@ interface NotificationFiltersProps {
   onReset: () => void;
 }
 
+// Get notification type label - updated with real data
+const getNotificationTypeLabel = (type: number) => {
+  switch (type) {
+    case 1:
+      return {
+        label: "Nearing Expiration",
+        color: "text-yellow-400 bg-yellow-900",
+      };
+    case 2:
+      return { label: "Expired", color: "text-red-400 bg-red-900" };
+    case 3:
+      return { label: "Document Update", color: "text-blue-400 bg-blue-900" };
+    case 4:
+      return {
+        label: "System Maintenance",
+        color: "text-purple-400 bg-purple-900",
+      };
+    case 5:
+      return { label: "System Escalation", color: "text-red-500 bg-red-900" };
+    case 6:
+      return { label: "General", color: "text-gray-400 bg-gray-900" };
+    case 7:
+      return {
+        label: "Document Submitted",
+        color: "text-green-400 bg-green-900",
+      };
+    case 8:
+      return {
+        label: "Document Approved",
+        color: "text-emerald-400 bg-emerald-900",
+      };
+    case 9:
+      return { label: "Document Rejected", color: "text-red-400 bg-red-900" };
+    default:
+      return { label: "Unknown", color: "text-gray-400 bg-gray-900" };
+  }
+};
+
 const NotificationFilters: React.FC<NotificationFiltersProps> = ({
   filters,
   onFiltersChange,
@@ -15,7 +53,10 @@ const NotificationFilters: React.FC<NotificationFiltersProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const handleInputChange = (field: keyof NotificationLogsFilters, value: any) => {
+  const handleInputChange = (
+    field: keyof NotificationLogsFilters,
+    value: any
+  ) => {
     onFiltersChange({
       ...filters,
       [field]: value,
@@ -26,6 +67,19 @@ const NotificationFilters: React.FC<NotificationFiltersProps> = ({
   const hasActiveFilters = Object.values(filters).some(
     (value) => value !== undefined && value !== "" && value !== null
   );
+
+  // Define available notification types
+  const notificationTypes = [
+    { value: 1, label: getNotificationTypeLabel(1).label },
+    { value: 2, label: getNotificationTypeLabel(2).label },
+    { value: 3, label: getNotificationTypeLabel(3).label },
+    { value: 4, label: getNotificationTypeLabel(4).label },
+    { value: 5, label: getNotificationTypeLabel(5).label },
+    { value: 6, label: getNotificationTypeLabel(6).label },
+    { value: 7, label: getNotificationTypeLabel(7).label },
+    { value: 8, label: getNotificationTypeLabel(8).label },
+    { value: 9, label: getNotificationTypeLabel(9).label },
+  ];
 
   return (
     <div className="p-4 mb-6 bg-gray-800 bg-opacity-50 border border-gray-700 shadow-lg backdrop-blur-md rounded-xl">
@@ -72,8 +126,10 @@ const NotificationFilters: React.FC<NotificationFiltersProps> = ({
           </label>
           <select
             value={filters.size || 10}
-            onChange={(e) => handleInputChange("size", parseInt(e.target.value))}
-            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) =>
+              handleInputChange("size", parseInt(e.target.value))
+            }
+            className="w-full px-3 py-2 text-gray-100 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value={5}>5</option>
             <option value={10}>10</option>
@@ -89,13 +145,17 @@ const NotificationFilters: React.FC<NotificationFiltersProps> = ({
           </label>
           <select
             value={filters.notificationType || ""}
-            onChange={(e) => handleInputChange("notificationType", e.target.value || undefined)}
-            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) =>
+              handleInputChange("notificationType", e.target.value || undefined)
+            }
+            className="w-full px-3 py-2 text-gray-100 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Types</option>
-            <option value="1">Type 1</option>
-            <option value="2">Type 2</option>
-            <option value="3">Type 3</option>
+            {notificationTypes.map((type) => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -105,10 +165,13 @@ const NotificationFilters: React.FC<NotificationFiltersProps> = ({
           </label>
           <select
             value={filters.isAsc === undefined ? "" : filters.isAsc.toString()}
-            onChange={(e) => 
-              handleInputChange("isAsc", e.target.value === "" ? undefined : e.target.value === "true")
+            onChange={(e) =>
+              handleInputChange(
+                "isAsc",
+                e.target.value === "" ? undefined : e.target.value === "true"
+              )
             }
-            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 text-gray-100 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Default</option>
             <option value="true">Ascending</option>
@@ -125,13 +188,15 @@ const NotificationFilters: React.FC<NotificationFiltersProps> = ({
               Document ID
             </label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute w-4 h-4 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
               <input
                 type="text"
                 value={filters.documentId || ""}
-                onChange={(e) => handleInputChange("documentId", e.target.value || undefined)}
+                onChange={(e) =>
+                  handleInputChange("documentId", e.target.value || undefined)
+                }
                 placeholder="Enter document ID"
-                className="w-full pl-10 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full py-2 pl-10 pr-3 text-gray-100 placeholder-gray-400 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -141,13 +206,15 @@ const NotificationFilters: React.FC<NotificationFiltersProps> = ({
               Recipient
             </label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute w-4 h-4 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
               <input
                 type="text"
                 value={filters.recipient || ""}
-                onChange={(e) => handleInputChange("recipient", e.target.value || undefined)}
+                onChange={(e) =>
+                  handleInputChange("recipient", e.target.value || undefined)
+                }
                 placeholder="Enter recipient email"
-                className="w-full pl-10 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full py-2 pl-10 pr-3 text-gray-100 placeholder-gray-400 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -158,8 +225,10 @@ const NotificationFilters: React.FC<NotificationFiltersProps> = ({
             </label>
             <select
               value={filters.sortBy || ""}
-              onChange={(e) => handleInputChange("sortBy", e.target.value || undefined)}
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) =>
+                handleInputChange("sortBy", e.target.value || undefined)
+              }
+              className="w-full px-3 py-2 text-gray-100 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Default</option>
               <option value="createAt">Created Date</option>

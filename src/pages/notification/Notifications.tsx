@@ -14,6 +14,8 @@ import {
   Empty,
   Spin,
   Modal,
+  Button,
+  message,
 } from "antd";
 import {
   BellOutlined,
@@ -23,19 +25,48 @@ import {
   SendOutlined,
   ReloadOutlined,
   ClockCircleOutlined,
+  CheckOutlined,
 } from "@ant-design/icons";
-import {
-  getUserNotifications,
-  getUnreadNotificationCount,
-  Notification,
-  UserNotificationFilters,
-} from "../../lib/api/notification";
-import toast from "react-hot-toast";
+import { api } from "../../lib/api/api";
 import moment from "moment";
 import { Navbar } from "../../components/layout/Navbar";
 
 const { Title, Text } = Typography;
 const { Content } = Layout;
+
+// Notification interface
+interface Notification {
+  id: string;
+  documentId: string;
+  documentVersion: string;
+  notificationType: number;
+  recipientType: number;
+  recipientAddress: string;
+  subject: string;
+  message: string;
+  isSent: boolean;
+  isRead: boolean;
+  readAt: string | null;
+  sentAt: string;
+  errorMessage: string | null;
+  createAt: string;
+}
+
+interface NotificationResponse {
+  size: number;
+  page: number;
+  total: number;
+  totalPages: number;
+  items: Notification[];
+}
+
+interface UnreadCountResponse {
+  success: boolean;
+  data: {
+    unreadCount: number;
+  };
+  message: string;
+}
 
 // Notification type mappings với màu sắc phù hợp
 const notificationTypes = {
@@ -76,19 +107,43 @@ export default function UserNotifications() {
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [filters] = useState<UserNotificationFilters>({});
   const [selectedNotification, setSelectedNotification] =
     useState<Notification | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
-
-  // Local state for unread count
   const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [markingAsRead, setMarkingAsRead] = useState<Set<string>>(new Set());
+  const [markingAllAsRead, setMarkingAllAsRead] = useState(false);
+
+  // API functions
+  const getMyNotifications = async (pageNumber = 1, pageSize = 20) => {
+    const response = await api.get(
+      `/notification/my-notifications?page=${pageNumber}&size=${pageSize}`
+    );
+    return response.data as NotificationResponse;
+  };
+
+  const getUnreadNotificationCount = async () => {
+    const response = await api.get("/notification/unread-count");
+    return response.data as UnreadCountResponse;
+  };
+
+  const markNotificationAsRead = async (notificationId: string) => {
+    const response = await api.post(
+      `/notification/${notificationId}/mark-read`
+    );
+    return response.data;
+  };
+
+  const markAllNotificationsAsRead = async () => {
+    const response = await api.post("/notification/mark-all-read");
+    return response.data;
+  };
 
   // Refresh unread count from API
   const refreshUnreadCount = useCallback(async () => {
     try {
-      const count = await getUnreadNotificationCount();
-      setUnreadCount(count);
+      const response = await getUnreadNotificationCount();
+      setUnreadCount(response.data.unreadCount);
     } catch (error) {
       console.error("Failed to refresh unread count:", error);
     }
@@ -97,7 +152,7 @@ export default function UserNotifications() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await getUserNotifications(page, 20, filters);
+      const response = await getMyNotifications(page, 20);
       setNotifications(response.items || []);
       setTotal(response.total || 0);
 
@@ -106,13 +161,13 @@ export default function UserNotifications() {
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
-      toast.error(`Failed to load notifications: ${errorMessage}`);
+      message.error(`Failed to load notifications: ${errorMessage}`);
       setNotifications([]);
       setTotal(0);
     } finally {
       setLoading(false);
     }
-  }, [page, filters, refreshUnreadCount]);
+  }, [page, refreshUnreadCount]);
 
   // Fetch user notifications
   useEffect(() => {
@@ -143,46 +198,83 @@ export default function UserNotifications() {
     return moment(dateString).format("DD/MM/YYYY HH:mm:ss");
   };
 
-  const handleNotificationClick = async (notification: Notification) => {
+  const handleNotificationClick = (notification: Notification) => {
     setSelectedNotification(notification);
     setIsModalVisible(true);
-
-    // Mark as read if not already read
-    // if (!notification.isRead) {
-    //   try {
-    //     await markNotificationAsRead(notification.id);
-    //     // Update local state to mark as read
-    //     setNotifications((prev) =>
-    //       prev.map((n) =>
-    //         n.id === notification.id ? { ...n, isRead: true } : n
-    //       )
-    //     );
-    //     // Update global context
-    //     markAsRead(notification.id);
-    //   } catch (error: any) {
-    //     console.error("Failed to mark notification as read:", error);
-    //     // Don't show error toast as this is not critical for user experience
-    //   }
-    // }
-
-    // Call dismiss API when user views notification
-    // try {
-    //   await dismissNotification(notification.id);
-    //   // Update local state to mark as dismissed
-    //   setNotifications((prev) =>
-    //     prev.map((n) =>
-    //       n.id === notification.id ? { ...n, isDismissed: true } : n
-    //     )
-    //   );
-    // } catch (error: any) {
-    //   console.error("Failed to dismiss notification:", error);
-    //   // Don't show error toast as this is not critical for user experience
-    // }
   };
 
   const handleModalClose = () => {
     setIsModalVisible(false);
     setSelectedNotification(null);
+  };
+
+  const handleMarkAsRead = async (
+    notificationId: string,
+    e: React.MouseEvent
+  ) => {
+    e.stopPropagation(); // Prevent triggering the notification click
+
+    setMarkingAsRead((prev) => new Set([...prev, notificationId]));
+
+    try {
+      await markNotificationAsRead(notificationId);
+
+      // Update local state
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === notificationId
+            ? { ...n, isRead: true, readAt: new Date().toISOString() }
+            : n
+        )
+      );
+
+      // Refresh unread count
+      await refreshUnreadCount();
+
+      // Trigger event to update navbar badge
+      window.dispatchEvent(new CustomEvent("notification_update"));
+
+      message.success("Notification marked as read");
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+      message.error("Failed to mark notification as read");
+    } finally {
+      setMarkingAsRead((prev) => {
+        const next = new Set(prev);
+        next.delete(notificationId);
+        return next;
+      });
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    setMarkingAllAsRead(true);
+
+    try {
+      await markAllNotificationsAsRead();
+
+      // Update local state - mark all notifications as read
+      setNotifications((prev) =>
+        prev.map((n) => ({
+          ...n,
+          isRead: true,
+          readAt: new Date().toISOString(),
+        }))
+      );
+
+      // Refresh unread count
+      await refreshUnreadCount();
+
+      // Trigger event to update navbar badge
+      window.dispatchEvent(new CustomEvent("notification_update"));
+
+      message.success("All notifications marked as read");
+    } catch (error) {
+      console.error("Failed to mark all notifications as read:", error);
+      message.error("Failed to mark all notifications as read");
+    } finally {
+      setMarkingAllAsRead(false);
+    }
   };
 
   // Function to strip HTML tags for preview
@@ -224,14 +316,27 @@ export default function UserNotifications() {
                 </Title>
                 <Text type="secondary">View your document activities</Text>
               </div>
-              <ReloadOutlined
-                onClick={fetchData}
-                style={{
-                  fontSize: "20px",
-                  cursor: "pointer",
-                  color: loading ? "#ccc" : "#1890ff",
-                }}
-              />
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                {unreadCount > 0 && (
+                  <Button
+                    type="primary"
+                    icon={<CheckOutlined />}
+                    loading={markingAllAsRead}
+                    onClick={handleMarkAllAsRead}
+                    size="small"
+                  >
+                    Mark All as Read
+                  </Button>
+                )}
+                <ReloadOutlined
+                  onClick={fetchData}
+                  style={{
+                    fontSize: "20px",
+                    cursor: "pointer",
+                    color: loading ? "#ccc" : "#1890ff",
+                  }}
+                />
+              </div>
             </div>
           </div>
 
@@ -316,7 +421,7 @@ export default function UserNotifications() {
                         padding: "16px",
                         cursor: "pointer",
                         transition: "all 0.2s",
-                        opacity: notification.isDismissed ? 0.7 : 1, // Visual indicator for dismissed
+                        position: "relative",
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.boxShadow =
@@ -327,7 +432,59 @@ export default function UserNotifications() {
                       }}
                       onClick={() => handleNotificationClick(notification)}
                     >
+                      {/* Read status indicator */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          left: "8px",
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: "24px",
+                          height: "24px",
+                        }}
+                      >
+                        {notification.isRead ? (
+                          <CheckCircleOutlined
+                            style={{ color: "#52c41a", fontSize: "16px" }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: "20px",
+                              height: "20px",
+                              border: "1px solid #d9d9d9",
+                              borderRadius: "50%",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              backgroundColor: "#fff",
+                              transition: "all 0.2s",
+                            }}
+                            onClick={(e) =>
+                              handleMarkAsRead(notification.id, e)
+                            }
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f0f0f0";
+                              e.currentTarget.style.borderColor = "#1890ff";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#d9d9d9";
+                            }}
+                          >
+                            {markingAsRead.has(notification.id) && (
+                              <Spin size="small" style={{ fontSize: "10px" }} />
+                            )}
+                          </div>
+                        )}
+                      </div>
+
                       <List.Item.Meta
+                        style={{ marginLeft: "32px" }} // Add margin to account for the read indicator
                         avatar={
                           <Avatar
                             style={{
@@ -357,11 +514,6 @@ export default function UserNotifications() {
                                   status="processing"
                                   style={{ marginLeft: 8 }}
                                 />
-                              )}
-                              {notification.isDismissed && (
-                                <Tag color="gray" style={{ marginLeft: 8 }}>
-                                  Dismissed
-                                </Tag>
                               )}
                             </div>
                             <Text type="secondary" style={{ fontSize: "12px" }}>
@@ -449,10 +601,10 @@ export default function UserNotifications() {
                     ).label
                   }
                 </Tag>
-                {!selectedNotification.isRead && <Tag color="blue">Unread</Tag>}
-                {selectedNotification.isDismissed && (
-                  <Tag color="gray">Dismissed</Tag>
+                {!selectedNotification.isRead && (
+                  <Tag color="orange">Unread</Tag>
                 )}
+                {selectedNotification.isRead && <Tag color="green">Read</Tag>}
               </div>
             </div>
 
@@ -499,6 +651,21 @@ export default function UserNotifications() {
                 </div>
               </Col>
             </Row>
+
+            {selectedNotification.readAt && (
+              <Row gutter={16}>
+                <Col span={12}>
+                  <div style={{ marginBottom: 12 }}>
+                    <Text type="secondary" style={{ fontSize: "12px" }}>
+                      Read At:
+                    </Text>
+                    <div>
+                      <Text>{formatFullDate(selectedNotification.readAt)}</Text>
+                    </div>
+                  </div>
+                </Col>
+              </Row>
+            )}
 
             {selectedNotification.documentId && (
               <div style={{ marginBottom: 12 }}>
@@ -559,7 +726,7 @@ export default function UserNotifications() {
                   </Text>
                   <div>
                     {selectedNotification.isRead ? (
-                      <Tag color="blue">Read</Tag>
+                      <Tag color="green">Read</Tag>
                     ) : (
                       <Tag color="orange">Unread</Tag>
                     )}
@@ -592,43 +759,43 @@ export default function UserNotifications() {
 
       {/* Add CSS for HTML content styling */}
       <style>{`
-                .ant-modal-body div[dangerouslySetInnerHTML] p {
-                    margin-bottom: 12px;
-                }
-                
-                .ant-modal-body div[dangerouslySetInnerHTML] ul {
-                    margin: 12px 0;
-                    padding-left: 20px;
-                }
-                
-                .ant-modal-body div[dangerouslySetInnerHTML] li {
-                    margin-bottom: 8px;
-                }
-                
-                .ant-modal-body div[dangerouslySetInnerHTML] a {
-                    color: #1890ff;
-                    text-decoration: none;
-                }
-                
-                .ant-modal-body div[dangerouslySetInnerHTML] a:hover {
-                    text-decoration: underline;
-                }
-                
-                .ant-modal-body div[dangerouslySetInnerHTML] hr {
-                    margin: 16px 0;
-                    border: none;
-                    border-top: 1px solid #e9e9e9;
-                }
-                
-                .ant-modal-body div[dangerouslySetInnerHTML] small {
-                    color: #999;
-                    font-size: 12px;
-                }
-                
-                .ant-modal-body div[dangerouslySetInnerHTML] b {
-                    font-weight: 600;
-                }
-            `}</style>
+        .ant-modal-body div[dangerouslySetInnerHTML] p {
+          margin-bottom: 12px;
+        }
+        
+        .ant-modal-body div[dangerouslySetInnerHTML] ul {
+          margin: 12px 0;
+          padding-left: 20px;
+        }
+        
+        .ant-modal-body div[dangerouslySetInnerHTML] li {
+          margin-bottom: 8px;
+        }
+        
+        .ant-modal-body div[dangerouslySetInnerHTML] a {
+          color: #1890ff;
+          text-decoration: none;
+        }
+        
+        .ant-modal-body div[dangerouslySetInnerHTML] a:hover {
+          text-decoration: underline;
+        }
+        
+        .ant-modal-body div[dangerouslySetInnerHTML] hr {
+          margin: 16px 0;
+          border: none;
+          border-top: 1px solid #e9e9e9;
+        }
+        
+        .ant-modal-body div[dangerouslySetInnerHTML] small {
+          color: #999;
+          font-size: 12px;
+        }
+        
+        .ant-modal-body div[dangerouslySetInnerHTML] b {
+          font-weight: 600;
+        }
+      `}</style>
     </Layout>
   );
 }

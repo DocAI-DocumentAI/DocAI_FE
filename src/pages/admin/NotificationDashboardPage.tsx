@@ -23,15 +23,39 @@ const formatDate = (dateString: string) => {
   return date.toLocaleDateString() + " " + date.toLocaleTimeString();
 };
 
-// Get notification type label
+// Get notification type label - updated with real data
 const getNotificationTypeLabel = (type: number) => {
   switch (type) {
     case 1:
-      return { label: "Info", color: "text-blue-400 bg-blue-900" };
+      return {
+        label: "Nearing Expiration",
+        color: "text-yellow-400 bg-yellow-900",
+      };
     case 2:
-      return { label: "Warning", color: "text-yellow-400 bg-yellow-900" };
+      return { label: "Expired", color: "text-red-400 bg-red-900" };
     case 3:
-      return { label: "Error", color: "text-red-400 bg-red-900" };
+      return { label: "Document Update", color: "text-blue-400 bg-blue-900" };
+    case 4:
+      return {
+        label: "System Maintenance",
+        color: "text-purple-400 bg-purple-900",
+      };
+    case 5:
+      return { label: "System Escalation", color: "text-red-500 bg-red-900" };
+    case 6:
+      return { label: "General", color: "text-gray-400 bg-gray-900" };
+    case 7:
+      return {
+        label: "Document Submitted",
+        color: "text-green-400 bg-green-900",
+      };
+    case 8:
+      return {
+        label: "Document Approved",
+        color: "text-emerald-400 bg-emerald-900",
+      };
+    case 9:
+      return { label: "Document Rejected", color: "text-red-400 bg-red-900" };
     default:
       return { label: "Unknown", color: "text-gray-400 bg-gray-900" };
   }
@@ -376,7 +400,7 @@ const NotificationDashboardPage: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-400">
                       ID
                     </label>
-                    <p className="text-gray-100 font-mono text-sm">
+                    <p className="font-mono text-sm text-gray-100">
                       {selectedNotification.id}
                     </p>
                   </div>
@@ -384,7 +408,7 @@ const NotificationDashboardPage: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-400">
                       Document ID
                     </label>
-                    <p className="text-gray-100 font-mono text-sm">
+                    <p className="font-mono text-sm text-gray-100">
                       {selectedNotification.documentId}
                     </p>
                   </div>
@@ -452,21 +476,21 @@ const NotificationDashboardPage: React.FC = () => {
 
                 {/* Subject */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                  <label className="block mb-2 text-sm font-medium text-gray-400">
                     Subject
                   </label>
-                  <p className="p-3 bg-gray-900 bg-opacity-50 rounded-lg text-gray-100">
+                  <p className="p-3 text-gray-100 bg-gray-900 bg-opacity-50 rounded-lg">
                     {selectedNotification.subject}
                   </p>
                 </div>
 
                 {/* Message */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                  <label className="block mb-2 text-sm font-medium text-gray-400">
                     Message
                   </label>
                   <div
-                    className="p-3 bg-gray-900 bg-opacity-50 rounded-lg text-gray-100 max-h-60 overflow-y-auto"
+                    className="p-3 overflow-y-auto text-gray-100 bg-gray-900 bg-opacity-50 rounded-lg max-h-60"
                     dangerouslySetInnerHTML={{
                       __html: selectedNotification.message,
                     }}
@@ -498,10 +522,10 @@ const NotificationDashboardPage: React.FC = () => {
                 {/* Error Message */}
                 {selectedNotification.errorMessage && (
                   <div>
-                    <label className="block text-sm font-medium text-red-400 mb-2">
+                    <label className="block mb-2 text-sm font-medium text-red-400">
                       Error Message
                     </label>
-                    <p className="p-3 bg-red-900 bg-opacity-20 border border-red-700 rounded-lg text-red-300">
+                    <p className="p-3 text-red-300 bg-red-900 border border-red-700 rounded-lg bg-opacity-20">
                       {selectedNotification.errorMessage}
                     </p>
                   </div>
