@@ -51,12 +51,17 @@ export function SearchResults({ results }: SearchResultsProps) {
                 </Title>
                 {result.description && (
                   <Paragraph
-                    className="text-gray-600 mb-3"
+                    className=" mb-3 text-sm text-gray-500 line-clamp-2 break-words"
                     ellipsis={{ rows: 2, expandable: false }}
                   >
-                    {result.description}
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: result.description || ""
+                      }}
+                    />
                   </Paragraph>
                 )}
+                 
               </div>
               <div className="ml-4 flex items-center text-blue-600 hover:text-blue-800">
                 <EyeOutlined className="mr-1" />
@@ -71,8 +76,8 @@ export function SearchResults({ results }: SearchResultsProps) {
               <Space direction="vertical" size="small">
                 <div className="flex items-center text-sm text-gray-600">
                   <FileTextOutlined className="mr-2 text-gray-400" />
-                  <Text strong>Document:</Text>
-                  <Text className="ml-1">{result.documentName}</Text>
+                  <Text className="" strong>Document:</Text>
+                  <Text className="ml-1 line-clamp-1 break-words w-3/5">{result.documentName}</Text>
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
                   <TeamOutlined className="mr-2 text-gray-400" />

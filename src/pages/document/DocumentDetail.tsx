@@ -946,9 +946,9 @@ export default function DocumentPage() {
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <h3 className="text-sm font-medium text-gray-900">
-                          {ver.versionName ||
-                            ver.title ||
+                        <h3 className="text-sm font-medium text-gray-900 line-clamp-1 break-words w-3/5">
+                          {ver.title ||
+                            ver.versionName ||
                             `Version ${index + 1}`}
                         </h3>
                         <span
