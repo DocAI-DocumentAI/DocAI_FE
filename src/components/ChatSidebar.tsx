@@ -151,12 +151,12 @@ function ChatSidebar() {
   // Handle save rename from popup
   const handleSaveRename = async () => {
     if (!newChatTitle.trim()) {
-      toast.error("Tên đoạn chat không được để trống");
+      toast.error("Chat title cannot be empty");
       return;
     }
 
     if (newChatTitle.length > 100) {
-      toast.error("Tên đoạn chat không được quá 100 ký tự");
+      toast.error("Chat title cannot exceed 100 characters");
       return;
     }
 
@@ -179,11 +179,11 @@ function ChatSidebar() {
       setShowRenameModal(false);
       setRenamingChatId(null);
       setNewChatTitle("");
-      toast.success("Đã đổi tên đoạn chat thành công");
+      toast.success("Chat renamed successfully");
     } catch (error: any) {
       console.error("Failed to rename chat session:", error);
       toast.error(
-        `Đổi tên thất bại: ${
+        `Rename failed: ${
           error?.response?.data?.message || error.message
         }`
       );
@@ -223,7 +223,7 @@ function ChatSidebar() {
     // Confirm deletion
     if (
       !window.confirm(
-        `Bạn có chắc chắn muốn xóa cuộc trò chuyện "${chatToDelete.title}"?`
+        `Are you sure you want to delete the chat "${chatToDelete.title}"?`
       )
     ) {
       return;
@@ -248,11 +248,11 @@ function ChatSidebar() {
         navigate("/chat/new");
       }
 
-      toast.success("Đã xóa cuộc trò chuyện thành công");
+      toast.success("Chat deleted successfully");
     } catch (error: any) {
       console.error("Failed to delete chat session:", error);
       toast.error(
-        `Xóa cuộc trò chuyện thất bại: ${
+        `Failed to delete chat: ${
           error?.response?.data?.message || error.message
         }`
       );
@@ -285,7 +285,7 @@ function ChatSidebar() {
       setAvailableCharacteristics(preferences.availableCharacteristics || []);
     } catch (error: any) {
       console.error("Failed to fetch user preferences:", error);
-      toast.error("Không thể tải thông tin cá nhân hóa");
+      toast.error("Unable to load personalization settings");
 
       // Fallback: fetch characteristics separately
       try {
@@ -302,7 +302,7 @@ function ChatSidebar() {
   };
 
   const handleNewChatClick = () => {
-    // nếu đang ở chat new thì ko làm gì cả
+    // If already on new chat, do nothing
     if (location.pathname === "/chat/new") {
       return;
     }
@@ -343,7 +343,7 @@ function ChatSidebar() {
     return classes.filter(Boolean).join(" ");
   };
 
-  // Helper để lấy chat ID từ URL
+  // Helper to get chat ID from URL
   const getCurrentChatId = () => {
     const match = location.pathname.match(/\/chat\/(.+)/);
     return match ? match[1] : null;
@@ -382,9 +382,9 @@ function ChatSidebar() {
 
       await api.patch("/chatbox/user", payload);
 
-      toast.success("Đã lưu cài đặt cá nhân hóa thành công!");
+      toast.success("Personalization settings saved successfully!");
 
-      // Fetch lại để verify
+      // Refetch to verify
       setTimeout(async () => {
         await fetchUserPreferences();
       }, 1000);
@@ -393,7 +393,7 @@ function ChatSidebar() {
     } catch (error: any) {
       console.error("Failed to save preferences:", error);
       toast.error(
-        `Lưu cài đặt thất bại: ${
+        `Failed to save settings: ${
           error?.response?.data?.message || error.message
         }`
       );
@@ -402,7 +402,7 @@ function ChatSidebar() {
     }
   };
 
-  // Thêm validation trước khi save
+  // Add validation before saving
   const validateAndSave = async () => {
     await handleSaveCustomize();
   };
@@ -422,9 +422,9 @@ function ChatSidebar() {
         (char) => char !== characteristicValue
       );
     } else {
-      // Add characteristic - chỉ cho phép tối đa 2
+      // Add characteristic - only allow max 2
       if (customizeSettings.chatbotCharacteristics.length >= 2) {
-        toast.warning("Bạn chỉ có thể chọn tối đa 2 đặc điểm");
+        toast.warning("You can only select up to 2 characteristics");
         return;
       }
       newCharacteristics = [
@@ -473,8 +473,12 @@ function ChatSidebar() {
             }`}
           >
             {!isCollapsed && (
-              <Link to="/" className="text-2xl font-medium">
-                Docs<span className="text-blue-300">+</span>AI
+              <Link to="/" className="flex items-center">
+                <img
+                  src="/LOGO.png"
+                  alt="Docs+AI"
+                  className="h-10 w-auto"
+                />
               </Link>
             )}
           </div>
@@ -536,7 +540,7 @@ function ChatSidebar() {
           </div>
         </div>
 
-        {/* Chat history - Ẩn thanh cuộn */}
+        {/* Chat history - Hidden scrollbar */}
         {!isCollapsed && (
           <div
             className="flex-1 overflow-auto"
@@ -600,7 +604,7 @@ function ChatSidebar() {
                                 className="flex items-center w-full gap-2 px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
                               >
                                 <Edit3 size={14} />
-                                Đổi tên
+                                Rename
                               </button>
                               <button
                                 onClick={(e) => handleDeleteChat(chat.id, e)}
@@ -608,7 +612,7 @@ function ChatSidebar() {
                                 disabled={deletingChatId === chat.id}
                               >
                                 <Trash2 size={14} />
-                                Xóa
+                                Delete
                               </button>
                             </div>
                           )}
@@ -622,7 +626,7 @@ function ChatSidebar() {
           </div>
         )}
 
-        {/* Footer với Profile Menu */}
+        {/* Footer with Profile Menu */}
         <div className="relative p-4 mt-auto border-t border-blue-800">
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
@@ -687,7 +691,7 @@ function ChatSidebar() {
                     className="flex items-center w-full gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     <Settings size={16} />
-                    Tùy chỉnh chat
+                    Customize Chat
                   </button>
 
                   <div className="my-1 border-t border-gray-100"></div>
@@ -719,7 +723,7 @@ function ChatSidebar() {
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Đổi tên cuộc trò chuyện
+                  Rename Chat
                 </h3>
                 <button
                   onClick={handleCancelRename}
@@ -734,7 +738,7 @@ function ChatSidebar() {
               <div className="p-4">
                 <div className="mb-4">
                   <label htmlFor="chatTitle" className="block text-sm font-medium text-gray-700 mb-2">
-                    Tên mới
+                    New Name
                   </label>
                   <input
                     id="chatTitle"
@@ -743,13 +747,13 @@ function ChatSidebar() {
                     onChange={(e) => setNewChatTitle(e.target.value)}
                     onKeyDown={handleRenameKeyPress}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-                    placeholder="Nhập tên mới cho cuộc trò chuyện"
+                    placeholder="Enter new chat name"
                     maxLength={100}
                     disabled={isRenaming}
                     autoFocus
                   />
                   <div className="mt-1 text-xs text-gray-500">
-                    {newChatTitle.length}/100 ký tự
+                    {newChatTitle.length}/100 characters
                   </div>
                 </div>
               </div>
@@ -761,7 +765,7 @@ function ChatSidebar() {
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50"
                   disabled={isRenaming}
                 >
-                  Hủy
+                  Cancel
                 </button>
                 <button
                   onClick={handleSaveRename}
@@ -771,7 +775,7 @@ function ChatSidebar() {
                   {isRenaming && (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   )}
-                  {isRenaming ? "Đang lưu..." : "Lưu"}
+                  {isRenaming ? "Saving..." : "Save"}
                 </button>
               </div>
             </div>
@@ -779,7 +783,7 @@ function ChatSidebar() {
         </>
       )}
 
-      {/* Customize ChatGPT Modal */}
+      {/* Customize Chat Modal */}
       {showCustomizeModal && (
         <>
           {/* Modal Overlay */}
@@ -790,7 +794,7 @@ function ChatSidebar() {
               <div className="flex items-center justify-between p-6 border-b border-gray-700">
                 <div className="flex items-center gap-3">
                   <h2 className="text-xl font-semibold">
-                    Tùy chỉnh Chat DocAI
+                    Customize Docs+AI Chat
                   </h2>
                   <HelpCircle size={20} className="text-gray-400" />
                 </div>
@@ -806,21 +810,20 @@ function ChatSidebar() {
               {/* Body */}
               <div className="p-6 space-y-6">
                 <p className="text-sm text-gray-300">
-                  Hãy giới thiệu bản thân để nhận được các phản hồi chính xác và
-                  phù hợp hơn với bạn
+                  Tell us about yourself to receive more accurate and personalized responses
                 </p>
 
                 {customizeLoading ? (
                   <div className="py-8 text-center">
                     <div className="w-8 h-8 mx-auto border-b-2 border-white rounded-full animate-spin"></div>
-                    <p className="mt-2 text-gray-400">Đang tải cài đặt...</p>
+                    <p className="mt-2 text-gray-400">Loading settings...</p>
                   </div>
                 ) : (
                   <>
                     {/* Name Field */}
                     <div>
                       <label className="block mb-2 text-sm font-medium">
-                        Chat DocAI nên gọi bạn là gì?
+                        What should Docs+AI Chat call you?
                       </label>
                       <input
                         type="text"
@@ -832,7 +835,7 @@ function ChatSidebar() {
                           })
                         }
                         className="w-full px-3 py-2 text-white placeholder-gray-400 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Nhập tên bạn muốn ChatGPT gọi"
+                        placeholder="Enter the name you want to be called"
                       />
                     </div>
 
@@ -840,12 +843,12 @@ function ChatSidebar() {
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <label className="block text-sm font-medium">
-                          Chat DocAI nên có những đặc điểm gì?
+                          What characteristics should Docs+AI Chat have?
                         </label>
                         <HelpCircle size={16} className="text-gray-400" />
                       </div>
                       <p className="mb-2 text-xs text-gray-400">
-                        Chọn tối đa 2 đặc điểm (
+                        Choose up to 2 characteristics (
                         {customizeSettings.chatbotCharacteristics.length}/2)
                       </p>
 
@@ -887,7 +890,7 @@ function ChatSidebar() {
                     {/* Additional Info Field */}
                     <div>
                       <label className="block mb-2 text-sm font-medium">
-                        Thông tin bổ sung
+                        Additional Information
                       </label>
                       <textarea
                         value={customizeSettings.additionalInfo}
@@ -899,7 +902,7 @@ function ChatSidebar() {
                         }
                         rows={4}
                         className="w-full px-3 py-2 text-white placeholder-gray-400 bg-gray-700 border border-gray-600 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Hãy mô tả thêm về bản thân hoặc cách bạn muốn ChatGPT phản hồi..."
+                        placeholder="Tell us more about yourself or how you want the chat to respond..."
                       />
                     </div>
                   </>
@@ -913,14 +916,14 @@ function ChatSidebar() {
                   className="px-4 py-2 text-gray-300 transition-colors hover:text-white"
                   disabled={customizeLoading}
                 >
-                  Hủy bỏ
+                  Cancel
                 </button>
                 <button
                   onClick={validateAndSave}
                   className="px-6 py-2 font-medium text-gray-900 transition-colors bg-white rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={customizeLoading}
                 >
-                  {customizeLoading ? "Đang lưu..." : "Lưu"}
+                  {customizeLoading ? "Saving..." : "Save"}
                 </button>
               </div>
             </div>

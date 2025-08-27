@@ -4,8 +4,7 @@ import { useState, useEffect } from "react"
 import { Trash2, Eye, Calendar, User, FileText, Bookmark } from "lucide-react"
 import { Link } from "react-router-dom"
 import { Navbar } from "../../components/layout/Navbar"
-import { api } from "../../lib/api/api"
-import toast from "react-hot-toast"
+import { api } from "../../lib/api/api" 
 
 interface BookmarkItem {
   id: string
@@ -25,7 +24,7 @@ export default function BookmarksPage() {
 
   const userStr = localStorage.getItem("user");
   if (!userStr) {
-    toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
+     
     return;
   }
   const user = JSON.parse(userStr);
@@ -46,7 +45,7 @@ export default function BookmarksPage() {
   }
 
   const deleteBookmark = async (documentId: string) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa bookmark này?')) return
+    if (!confirm('Are you sure you want to delete this bookmark?')) return
     
     try {
       await api.delete(`/document/bookmarks/${documentId}?userId=${user.userId}`)
@@ -54,7 +53,7 @@ export default function BookmarksPage() {
       fetchBookmarks(currentPage)
     } catch (error) {
       console.error('Failed to delete bookmark:', error)
-      alert('Lỗi khi xóa bookmark')
+      alert('Error deleting bookmark')
     }
   }
 
@@ -69,7 +68,7 @@ export default function BookmarksPage() {
         <main className="flex-1 p-6">
           <div className="mx-auto max-w-6xl">
             <div className="flex items-center justify-center py-12">
-              <div className="text-gray-500">Đang tải...</div>
+              <div className="text-gray-500">Loading...</div>
             </div>
           </div>
         </main>
@@ -85,24 +84,24 @@ export default function BookmarksPage() {
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">My Bookmarks</h1>
-              <p className="text-gray-600">Quản lý các tài liệu đã bookmark</p>
+              <p className="text-gray-600">Manage your bookmarked documents</p>
             </div>
             <div className="flex items-center text-sm text-gray-500">
               <Bookmark className="mr-1 h-4 w-4" />
-              {bookmarks.length} tài liệu
+              {bookmarks.length} documents
             </div>
           </div>
 
           {bookmarks.length === 0 ? (
             <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
               <Bookmark className="mx-auto mb-4 h-12 w-12 text-gray-400" />
-              <h3 className="mb-2 text-lg font-medium text-gray-900">Chưa có bookmark nào</h3>
-              <p className="text-gray-500">Bắt đầu bookmark các tài liệu để dễ dàng truy cập sau này.</p>
+              <h3 className="mb-2 text-lg font-medium text-gray-900">No bookmarks yet</h3>
+              <p className="text-gray-500">Start bookmarking documents for easy access later.</p>
               <Link
                 to="/search"
                 className="mt-4 inline-flex items-center rounded-md bg-blue-800 px-4 py-2 text-sm font-medium text-white hover:bg-blue-900"
               >
-                Tìm kiếm tài liệu
+                Search Documents
               </Link>
             </div>
           ) : (
@@ -118,16 +117,16 @@ export default function BookmarksPage() {
                         {bookmark.title || 'Untitled Document'}
                       </h3>
                       <p className="mb-3 text-sm text-gray-600 line-clamp-2">
-                        {bookmark.description || 'Không có mô tả'}
+                        {bookmark.description || 'No description available'}
                       </p>
                       <div className="flex flex-wrap gap-4 text-xs text-gray-500">
                         <div className="flex items-center">
                           <Calendar className="mr-1 h-3 w-3" />
-                          Đã bookmark: {new Date(bookmark.createdTime).toLocaleDateString('vi-VN')}
+                          Bookmarked: {new Date(bookmark.createdTime).toLocaleDateString('en-US')}
                         </div>
                         <div className="flex items-center">
                           <User className="mr-1 h-3 w-3" />
-                          ID: {bookmark.ownerId.slice(0, 8)}...
+                          Owner ID: {bookmark.ownerId.slice(0, 8)}...
                         </div>
                         <div className="flex items-center">
                           <FileText className="mr-1 h-3 w-3" />
@@ -141,14 +140,14 @@ export default function BookmarksPage() {
                         className="flex items-center rounded-md bg-blue-50 px-3 py-2 text-sm font-medium text-blue-800 hover:bg-blue-100"
                       >
                         <Eye className="mr-1 h-4 w-4" />
-                        Xem
+                        View
                       </Link>
                       <button
                         onClick={() => deleteBookmark(bookmark.documentId)}
                         className="flex items-center rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-800 hover:bg-red-100"
                       >
                         <Trash2 className="mr-1 h-4 w-4" />
-                        Xóa
+                        Delete
                       </button>
                     </div>
                   </div>
@@ -163,17 +162,17 @@ export default function BookmarksPage() {
                     disabled={currentPage <= 1}
                     className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    Trước
+                    Previous
                   </button>
                   <span className="text-sm text-gray-500">
-                    Trang {currentPage} / {totalPages}
+                    Page {currentPage} of {totalPages}
                   </span>
                   <button
                     onClick={() => fetchBookmarks(currentPage + 1)}
                     disabled={currentPage >= totalPages}
                     className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    Sau
+                    Next
                   </button>
                 </div>
               )}

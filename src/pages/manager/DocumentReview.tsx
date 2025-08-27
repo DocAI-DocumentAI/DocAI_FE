@@ -97,7 +97,7 @@ export default function DocumentReview() {
         }
         const userStr = localStorage.getItem("user");
         if (!userStr) {
-            toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
+             
             return;
         }
         if (!isApproved && rejectionComments.trim().length < 10) {

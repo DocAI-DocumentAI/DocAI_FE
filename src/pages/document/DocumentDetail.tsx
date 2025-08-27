@@ -1,4 +1,4 @@
-"use client";
+
 import { useState, useEffect, useCallback } from "react";
 import {
   ArrowLeft,
@@ -50,7 +50,7 @@ export default function DocumentPage() {
 
   const userStr = localStorage.getItem("user");
   if (!userStr) {
-    toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
+     
     return;
   }
   const user = JSON.parse(userStr);
@@ -81,18 +81,18 @@ export default function DocumentPage() {
         await api.delete(`/document/bookmarks/${id}?userId=${user.userId}`);
         setIsBookmarked(false);
         setBookmarkId(null);
-        toast.success("Đã xóa bookmark");
+        toast.success("Bookmark removed");
       } else {
         // Add bookmark
         await api.post(`/document/bookmarks/${id}?userId=${user.userId}`);
         setIsBookmarked(true);
-        toast.success("Đã thêm bookmark");
+        toast.success("Bookmark added");
         // Refresh bookmark status to get the new bookmark ID
         await checkBookmarkStatus();
       }
     } catch (error) {
       console.error("Failed to toggle bookmark:", error);
-      toast.error("Lỗi khi thay đổi bookmark");
+      toast.error("Error changing bookmark");
     }
   };
 
@@ -180,7 +180,7 @@ export default function DocumentPage() {
       toast.success("File downloaded successfully");
     } catch (error) {
       console.error("Download failed:", error);
-      toast.error("Tải file thất bại");
+      toast.error("File download failed");
     }
   };
 
@@ -329,7 +329,7 @@ export default function DocumentPage() {
           {/* Document Header */}
           <div className="mb-6">
             <h1 className="mb-4 text-3xl font-bold text-gray-900">
-              {mainDoc.title || "Chưa có tiêu đề"}
+              {mainDoc.title || "No title"}
             </h1>
 
             {/* Status and Visibility */}

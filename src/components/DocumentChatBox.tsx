@@ -14,7 +14,6 @@ import {
   SendOutlined,
   CloseOutlined,
   MinusOutlined,
-  RobotOutlined,
   FileTextOutlined,
   LockOutlined,
   PlusOutlined,
@@ -410,7 +409,7 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
                       value={model.modelName}
                     >
                       <div className="flex items-center">
-                        <RobotOutlined className="mr-2" />
+                        <img src="/LOGO_SMALL.png" alt="AI" className="w-4 h-4 mr-2" />
                         {model.displayName || model.modelName}
                       </div>
                     </Select.Option>
@@ -437,7 +436,7 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
               <div className="flex-grow space-y-4">
                 {messages.length === 0 && (
                   <div className="text-center text-gray-500 mt-8">
-                    <RobotOutlined className="text-2xl mb-2" />
+                    <img src="/LOGO_SMALL.png" alt="AI" className="w-8 h-8 mb-2 mx-auto" />
                     <Text type="secondary">
                       Ask me anything about this document!
                     </Text>
@@ -451,6 +450,8 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
                     content={message.content}
                     timestamp={message.timestamp}
                     isStreaming={message.isStreaming}
+                    documentSources={message.documentSources as any}
+                    hasDocumentContext={message.hasDocumentContext}
                   />
                 ))}
 

@@ -106,7 +106,7 @@ export default function DocumentVersionDetail() {
       console.log('Document data:', res.data.data);
     } catch (error: any) {
       console.error('Error fetching document:', error);
-      toast.error(`Không thể tải thông tin tài liệu: ${error?.response?.data?.message || error.message}`);
+      toast.error(`Unable to load document information: ${error?.response?.data?.message || error.message}`);
       setDocument(null);
     } finally {
       setLoading(false);
@@ -115,7 +115,7 @@ export default function DocumentVersionDetail() {
 
   const handlePreview = async () => {
     if (!document?.versionId) {
-      toast.error("Không tìm thấy versionId!");
+      toast.error("Version ID not found!");
       return;
     }
 
@@ -128,7 +128,7 @@ export default function DocumentVersionDetail() {
         setPreviewUrl(data.iframeUrl);
         setPreviewVisible(true);
       } else {
-        toast.error("Không thể xem trước loại file này");
+        toast.error("Cannot preview this file type");
       }
     } catch (error: any) {
       toast.error(`Preview failed: ${error?.response?.data?.message || error.message}`);
@@ -189,9 +189,9 @@ export default function DocumentVersionDetail() {
         <Navbar />
         <Content className="p-6">
           <div className="text-center">
-            <Title level={3}>Không tìm thấy tài liệu</Title>
+            <Title level={3}>Document Not Found</Title>
             <Button onClick={() => navigate('/documents')} type="primary">
-              Quay lại danh sách
+              Back to List
             </Button>
           </div>
         </Content>
@@ -211,19 +211,19 @@ export default function DocumentVersionDetail() {
             onClick={() => navigate(-1)}
             className="mb-4 p-0 h-auto"
           >
-            Quay lại
+            Back
           </Button>
 
           {/* Replacement Document Alert */}
           {document.isReplaced && document.replacementDocumentName && (
             <Alert
-              message="Tài liệu đã được thay thế"
+              message="Document has been replaced"
               description={
                 <div>
-                  Tài liệu này đã được thay thế bởi: <strong>{document.replacementDocumentName}</strong>
+                  This document has been replaced by: <strong>{document.replacementDocumentName}</strong>
                   <br />
                   <Button type="link" icon={<ExternalLink size={14} />} style={{ padding: 0, marginTop: 4 }}>
-                    Xem tài liệu thay thế
+                    View replacement document
                   </Button>
                 </div>
               }
@@ -253,13 +253,13 @@ export default function DocumentVersionDetail() {
                   <Tag
                     color={document.isPublic ? 'blue' : 'orange'}
                     icon={document.isPublic ? <Globe size={12} /> : <Lock size={12} />}
-                    className="px-3 py-1 flex   items-center"
+                    className="px-3 py-1 flex items-center"
                   >
-                    {document.isPublic ? 'Công khai' : 'Riêng tư'}
+                    {document.isPublic ? 'Public' : 'Private'}
                   </Tag>
 
                   <Text type="secondary" className="text-sm">
-                    Phiên bản: {document.versionName}
+                    Version: {document.versionName}
                   </Text>
                 </div>
 
@@ -272,7 +272,7 @@ export default function DocumentVersionDetail() {
                 {document.tags && document.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-6">
                     {document.tags.map((tag, index) => (
-                      <Tag key={index} icon={<TagIcon size={12} />} className="rounded-full  flex gap-2 items-center">
+                      <Tag key={index} icon={<TagIcon size={12} />} className="rounded-full flex gap-2 items-center">
                         {tag}
                       </Tag>
                     ))}
@@ -282,7 +282,7 @@ export default function DocumentVersionDetail() {
 
               {/* Document Summary */}
               {document.summary && (
-                <Card title="Tóm tắt tài liệu" className="mb-6 shadow-sm">
+                <Card title="Document Summary" className="mb-6 shadow-sm">
                   <div
                     className="prose prose-gray max-w-none bg-gray-50 p-4 rounded-lg"
                     dangerouslySetInnerHTML={{ __html: document.summary }}
@@ -292,7 +292,7 @@ export default function DocumentVersionDetail() {
 
               {/* Document Content */}
               {document.content && (
-                <Card title="Nội dung chi tiết" className="mb-6 shadow-sm">
+                <Card title="Detailed Content" className="mb-6 shadow-sm">
                   <div
                     className="prose prose-gray max-w-none leading-relaxed"
                     dangerouslySetInnerHTML={{ __html: document.content }}
@@ -332,12 +332,12 @@ export default function DocumentVersionDetail() {
                     loading={previewLoading}
                     className="h-12 text-base font-medium"
                   >
-                    Xem tài liệu
+                    View Document
                   </Button>
                 </Card>
 
                 {/* Document Info Card */}
-                <Card title="Thông tin tài liệu" className="shadow-sm">
+                <Card title="Document Information" className="shadow-sm">
                   <div className="space-y-4">
                     <div className="flex items-start gap-3">
                       <User size={16} className="text-gray-500 mt-1" />
@@ -351,7 +351,7 @@ export default function DocumentVersionDetail() {
                       <Building2 size={16} className="text-gray-500 mt-1" />
                       <div className="flex-1">
                         <Text className="block font-medium">{document.departmentName}</Text>
-                        <Text type="secondary" className="text-sm">Phòng ban</Text>
+                        <Text type="secondary" className="text-sm">Department</Text>
                       </div>
                     </div>
 
@@ -359,7 +359,7 @@ export default function DocumentVersionDetail() {
                       <Calendar size={16} className="text-gray-500 mt-1" />
                       <div className="flex-1">
                         <Text className="block font-medium">{formatDate(document.createdTime)}</Text>
-                        <Text type="secondary" className="text-sm">Ngày tạo</Text>
+                        <Text type="secondary" className="text-sm">Created Date</Text>
                       </div>
                     </div>
 
@@ -368,7 +368,7 @@ export default function DocumentVersionDetail() {
                         <FileText size={16} className="text-gray-500 mt-1" />
                         <div className="flex-1">
                           <Text className="block font-medium">{document.documentTypeName}</Text>
-                          <Text type="secondary" className="text-sm">Loại tài liệu</Text>
+                          <Text type="secondary" className="text-sm">Document Type</Text>
                         </div>
                       </div>
                     )}
@@ -379,7 +379,7 @@ export default function DocumentVersionDetail() {
                         <FolderOutlined style={{ fontSize: 16, color: '#666', marginTop: 4 }} />
                         <div className="flex-1">
                           <Text className="block font-medium">{document.folderName}</Text>
-                          <Text type="secondary" className="text-sm">Thư mục hiện tại</Text>
+                          <Text type="secondary" className="text-sm">Current Folder</Text>
                         </div>
                       </div>
                     )}
@@ -389,7 +389,7 @@ export default function DocumentVersionDetail() {
                         <FolderOutlined style={{ fontSize: 16, color: '#1890ff', marginTop: 4 }} />
                         <div className="flex-1">
                           <Text className="block font-medium" style={{ color: '#1890ff' }}>{document.targetFolderName}</Text>
-                          <Text type="secondary" className="text-sm">Thư mục đích</Text>
+                          <Text type="secondary" className="text-sm">Target Folder</Text>
                         </div>
                       </div>
                     )}
@@ -398,15 +398,15 @@ export default function DocumentVersionDetail() {
 
                 {/* Approval Info */}
                 {(document.approvedBy || document.rejectedBy) && (
-                  <Card title="Thông tin duyệt" className="shadow-sm">
+                  <Card title="Approval Information" className="shadow-sm">
                     <div className="space-y-3">
                       {document.approvedBy && (
                         <div>
-                          <Text strong className="block text-green-600">Đã được duyệt</Text>
-                          <Text className="block">Bởi: {document.approvedBy}</Text>
+                          <Text strong className="block text-green-600">Approved</Text>
+                          <Text className="block">By: {document.approvedBy}</Text>
                           {document.approvedAt && (
                             <Text type="secondary" className="text-sm">
-                              Ngày: {formatDate(document.approvedAt)}
+                              Date: {formatDate(document.approvedAt)}
                             </Text>
                           )}
                         </div>
@@ -414,11 +414,11 @@ export default function DocumentVersionDetail() {
 
                       {document.rejectedBy && (
                         <div>
-                          <Text strong className="block text-red-600">Bị từ chối</Text>
-                          <Text className="block">Bởi: {document.rejectedBy}</Text>
+                          <Text strong className="block text-red-600">Rejected</Text>
+                          <Text className="block">By: {document.rejectedBy}</Text>
                           {document.rejectionReason && (
                             <Text type="secondary" className="block text-sm mt-1">
-                              Lý do: {document.rejectionReason}
+                              Reason: {document.rejectionReason}
                             </Text>
                           )}
                         </div>
@@ -429,18 +429,18 @@ export default function DocumentVersionDetail() {
 
                 {/* Effective Period */}
                 {(document.effectiveFrom || document.effectiveUntil || document.signedBy) && (
-                  <Card title="Thông tin hiệu lực" className="shadow-sm">
+                  <Card title="Effective Information" className="shadow-sm">
                     <div className="space-y-3">
                       {document.effectiveFrom && (
                         <div>
-                          <Text type="secondary" className="text-sm">Hiệu lực từ</Text>
+                          <Text type="secondary" className="text-sm">Effective From</Text>
                           <Text className="block font-medium">{formatDate(document.effectiveFrom)}</Text>
                         </div>
                       )}
 
                       {document.effectiveUntil && (
                         <div>
-                          <Text type="secondary" className="text-sm">Hiệu lực đến</Text>
+                          <Text type="secondary" className="text-sm">Effective Until</Text>
                           <Text className="block font-medium">{formatDate(document.effectiveUntil)}</Text>
                         </div>
                       )}
@@ -449,7 +449,7 @@ export default function DocumentVersionDetail() {
                         <div className="flex items-center gap-2">
                           <Edit3 size={14} className="text-gray-500" />
                           <div>
-                            <Text type="secondary" className="text-sm block">Người ký</Text>
+                            <Text type="secondary" className="text-sm block">Signed By</Text>
                             <Text className="font-medium">{document.signedBy}</Text>
                           </div>
                         </div>
@@ -460,16 +460,16 @@ export default function DocumentVersionDetail() {
 
                 {/* Replacement Info */}
                 {document.replacementId && (
-                  <Card title="Thông tin thay thế" className="shadow-sm border-orange-200">
+                  <Card title="Replacement Information" className="shadow-sm border-orange-200">
                     <div className="space-y-3">
                       <div>
-                        <Text type="secondary" className="text-sm block">ID thay thế</Text>
+                        <Text type="secondary" className="text-sm block">Replacement ID</Text>
                         <Text copyable className="font-mono text-sm">{document.replacementId}</Text>
                       </div>
 
                       {document.replacementDocumentName && (
                         <div>
-                          <Text type="secondary" className="text-sm block">Tài liệu thay thế</Text>
+                          <Text type="secondary" className="text-sm block">Replacement Document</Text>
                           <Text className="font-medium">{document.replacementDocumentName}</Text>
                         </div>
                       )}
@@ -493,7 +493,7 @@ export default function DocumentVersionDetail() {
           onCancel={() => setPreviewVisible(false)}
           footer={[
             <Button key="close" onClick={() => setPreviewVisible(false)} size="large">
-              Đóng
+              Close
             </Button>
           ]}
           width="95%"

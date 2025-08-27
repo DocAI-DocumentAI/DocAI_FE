@@ -36,7 +36,7 @@ export default function AppearanceSettings() {
           <option value="Dark">Dark</option>
           <option value="System">System</option>
         </select>
-        <p className="mt-1 text-xs text-gray-500">Choose how DocsAI looks to you.</p>
+        <p className="mt-1 text-xs text-gray-500">Choose how Docs+AI looks to you.</p>
       </div>
 
       <button className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50">

@@ -169,7 +169,11 @@ const DocumentReplacement: React.FC = () => {
       params.keyword = search;
     }
       const response = await getReplaceableDocuments(params);
-      setReplaceableDocuments(response.items || []);
+      const normalizedItems = (response.items || []).map((it: any) => ({
+        ...it,
+        id: it.id || it.documentId,
+      }));
+      setReplaceableDocuments(normalizedItems);
       setTotalDocuments(response.totalCount || 0);
     } catch (error) {
       console.error("Failed to load replaceable documents:", error);
@@ -224,7 +228,7 @@ const DocumentReplacement: React.FC = () => {
       effectiveUntil: values.effectiveTo ? values.effectiveTo.toISOString() : "",
       tags: Array.isArray(values.tags) ? values.tags.filter(Boolean) : [],
       file: selectedFile,
-      replacementDocumentId: selectedDocument.id,
+      replacementDocumentId: (selectedDocument as any).documentId || selectedDocument.id,
       documentTypeId: values.type || "",
       isPublic: isPublicState, // Use the actual isPublic state
       folderId: values.folderId || selectedFolderId || "",

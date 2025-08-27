@@ -122,7 +122,7 @@ export default function AccountSettings() {
                             placeholder="Enter your full name"
                         />
                         <p className="mt-1 text-xs text-gray-500">
-                            Your name may appear around DocAI where you contribute or are mentioned. You can update it at any time.
+                            Your name may appear around Docs+AI where you contribute or are mentioned. You can update it at any time.
                         </p>
                     </div>
 
