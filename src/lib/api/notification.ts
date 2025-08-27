@@ -10,13 +10,11 @@ export interface Notification {
   subject: string;
   message: string;
   isSent: boolean;
+  isRead: boolean;
+  readAt: string | null;
   sentAt: string;
-  isDismissed: boolean;
-  dismissedAt: string;
-  dismissedByUserId: string;
-  errorMessage: string;
+  errorMessage: string | null;
   createAt: string;
-  isRead?: boolean; // Thêm field này cho user notifications
 }
 
 export interface NotificationFilters {
@@ -43,7 +41,15 @@ export interface NotificationResponse {
   items: Notification[];
 }
 
-// Admin notification logs
+export interface UnreadCountResponse {
+  success: boolean;
+  data: {
+    unreadCount: number;
+  };
+  message: string;
+}
+
+// Admin notification logs (existing functions)
 export const getNotificationLogs = async (
   pageNumber = 1,
   pageSize = 10,
@@ -51,7 +57,6 @@ export const getNotificationLogs = async (
 ) => {
   let url = `/notification/logs?Page=${pageNumber}&Size=${pageSize}`;
 
-  // Add filters to URL
   if (filters.documentId) {
     url += `&DocumentId=${encodeURIComponent(filters.documentId)}`;
   }
@@ -88,7 +93,34 @@ export const resendNotification = async (id: string) => {
   return response.data;
 };
 
-// User notifications - chỉ xem và đánh dấu đã đọc
+// NEW USER NOTIFICATION FUNCTIONS
+// 1. Get user's notifications
+export const getMyNotifications = async (pageNumber = 1, pageSize = 20) => {
+  const response = await api.get(
+    `/notification/my-notifications?page=${pageNumber}&size=${pageSize}`
+  );
+  return response.data as NotificationResponse;
+};
+
+// 2. Get unread notification count
+export const getUnreadNotificationCount = async () => {
+  const response = await api.get("/notification/unread-count");
+  return response.data as UnreadCountResponse;
+};
+
+// 3. Mark single notification as read
+export const markNotificationAsRead = async (notificationId: string) => {
+  const response = await api.post(`/notification/${notificationId}/mark-read`);
+  return response.data;
+};
+
+// 4. Mark all notifications as read
+export const markAllNotificationsAsRead = async () => {
+  const response = await api.post("/notification/mark-all-read");
+  return response.data;
+};
+
+// LEGACY FUNCTIONS (for backward compatibility - can be removed if not used elsewhere)
 export const getUserNotifications = async (
   pageNumber = 1,
   pageSize = 20,
@@ -108,20 +140,4 @@ export const getUserNotifications = async (
 
   const response = await api.get(url);
   return response.data as NotificationResponse;
-};
-
-export const markNotificationAsRead = async (id: string) => {
-  const response = await api.patch(`/notification/${id}/read`);
-  return response.data;
-};
-
-// Get unread notification count
-export const getUnreadNotificationCount = async (): Promise<number> => {
-  try {
-    const response = await getUserNotifications(1, 1, { isRead: false });
-    return response.total || 0;
-  } catch (error) {
-    console.error("Failed to get unread notification count:", error);
-    return 0;
-  }
 };

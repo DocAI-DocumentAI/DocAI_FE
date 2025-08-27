@@ -1,30 +1,81 @@
-import { useState } from "react";
-// import { useAuth } from "@/context/auth-context"
+import { useState, useEffect, useCallback } from "react";
 import { Search, BellRing } from "lucide-react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { api } from "../../lib/api/api";
 
 export function Navbar() {
-  //   const { user, logout } = useAuth()
   const [showDropdown, setShowDropdown] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
 
+  // Move user check after all hooks
   const userStr = localStorage.getItem("user");
-  if (!userStr) {
-    toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
-    return <Navigate to="/login" replace />;
-  }
-  const user = JSON.parse(userStr);
+  const user = userStr ? JSON.parse(userStr) : null;
+
   const logout = () => {
     console.log("Logout");
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/login");
   };
+
   const toggleDropdown = () => {
     setShowDropdown(!showDropdown);
   };
+
+  // Get unread notification count
+  const getUnreadNotificationCount = useCallback(async () => {
+    try {
+      const response = await api.get("/notification/unread-count");
+      if (response.data && response.data.data) {
+        setUnreadCount(response.data.data.unreadCount);
+      }
+    } catch (error) {
+      console.error("Failed to get unread notification count:", error);
+      // Don't show error toast as this is not critical
+    }
+  }, []);
+
+  // Fetch unread count on component mount and set up interval
+  useEffect(() => {
+    getUnreadNotificationCount();
+
+    // Update unread count every 30 seconds
+    const interval = setInterval(getUnreadNotificationCount, 30000);
+
+    return () => clearInterval(interval);
+  }, [getUnreadNotificationCount]);
+
+  // Listen for storage events to update count when notifications are read
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === "notification_update") {
+        getUnreadNotificationCount();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    // Also listen for custom events within the same tab
+    const handleCustomEvent = () => {
+      getUnreadNotificationCount();
+    };
+
+    window.addEventListener("notification_update", handleCustomEvent);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("notification_update", handleCustomEvent);
+    };
+  }, [getUnreadNotificationCount]);
+
+  // Check if user exists after hooks
+  if (!user) {
+    toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <nav className="flex items-center justify-between h-16 px-6 bg-blue-800">
@@ -38,10 +89,15 @@ export function Navbar() {
         <div className="relative">
           <button
             onClick={() => navigate("/notifications")}
-            className="flex items-center justify-center w-8 h-8 text-blue-800 transition-colors bg-white rounded-full hover:bg-gray-100"
+            className="relative flex items-center justify-center w-8 h-8 text-blue-800 transition-colors bg-white rounded-full hover:bg-gray-100"
             title="Notifications"
           >
             <BellRing className="w-5 h-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium min-w-[20px] px-1">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
           </button>
         </div>
         <div className="relative max-w-64 ">
