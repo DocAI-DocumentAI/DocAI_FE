@@ -9,6 +9,7 @@ import {
   useAIConfigurations,
   useUpdateAIConfiguration,
   UpdateAIConfigurationRequest,
+  AIConfigurationData,
 } from "../../services/chatboxService";
 
 interface FormErrors {
@@ -32,10 +33,10 @@ const UpdateConfigAI: React.FC = () => {
     modelName: "",
     displayName: "",
     temperature: 0.7,
-    topP: 0.9,
-    maxTokens: 8000,
+    topP: 1.0,
+    maxTokens: 2048,
     systemPrompt: "",
-    isFree: true,
+    isFree: false,
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -43,10 +44,14 @@ const UpdateConfigAI: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Find and load the configuration data
+  const [currentConfig, setCurrentConfig] =
+    useState<AIConfigurationData | null>(null);
+
   useEffect(() => {
     if (configData && id) {
       const config = configData.find((c) => c.id === id);
       if (config) {
+        setCurrentConfig(config);
         setFormData({
           modelName: config.modelName,
           displayName: config.displayName,
@@ -87,25 +92,35 @@ const UpdateConfigAI: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-
-    if (!formData.modelName.trim()) {
-      newErrors.modelName = "Model name is required";
+    // ModelName validation - Required (only if not active), max 200 characters
+    if (!currentConfig?.isActive) {
+      if (!formData.modelName.trim()) {
+        newErrors.modelName = "Model name is required";
+      } else if (formData.modelName.length > 200) {
+        newErrors.modelName = "Model name must not exceed 200 characters";
+      }
     }
 
+    // DisplayName validation - Required, max 100 characters
     if (!formData.displayName.trim()) {
       newErrors.displayName = "Display name is required";
+    } else if (formData.displayName.length > 100) {
+      newErrors.displayName = "Display name must not exceed 100 characters";
     }
 
-    if (formData.temperature < 0 || formData.temperature > 2) {
-      newErrors.temperature = "Temperature must be between 0 and 2";
+    // Temperature validation - Range 0.0 to 2.0
+    if (formData.temperature < 0.0 || formData.temperature > 2.0) {
+      newErrors.temperature = "Temperature must be between 0.0 and 2.0";
     }
 
-    if (formData.topP < 0 || formData.topP > 1) {
-      newErrors.topP = "Top P must be between 0 and 1";
+    // TopP validation - Range 0.0 to 1.0
+    if (formData.topP < 0.0 || formData.topP > 1.0) {
+      newErrors.topP = "Top P must be between 0.0 and 1.0";
     }
 
-    if (formData.maxTokens < 1 || formData.maxTokens > 100000) {
-      newErrors.maxTokens = "Max tokens must be between 1 and 100,000";
+    // MaxTokens validation - Range 256 to 8192
+    if (formData.maxTokens < 256 || formData.maxTokens > 8192) {
+      newErrors.maxTokens = "MaxTokens phải từ 256 đến 8192";
     }
 
     // System prompt is optional - no validation required
@@ -126,8 +141,10 @@ const UpdateConfigAI: React.FC = () => {
       await updateMutation.mutateAsync({ id, data: formData });
       toast.success("AI configuration updated successfully!");
       navigate("/admin/config-ai");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to update AI configuration");
+    } catch (error: unknown) {
+      toast.error(
+        (error as Error).message || "Failed to update AI configuration"
+      );
     }
   };
 
@@ -136,7 +153,7 @@ const UpdateConfigAI: React.FC = () => {
     return (
       <div className="relative z-10 flex-1 overflow-auto">
         <Header title="Update AI Configuration" />
-        <main className="px-4 py-6 mx-auto max-w-4xl lg:px-8">
+        <main className="max-w-4xl px-4 py-6 mx-auto lg:px-8">
           <div className="flex items-center justify-center h-64">
             <div className="flex flex-col items-center gap-4">
               <div className="w-8 h-8 border-2 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
@@ -152,13 +169,13 @@ const UpdateConfigAI: React.FC = () => {
     <div className="relative z-10 flex-1 overflow-auto">
       <Header title="Update AI Configuration" />
 
-      <main className="px-4 py-6 mx-auto max-w-4xl lg:px-8">
+      <main className="max-w-4xl px-4 py-6 mx-auto lg:px-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <Link
               to="/admin/config-ai"
-              className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-300 transition-colors bg-gray-700 border border-gray-600 rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Configurations
@@ -181,37 +198,44 @@ const UpdateConfigAI: React.FC = () => {
         >
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Model Information */}
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div>
-                <label
-                  htmlFor="modelName"
-                  className="block text-sm font-medium text-gray-300 mb-2"
-                >
-                  Model Name *
-                </label>
-                <input
-                  type="text"
-                  id="modelName"
-                  name="modelName"
-                  value={formData.modelName}
-                  onChange={handleInputChange}
-                  placeholder="e.g., meta-llama/llama-3.3-70b-instruct:free"
-                  className={`w-full px-3 py-2 bg-gray-700 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-100 placeholder-gray-400 ${
-                    errors.modelName ? "border-red-500" : "border-gray-600"
-                  }`}
-                />
-                {errors.modelName && (
-                  <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    {errors.modelName}
-                  </p>
-                )}
-              </div>
+            <div
+              className={`grid grid-cols-1 gap-6 ${
+                currentConfig?.isActive ? "md:grid-cols-1" : "md:grid-cols-2"
+              }`}
+            >
+              {/* Only show Model Name field if the model is not active */}
+              {!currentConfig?.isActive && (
+                <div>
+                  <label
+                    htmlFor="modelName"
+                    className="block mb-2 text-sm font-medium text-gray-300"
+                  >
+                    Model Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="modelName"
+                    name="modelName"
+                    value={formData.modelName}
+                    onChange={handleInputChange}
+                    placeholder="e.g., meta-llama/llama-3.3-70b-instruct:free"
+                    className={`w-full px-3 py-2 bg-gray-700 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-100 placeholder-gray-400 ${
+                      errors.modelName ? "border-red-500" : "border-gray-600"
+                    }`}
+                  />
+                  {errors.modelName && (
+                    <p className="flex items-center gap-1 mt-1 text-sm text-red-400">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.modelName}
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div>
                 <label
                   htmlFor="displayName"
-                  className="block text-sm font-medium text-gray-300 mb-2"
+                  className="block mb-2 text-sm font-medium text-gray-300"
                 >
                   Display Name *
                 </label>
@@ -227,7 +251,7 @@ const UpdateConfigAI: React.FC = () => {
                   }`}
                 />
                 {errors.displayName && (
-                  <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                  <p className="flex items-center gap-1 mt-1 text-sm text-red-400">
                     <AlertCircle className="w-4 h-4" />
                     {errors.displayName}
                   </p>
@@ -235,12 +259,28 @@ const UpdateConfigAI: React.FC = () => {
               </div>
             </div>
 
+            {/* Show status indicator when model is active */}
+            {currentConfig?.isActive && (
+              <div className="p-4 bg-green-900 border border-green-700 rounded-lg bg-opacity-30">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium text-green-300">
+                    This model is currently active
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-green-400">
+                  Model Name:{" "}
+                  <span className="font-mono">{formData.modelName}</span>
+                </p>
+              </div>
+            )}
+
             {/* Parameters */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <div>
                 <label
                   htmlFor="temperature"
-                  className="block text-sm font-medium text-gray-300 mb-2"
+                  className="block mb-2 text-sm font-medium text-gray-300"
                 >
                   Temperature *
                 </label>
@@ -250,15 +290,15 @@ const UpdateConfigAI: React.FC = () => {
                   name="temperature"
                   value={formData.temperature}
                   onChange={handleInputChange}
-                  min="0"
-                  max="2"
+                  min="0.0"
+                  max="2.0"
                   step="0.1"
                   className={`w-full px-3 py-2 bg-gray-700 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-100 ${
                     errors.temperature ? "border-red-500" : "border-gray-600"
                   }`}
                 />
                 {errors.temperature && (
-                  <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                  <p className="flex items-center gap-1 mt-1 text-sm text-red-400">
                     <AlertCircle className="w-4 h-4" />
                     {errors.temperature}
                   </p>
@@ -268,7 +308,7 @@ const UpdateConfigAI: React.FC = () => {
               <div>
                 <label
                   htmlFor="topP"
-                  className="block text-sm font-medium text-gray-300 mb-2"
+                  className="block mb-2 text-sm font-medium text-gray-300"
                 >
                   Top P *
                 </label>
@@ -278,15 +318,15 @@ const UpdateConfigAI: React.FC = () => {
                   name="topP"
                   value={formData.topP}
                   onChange={handleInputChange}
-                  min="0"
-                  max="1"
+                  min="0.0"
+                  max="1.0"
                   step="0.1"
                   className={`w-full px-3 py-2 bg-gray-700 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-100 ${
                     errors.topP ? "border-red-500" : "border-gray-600"
                   }`}
                 />
                 {errors.topP && (
-                  <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                  <p className="flex items-center gap-1 mt-1 text-sm text-red-400">
                     <AlertCircle className="w-4 h-4" />
                     {errors.topP}
                   </p>
@@ -296,7 +336,7 @@ const UpdateConfigAI: React.FC = () => {
               <div>
                 <label
                   htmlFor="maxTokens"
-                  className="block text-sm font-medium text-gray-300 mb-2"
+                  className="block mb-2 text-sm font-medium text-gray-300"
                 >
                   Max Tokens *
                 </label>
@@ -306,14 +346,14 @@ const UpdateConfigAI: React.FC = () => {
                   name="maxTokens"
                   value={formData.maxTokens}
                   onChange={handleInputChange}
-                  min="1"
-                  max="100000"
+                  min="256"
+                  max="8192"
                   className={`w-full px-3 py-2 bg-gray-700 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-100 ${
                     errors.maxTokens ? "border-red-500" : "border-gray-600"
                   }`}
                 />
                 {errors.maxTokens && (
-                  <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                  <p className="flex items-center gap-1 mt-1 text-sm text-red-400">
                     <AlertCircle className="w-4 h-4" />
                     {errors.maxTokens}
                   </p>
@@ -343,7 +383,7 @@ const UpdateConfigAI: React.FC = () => {
             <div>
               <label
                 htmlFor="systemPrompt"
-                className="block text-sm font-medium text-gray-300 mb-2"
+                className="block mb-2 text-sm font-medium text-gray-300"
               >
                 System Prompt
               </label>
@@ -359,7 +399,7 @@ const UpdateConfigAI: React.FC = () => {
                 }`}
               />
               {errors.systemPrompt && (
-                <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                <p className="flex items-center gap-1 mt-1 text-sm text-red-400">
                   <AlertCircle className="w-4 h-4" />
                   {errors.systemPrompt}
                 </p>
@@ -370,14 +410,14 @@ const UpdateConfigAI: React.FC = () => {
             <div className="flex justify-end gap-4 pt-6 border-t border-gray-700">
               <Link
                 to="/admin/config-ai"
-                className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-300 transition-colors bg-gray-700 border border-gray-600 rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 Cancel
               </Link>
               <button
                 type="submit"
                 disabled={updateMutation.isPending}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {updateMutation.isPending ? (
                   <>

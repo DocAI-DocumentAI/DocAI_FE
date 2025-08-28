@@ -28,16 +28,13 @@ const CreateConfigAI: React.FC = () => {
     modelName: "",
     displayName: "",
     temperature: 0.7,
-    topP: 0.9,
-    maxTokens: 8000,
+    topP: 1.0,
+    maxTokens: 2048,
     systemPrompt: "",
-    isFree: true,
+    isFree: false,
   });
 
-
   const [errors, setErrors] = useState<FormErrors>({});
-
-
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -62,28 +59,36 @@ const CreateConfigAI: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-
+    // ModelName validation - Required, max 200 characters
     if (!formData.modelName.trim()) {
       newErrors.modelName = "Model name is required";
+    } else if (formData.modelName.length > 200) {
+      newErrors.modelName = "Model name must not exceed 200 characters";
     }
 
+    // DisplayName validation - Required, max 100 characters
     if (!formData.displayName.trim()) {
       newErrors.displayName = "Display name is required";
+    } else if (formData.displayName.length > 100) {
+      newErrors.displayName = "Display name must not exceed 100 characters";
     }
 
-    if (formData.temperature < 0 || formData.temperature > 2) {
-      newErrors.temperature = "Temperature must be between 0 and 2";
+    // Temperature validation - Range 0.0 to 2.0
+    if (formData.temperature < 0.0 || formData.temperature > 2.0) {
+      newErrors.temperature = "Temperature must be between 0.0 and 2.0";
     }
 
-    if (formData.topP < 0 || formData.topP > 1) {
-      newErrors.topP = "Top P must be between 0 and 1";
+    // TopP validation - Range 0.0 to 1.0
+    if (formData.topP < 0.0 || formData.topP > 1.0) {
+      newErrors.topP = "Top P must be between 0.0 and 1.0";
     }
 
-    if (formData.maxTokens < 1 || formData.maxTokens > 100000) {
-      newErrors.maxTokens = "Max tokens must be between 1 and 100,000";
+    // MaxTokens validation - Range 256 to 8192
+    if (formData.maxTokens < 256 || formData.maxTokens > 8192) {
+      newErrors.maxTokens = "MaxTokens phải từ 256 đến 8192";
     }
 
-    // System prompt is optional - no validation required
+    // SystemPrompt is optional - no validation required
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -101,8 +106,10 @@ const CreateConfigAI: React.FC = () => {
       await createMutation.mutateAsync(formData);
       toast.success("AI configuration created successfully!");
       navigate("/admin/config-ai");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to create AI configuration");
+    } catch (error: unknown) {
+      toast.error(
+        (error as Error).message || "Failed to create AI configuration"
+      );
     }
   };
 
@@ -210,8 +217,8 @@ const CreateConfigAI: React.FC = () => {
                   name="temperature"
                   value={formData.temperature}
                   onChange={handleInputChange}
-                  min="0"
-                  max="2"
+                  min="0.0"
+                  max="2.0"
                   step="0.1"
                   className={`w-full px-3 py-2 bg-gray-700 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-100 ${
                     errors.temperature ? "border-red-500" : "border-gray-600"
@@ -238,8 +245,8 @@ const CreateConfigAI: React.FC = () => {
                   name="topP"
                   value={formData.topP}
                   onChange={handleInputChange}
-                  min="0"
-                  max="1"
+                  min="0.0"
+                  max="1.0"
                   step="0.1"
                   className={`w-full px-3 py-2 bg-gray-700 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-100 ${
                     errors.topP ? "border-red-500" : "border-gray-600"
@@ -266,8 +273,8 @@ const CreateConfigAI: React.FC = () => {
                   name="maxTokens"
                   value={formData.maxTokens}
                   onChange={handleInputChange}
-                  min="1"
-                  max="100000"
+                  min="256"
+                  max="8192"
                   className={`w-full px-3 py-2 bg-gray-700 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-100 ${
                     errors.maxTokens ? "border-red-500" : "border-gray-600"
                   }`}

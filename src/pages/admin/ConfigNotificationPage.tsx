@@ -17,6 +17,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/common/Header";
 import { useNotificationConfig } from "../../services/notificationService";
+import { getCronDescription } from "../../utils/cronUtils";
 
 // Format date for display
 const formatDate = (dateString: string) => {
@@ -36,7 +37,6 @@ const formatDate = (dateString: string) => {
 //   }
 //   return cronExpression;
 // };
-
 
 const ConfigNotificationPage: React.FC = () => {
   const navigate = useNavigate();
@@ -208,10 +208,13 @@ const ConfigNotificationPage: React.FC = () => {
                 <div className="flex items-center gap-3 mb-2">
                   <Calendar className="w-5 h-5 text-red-400" />
                   <h4 className="text-sm font-medium text-gray-300">
-                    Expired Notification Cron
+                    Expired Notification Schedule
                   </h4>
                 </div>
-                <p className="font-mono text-sm text-gray-100">
+                <p className="text-lg font-semibold text-gray-100 mb-1">
+                  {getCronDescription(configData.expiredNotificationCron)}
+                </p>
+                <p className="font-mono text-xs text-gray-400">
                   {configData.expiredNotificationCron}
                 </p>
               </div>
@@ -221,10 +224,13 @@ const ConfigNotificationPage: React.FC = () => {
                 <div className="flex items-center gap-3 mb-2">
                   <Calendar className="w-5 h-5 text-yellow-400" />
                   <h4 className="text-sm font-medium text-gray-300">
-                    Near Expired Notification Cron
+                    Near Expired Notification Schedule
                   </h4>
                 </div>
-                <p className="font-mono text-sm text-gray-100">
+                <p className="text-lg font-semibold text-gray-100 mb-1">
+                  {getCronDescription(configData.nearExpiredNotificationCron)}
+                </p>
+                <p className="font-mono text-xs text-gray-400">
                   {configData.nearExpiredNotificationCron}
                 </p>
               </div>
