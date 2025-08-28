@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { UploadOutlined, InboxOutlined, SearchOutlined, SwapOutlined, FileTextOutlined, ArrowLeftOutlined, FolderOutlined } from "@ant-design/icons"
 import { Layout, Typography, Card, Button, Input, Select, DatePicker, Form, Row, Col, Space, Spin, Table, Modal, Tag, Alert, Empty, Switch } from "antd"
 import {
@@ -56,6 +56,29 @@ const DocumentReplacement: React.FC = () => {
   // Folder selection
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(undefined);
 
+  // Debounce timer ref
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounced refresh suggestions function
+  const debouncedRefreshSuggestions = useCallback((delay: number = 500) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    debounceTimerRef.current = setTimeout(() => {
+      refreshSuggestions();
+    }, delay);
+  }, []);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
   // Load document types and handle pre-filled data
   useEffect(() => {
     const fetchDocumentTypes = async () => {
@@ -100,15 +123,22 @@ const DocumentReplacement: React.FC = () => {
   }, [location.state, form]);
 
   // Load replacement suggestions
-  const loadReplacementSuggestions = async (analysisData: any) => {
+  const loadReplacementSuggestions = useCallback(async (analysisData?: any) => {
     try {
       setLoadingSuggestions(true);
+      
+      // Use current form values if available, otherwise fall back to analysisData
+      const formValues = form.getFieldsValue();
+      const currentTitle = formValues.title || analysisData?.title || "";
+      const currentTags = formValues.tags || analysisData?.tags || [];
+      const currentDocumentTypeId = formValues.type || analysisData?.documentTypeId || "";
+      
       const suggestions = await getReplacementSuggestions({
-        title: analysisData.title,
-        description: analysisData.description,
-        tags: analysisData.tags,
-        documentTypeId: analysisData.documentTypeId,
-        isPublic: false,
+        title: currentTitle,
+        description: htmlDescription || analysisData?.description || "",
+        tags: currentTags,
+        documentTypeId: currentDocumentTypeId,
+        isPublic: isPublicState,
         maxSuggestions: 10,
         minSimilarityThreshold: minSimilarityThreshold,
         sameDepartmentOnly: sameDepartmentOnly
@@ -120,13 +150,16 @@ const DocumentReplacement: React.FC = () => {
     } finally {
       setLoadingSuggestions(false);
     }
-  };
+  }, [form, htmlDescription, isPublicState, minSimilarityThreshold, sameDepartmentOnly]);
 
-  // Refresh suggestions with current filters
-  const refreshSuggestions = () => {
-    if (location.state?.analysisData) {
-      loadReplacementSuggestions(location.state.analysisData);
-    }
+  // Refresh suggestions with current filters and form values
+  const refreshSuggestions = useCallback(() => {
+    loadReplacementSuggestions(location.state?.analysisData);
+  }, [loadReplacementSuggestions, location.state?.analysisData]);
+
+  // Handle form field changes to update suggestions
+  const handleFormFieldChange = () => {
+    debouncedRefreshSuggestions(500);
   };
 
   // Regenerate summary function
@@ -324,7 +357,11 @@ const DocumentReplacement: React.FC = () => {
               style={{ marginBottom: 24, height: "fit-content" }}
             >
               <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
-                Based on your document content, we found these similar documents that might be candidates for replacement.
+                Based on your document content and form fields, we found these similar documents that might be candidates for replacement.
+                <br />
+                <Text style={{ fontSize: '11px', fontStyle: 'italic' }}>
+                  Suggestions update automatically when you change title, description, tags, document type, or visibility.
+                </Text>
               </Text>
 
               {/* Filter Controls */}
@@ -477,7 +514,12 @@ const DocumentReplacement: React.FC = () => {
                 Upload the new document that will replace the selected document.
               </Text>
 
-              <Form form={form} layout="vertical" onFinish={handleSaveAsDraft}>
+              <Form 
+                form={form} 
+                layout="vertical" 
+                onFinish={handleSaveAsDraft}
+                onFieldsChange={handleFormFieldChange}
+              >
                 {/* File Upload Section */}
                 <div style={{ marginBottom: 24 }}>
                   <Text strong style={{ display: "block", marginBottom: 8 }}>Document File</Text>
@@ -582,6 +624,8 @@ const DocumentReplacement: React.FC = () => {
                         onFolderSelect={(folderId) => {
                           setSelectedFolderId(folderId);
                           form.setFieldValue('folderId', folderId);
+                          // Update suggestions when folder changes
+                          debouncedRefreshSuggestions(100);
                         }}
                         placeholder="Select folder (optional)"
                         allowClear={true}
@@ -639,6 +683,8 @@ const DocumentReplacement: React.FC = () => {
                           onChange={(checked) => {
                             setIsPublicState(checked);
                             form.setFieldValue('isPublic', checked);
+                            // Update suggestions when visibility changes
+                            debouncedRefreshSuggestions(100);
                           }}
                         />
                         <Text>Make this document public</Text>
@@ -650,7 +696,11 @@ const DocumentReplacement: React.FC = () => {
                 <Form.Item label="Description">
                   <WysiwygEditor
                     value={htmlDescription}
-                    onChange={(e) => setHtmlDescription(e.target.value)}
+                    onChange={(e) => {
+                      setHtmlDescription(e.target.value);
+                      // Debounce suggestion updates for description changes
+                      debouncedRefreshSuggestions(1000); // Longer delay for text changes
+                    }}
                     placeholder="Brief description of the document"
                     className="wysiwyg-editor"
                   />
