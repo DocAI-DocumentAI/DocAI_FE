@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import {
   ArrowLeft,
@@ -50,11 +49,13 @@ export default function DocumentPage() {
 
   const userStr = localStorage.getItem("user");
   if (!userStr) {
-     
+
     return;
   }
   const user = JSON.parse(userStr);
-
+  useEffect(() => {
+    setActiveTab("preview");
+  }, [id]);
   const checkBookmarkStatus = async () => {
     try {
       const response = await api.get(
@@ -290,16 +291,16 @@ export default function DocumentPage() {
             <div className="flex gap-2">
               <button
                 className={`rounded-md border p-2 ${isBookmarked
-                    ? "border-blue-800 bg-blue-50"
-                    : "border-gray-300"
+                  ? "border-blue-800 bg-blue-50"
+                  : "border-gray-300"
                   }`}
                 onClick={toggleBookmark}
                 title={isBookmarked ? "Remove bookmark" : "Add bookmark"}
               >
                 <Bookmark
                   className={`h-5 w-5 ${isBookmarked
-                      ? "text-blue-800 fill-blue-800"
-                      : "text-gray-700"
+                    ? "text-blue-800 fill-blue-800"
+                    : "text-gray-700"
                     }`}
                 />
               </button>
@@ -345,8 +346,8 @@ export default function DocumentPage() {
 
               <span
                 className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${mainDoc.isPublic
-                    ? "bg-green-100 text-green-800"
-                    : "bg-orange-100 text-orange-800"
+                  ? "bg-green-100 text-green-800"
+                  : "bg-orange-100 text-orange-800"
                   }`}
               >
                 {mainDoc.isPublic ? (
@@ -475,8 +476,8 @@ export default function DocumentPage() {
             <div className="flex overflow-x-auto">
               <button
                 className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "preview"
-                    ? "border-b-2 border-blue-800 text-blue-800"
-                    : "text-gray-600 hover:text-gray-900"
+                  ? "border-b-2 border-blue-800 text-blue-800"
+                  : "text-gray-600 hover:text-gray-900"
                   }`}
                 onClick={handlePreviewClick}
               >
@@ -485,8 +486,8 @@ export default function DocumentPage() {
               </button>
               <button
                 className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "content"
-                    ? "border-b-2 border-blue-800 text-blue-800"
-                    : "text-gray-600 hover:text-gray-900"
+                  ? "border-b-2 border-blue-800 text-blue-800"
+                  : "text-gray-600 hover:text-gray-900"
                   }`}
                 onClick={() => setActiveTab("content")}
               >
@@ -495,8 +496,8 @@ export default function DocumentPage() {
               </button>
               <button
                 className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "information"
-                    ? "border-b-2 border-blue-800 text-blue-800"
-                    : "text-gray-600 hover:text-gray-900"
+                  ? "border-b-2 border-blue-800 text-blue-800"
+                  : "text-gray-600 hover:text-gray-900"
                   }`}
                 onClick={() => setActiveTab("information")}
               >
@@ -505,8 +506,8 @@ export default function DocumentPage() {
               </button>
               <button
                 className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "original"
-                    ? "border-b-2 border-blue-800 text-blue-800"
-                    : "text-gray-600 hover:text-gray-900"
+                  ? "border-b-2 border-blue-800 text-blue-800"
+                  : "text-gray-600 hover:text-gray-900"
                   }`}
                 onClick={() => setActiveTab("original")}
               >
@@ -515,8 +516,8 @@ export default function DocumentPage() {
               </button>
               <button
                 className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "version"
-                    ? "border-b-2 border-blue-800 text-blue-800"
-                    : "text-gray-600 hover:text-gray-900"
+                  ? "border-b-2 border-blue-800 text-blue-800"
+                  : "text-gray-600 hover:text-gray-900"
                   }`}
                 onClick={() => setActiveTab("version")}
               >
@@ -525,8 +526,8 @@ export default function DocumentPage() {
               </button>
               <button
                 className={`whitespace-nowrap px-4 py-2 text-sm font-medium ${activeTab === "recommendations"
-                    ? "border-b-2 border-blue-800 text-blue-800"
-                    : "text-gray-600 hover:text-gray-900"
+                  ? "border-b-2 border-blue-800 text-blue-800"
+                  : "text-gray-600 hover:text-gray-900"
                   }`}
                 onClick={() => setActiveTab("recommendations")}
               >
@@ -848,8 +849,8 @@ export default function DocumentPage() {
                       </span>
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${mainDoc.isPublic
-                            ? "bg-green-100 text-green-800"
-                            : "bg-orange-100 text-orange-800"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-orange-100 text-orange-800"
                           }`}
                       >
                         {mainDoc.isPublic ? "Public" : "Private"}
@@ -861,8 +862,8 @@ export default function DocumentPage() {
                       </span>
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${mainDoc.isReplaced
-                            ? "bg-red-100 text-red-800"
-                            : "bg-green-100 text-green-800"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-green-100 text-green-800"
                           }`}
                       >
                         {mainDoc.isReplaced ? "Yes" : "No"}
@@ -877,50 +878,55 @@ export default function DocumentPage() {
           {activeTab === "original" && (
             <div className="p-6 bg-white border border-gray-200 rounded-md">
               <h2 className="mb-4 text-lg font-semibold text-gray-900">
-                {mainDoc.title || "Document Title"}
+                Original Document
               </h2>
 
-              <div className="flex flex-wrap gap-4 mb-4 text-xs text-gray-500">
-                <div className="flex items-center">
-                  <User className="w-3 h-3 mr-1" />
-                  {mainDoc.ownerName || "N/A"}
-                </div>
-                <div className="flex items-center">
-                  <Calendar className="w-3 h-3 mr-1" />
-                  {mainDoc.createdTime
-                    ? new Date(mainDoc.createdTime).toLocaleDateString()
-                    : "N/A"}
-                </div>
-                <div className="flex items-center">
-                  <FileText className="w-3 h-3 mr-1" />
-                  {mainDoc.fileType || "N/A"}
-                </div>
-                <div className="flex items-center">
-                  <Building className="w-3 h-3 mr-1" />
-                  {mainDoc.departmentName || "N/A"}
-                </div>
-              </div>
+              {mainDoc.replacementDocument ? (
+                <Link to={`/document/${mainDoc.replacementDocument.id}`}>
+                  {/* Original Document Title */}
+                  <div className="mb-4 text-xl font-bold text-gray-900">
+                    {mainDoc.replacementDocument.title || "Untitled Document"}
+                  </div>
 
-              <div className="mb-4 text-sm text-gray-700">
-                {mainDoc.description || "No description available."}
-              </div>
+                  {/* Original Document Meta Info */}
+                  <div className="flex flex-wrap gap-4 mb-4 text-xs text-gray-500">
+                    <div className="flex items-center">
+                      <User className="w-3 h-3 mr-1" />
+                      {mainDoc.replacementDocument.createdByName || "N/A"}
+                    </div>
+                    <div className="flex items-center">
+                      <Calendar className="w-3 h-3 mr-1" />
+                      {mainDoc.replacementDocument.createdTime
+                        ? new Date(mainDoc.replacementDocument.createdTime).toLocaleDateString('en-US')
+                        : "N/A"}
+                    </div>
+                    <div className="flex items-center">
+                      <FileText className="w-3 h-3 mr-1" />
+                      {mainDoc.replacementDocument.fileType || "N/A"}
+                    </div>
+                    <div className="flex items-center">
+                      <Building className="w-3 h-3 mr-1" />
+                      {mainDoc.replacementDocument.departmentName || "N/A"}
+                    </div>
+                  </div>
 
-              <div className="flex flex-wrap gap-2">
-                {Array.isArray(mainDoc.tags) && mainDoc.tags.length > 0 ? (
-                  mainDoc.tags.map((tag: string, index: number) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                    >
-                      {tag}
-                    </span>
-                  ))
-                ) : (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    No tags
-                  </span>
-                )}
-              </div>
+                  {/* Original Document Description */}
+                  <div className="mb-6 text-sm text-gray-700">
+                    {mainDoc.replacementDocument.description || "No description available."}
+                  </div>
+                </Link>
+              ) : (
+                /* No Original Document */
+                <div className="py-8 text-center text-gray-500">
+                  <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <h3 className="mb-2 text-lg font-medium text-gray-600">
+                    No Original Document
+                  </h3>
+                  <p className="text-sm">
+                    This document is not a replacement for any existing document.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -941,7 +947,7 @@ export default function DocumentPage() {
                 {versions.map((ver, index) => (
                   <div
                     key={ver.versionId}
-                  
+
                     className="p-4 border rounded-lg hover:bg-gray-50"
                   >
                     <div className="flex items-start justify-between mb-3">
@@ -1089,8 +1095,8 @@ export default function DocumentPage() {
                         <div className="flex items-center gap-2 ml-4">
                           <span
                             className={`px-2 py-1 rounded-full text-xs font-medium ${rec.isPublic
-                                ? "bg-green-100 text-green-800"
-                                : "bg-orange-100 text-orange-800"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-orange-100 text-orange-800"
                               }`}
                           >
                             {rec.isPublic ? "Public" : "Private"}
