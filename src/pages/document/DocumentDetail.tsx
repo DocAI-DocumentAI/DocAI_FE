@@ -877,56 +877,122 @@ export default function DocumentPage() {
 
           {activeTab === "original" && (
             <div className="p-6 bg-white border border-gray-200 rounded-md">
-              <h2 className="mb-4 text-lg font-semibold text-gray-900">
+              <h2 className="mb-6 text-lg font-semibold text-gray-900">
                 Original Document
               </h2>
 
-              {mainDoc.replacementDocument ? (
-                <Link to={`/document/${mainDoc.replacementDocument.id}`}>
-                  {/* Original Document Title */}
-                  <div className="mb-4 text-xl font-bold text-gray-900">
-                    {mainDoc.replacementDocument.title || "Untitled Document"}
-                  </div>
+              {/* Case 1: This document replaces another document (replacementDocument) */}
+              {mainDoc.replacementDocument && (
+                <div className="mb-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0">
+                      <FileText className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <div className="ml-3">
+                      <h4 className="text-sm font-medium text-orange-800 mb-3">
+                        This document replaces:
+                      </h4>
+                      <div className="p-3 bg-white rounded border-l-4 border-orange-400">
+                        <Link
+                          to={`/document/${mainDoc.replacementDocument.id}`}
+                          className="block hover:bg-gray-50 transition-colors"
+                        >
+                          <h5 className="text-base font-semibold text-gray-900 mb-2 hover:text-blue-600">
+                            {mainDoc.replacementDocument.title || "Untitled Document"}
+                          </h5>
 
-                  {/* Original Document Meta Info */}
-                  <div className="flex flex-wrap gap-4 mb-4 text-xs text-gray-500">
-                    <div className="flex items-center">
-                      <User className="w-3 h-3 mr-1" />
-                      {mainDoc.replacementDocument.createdByName || "N/A"}
-                    </div>
-                    <div className="flex items-center">
-                      <Calendar className="w-3 h-3 mr-1" />
-                      {mainDoc.replacementDocument.createdTime
-                        ? new Date(mainDoc.replacementDocument.createdTime).toLocaleDateString('en-US')
-                        : "N/A"}
-                    </div>
-                    <div className="flex items-center">
-                      <FileText className="w-3 h-3 mr-1" />
-                      {mainDoc.replacementDocument.fileType || "N/A"}
-                    </div>
-                    <div className="flex items-center">
-                      <Building className="w-3 h-3 mr-1" />
-                      {mainDoc.replacementDocument.departmentName || "N/A"}
-                    </div>
-                  </div>
+                          <div className="flex flex-wrap gap-4 mb-3 text-xs text-gray-500">
+                            
+                            <div className="flex items-center">
+                              <Calendar className="w-3 h-3 mr-1" />
+                              {mainDoc.replacementDocument.createdTime
+                                ? new Date(mainDoc.replacementDocument.createdTime).toLocaleDateString('en-US')
+                                : "N/A"}
+                            </div>
+                            <div className="flex items-center">
+                              <FileText className="w-3 h-3 mr-1" />
+                              {mainDoc.replacementDocument.documentTypeName || "N/A"}
+                            </div>
+                         
+                          </div>
 
-                  {/* Original Document Description */}
-                  <div className="mb-6 text-sm text-gray-700">
-                    {mainDoc.replacementDocument.description || "No description available."}
+                          <div className="text-sm text-gray-700 mb-3">
+                            {mainDoc.replacementDocument.description || "No description available."}
+                          </div>
+
+                          <div className="text-xs text-gray-600">
+                            <span className="font-medium">Document ID:</span>
+                            <span className="font-mono ml-1">{mainDoc.replacementDocument.id}</span>
+                          </div>
+                        </Link>
+                      </div>
+                    </div>
                   </div>
-                </Link>
-              ) : (
-                /* No Original Document */
+                </div>
+              )}
+
+              {/* Case 2: This document is replaced by another document (replacedByDocument) */}
+              {mainDoc.isReplaced && mainDoc.replacedByDocument && (
+                <div className="mb-6 p-4 bg-red-50 rounded-lg border border-red-200">
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0">
+                      <FileText className="w-5 h-5 text-red-600" />
+                    </div>
+                    <div className="ml-3">
+                      <h4 className="text-sm font-medium text-red-800 mb-3">
+                        This document has been replaced by:
+                      </h4>
+                      <div className="p-3 bg-white rounded border-l-4 border-red-400">
+                        <Link
+                          to={`/document/${mainDoc.replacedByDocument.id}`}
+                          className="block hover:bg-gray-50 transition-colors"
+                        >
+                          <h5 className="text-base font-semibold text-gray-900 mb-2 hover:text-blue-600">
+                            {mainDoc.replacedByDocument.title || "Untitled Document"}
+                          </h5>
+
+                          <div className="flex flex-wrap gap-4 mb-3 text-xs text-gray-500">
+                            
+                            <div className="flex items-center">
+                              <Calendar className="w-3 h-3 mr-1" />
+                              {mainDoc.replacedByDocument.createdTime
+                                ? new Date(mainDoc.replacedByDocument.createdTime).toLocaleDateString('en-US')
+                                : "N/A"}
+                            </div>
+                            <div className="flex items-center">
+                              <FileText className="w-3 h-3 mr-1" />
+                              {mainDoc.replacedByDocument.documentTypeName || "N/A"}
+                            </div>
+                           
+                          </div>
+
+                          <div className="text-sm text-gray-700 mb-3">
+                            {mainDoc.replacedByDocument.description || "No description available."}
+                          </div>
+
+                          <div className="text-xs text-gray-600">
+                            <span className="font-medium">Document ID:</span>
+                            <span className="font-mono ml-1">{mainDoc.replacedByDocument.id}</span>
+                          </div>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Case 3: No replacement relationship */}
+              {!mainDoc.replacementDocument && !mainDoc.isReplaced && (
                 <div className="py-8 text-center text-gray-500">
                   <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                   <h3 className="mb-2 text-lg font-medium text-gray-600">
-                    No Original Document
+                    No Document Replacement
                   </h3>
                   <p className="text-sm">
-                    This document is not a replacement for any existing document.
+                    This document is not involved in any replacement relationship.
                   </p>
                 </div>
-              )}
+              )} 
             </div>
           )}
 

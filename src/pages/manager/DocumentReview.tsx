@@ -97,7 +97,7 @@ export default function DocumentReview() {
         }
         const userStr = localStorage.getItem("user");
         if (!userStr) {
-             
+
             return;
         }
         if (!isApproved && rejectionComments.trim().length < 10) {
@@ -110,8 +110,8 @@ export default function DocumentReview() {
             // Folder-approval review endpoint (consolidated): POST /{versionId}/review
             const url = `/document/review/${document.versionId}`;
             const body = isApproved
-              ? { isApproved: true, ...(rejectionComments.trim() ? { comments: rejectionComments } : {}), ...(targetFolderId ? { targetFolderId } : {}) }
-              : { isApproved: false, comments: rejectionComments, returnToDrafts: true };
+                ? { isApproved: true, ...(rejectionComments.trim() ? { comments: rejectionComments } : {}), ...(targetFolderId ? { targetFolderId } : {}) }
+                : { isApproved: false, comments: rejectionComments, returnToDrafts: true };
             await api.post(url, body);
             toast.success(isApproved ? "Duyệt tài liệu thành công!" : "Từ chối tài liệu thành công!");
             navigate(-1);
@@ -132,7 +132,7 @@ export default function DocumentReview() {
         try {
             const response = await api.get(`/document/files/${document.versionId}/iframe-url`);
             const data = response.data.data;
-            
+
             if (data.canViewInline && data.iframeUrl) {
                 setPreviewUrl(data.iframeUrl);
                 setPreviewVisible(true);
@@ -185,6 +185,89 @@ export default function DocumentReview() {
                         </div>
                     </div>
 
+                    {/* Replacement Document Information - Add this after document title section */}
+                    {(document.replacementDocument || (document.isReplaced && document.replacedByDocument)) && (
+                        <Alert
+                            style={{ marginBottom: 16 }}
+                            type={document.isReplaced ? "warning" : "info"}
+                            showIcon
+                            message="Document Replacement Information"
+                            description={
+                                <div>
+                                    {/* Case 1: This document replaces another document */}
+                                    {document.replacementDocument && (
+                                        <div style={{ marginBottom: document.isReplaced ? 12 : 0 }}>
+                                            <Text strong>This document replaces:</Text>
+                                            <div style={{ marginLeft: 12, marginTop: 4, padding: 8, backgroundColor: '#f0f8ff', borderRadius: 4 }}>
+                                                <Text strong>{document.replacementDocument.title || 'Untitled Document'}</Text>
+                                                <br />
+                                                <Text style={{ fontSize: '12px', color: '#666' }}>
+                                                    Original ID: <span style={{ fontFamily: 'monospace' }}>{document.replacementDocument.id}</span>
+                                                </Text>
+                                                {document.replacementDocument.createdTime && (
+                                                    <>
+                                                        <br />
+                                                        <Text style={{ fontSize: '12px', color: '#666' }}>
+                                                            Created: {new Date(document.replacementDocument.createdTime).toLocaleDateString('en-US')}
+                                                        </Text>
+                                                    </>
+                                                )}
+                                                {document.replacementDocument.documentTypeName && (
+                                                    <>
+                                                        <br />
+                                                        <Text style={{ fontSize: '12px', color: '#666' }}>
+                                                            Type: {document.replacementDocument.documentTypeName}
+                                                        </Text>
+                                                    </>
+                                                )}
+                                                <br />
+                                                <Button
+                                                    type="link"
+                                                    size="small"
+                                                    onClick={() => navigate(`/document/${document.replacementDocument.id}`)}
+                                                    style={{ padding: 0, height: 'auto', marginTop: 2 }}
+                                                >
+                                                    View Original Document →
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Case 2: This document is replaced by another document */}
+                                    {document.isReplaced && document.replacedByDocument && (
+                                        <div>
+                                            <Text strong>This document has been replaced by:</Text>
+                                            <div style={{ marginLeft: 12, marginTop: 4, padding: 8, backgroundColor: '#fff7e6', borderRadius: 4 }}>
+                                                <Text strong>{document.replacedByDocument.title || 'Untitled Document'}</Text>
+                                                <br />
+                                                <Text style={{ fontSize: '12px', color: '#666' }}>
+                                                    Replacement ID: <span style={{ fontFamily: 'monospace' }}>{document.replacedByDocument.id}</span>
+                                                </Text>
+                                                {document.replacedByDocument.createdTime && (
+                                                    <>
+                                                        <br />
+                                                        <Text style={{ fontSize: '12px', color: '#666' }}>
+                                                            Created: {new Date(document.replacedByDocument.createdTime).toLocaleDateString('en-US')}
+                                                        </Text>
+                                                    </>
+                                                )}
+                                                {document.replacedByDocument.documentTypeName && (
+                                                    <>
+                                                        <br />
+                                                        <Text style={{ fontSize: '12px', color: '#666' }}>
+                                                            Type: {document.replacedByDocument.documentTypeName}
+                                                        </Text>
+                                                    </>
+                                                )}
+                                                <br />
+                                              
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            }
+                        />
+                    )}
                     <Row gutter={24}>
                         {/* Left Column - Document Details */}
                         <Col xs={24} lg={16}>
@@ -331,8 +414,8 @@ export default function DocumentReview() {
                                     <Title level={4} style={{ margin: 0 }}>
                                         Document Content
                                     </Title>
-                                    <Button 
-                                        icon={<EyeOutlined />} 
+                                    <Button
+                                        icon={<EyeOutlined />}
                                         onClick={handlePreview}
                                         disabled={!document.versionId}
                                         loading={previewLoading}
@@ -346,120 +429,233 @@ export default function DocumentReview() {
                             </Card>
                         </Col>
 
-                        {/* Right Column - Review Actions */}
+                        {/* Right Column - Review Actions - Only show for Pending documents */}
                         <Col xs={24} lg={8}>
-                            <Card>
-                                <Title level={4} style={{ marginBottom: 16 }}>
-                                    Review Actions
-                                </Title>
-                                <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
-                                    Please provide your review comments (required for rejection; optional for approval)
-                                </Text>
-                                <div style={{ marginBottom: 16 }}>
-                                    <Text strong>Target Folder (optional)</Text>
-                                    <FolderSelectorInput
-                                        selectedFolderId={targetFolderId}
-                                        onFolderSelect={setTargetFolderId}
-                                        placeholder="Select target folder after approval (optional)"
-                                        allowClear={true}
-                                        filterPermission="write"
-                                        treeType={document.isPublic ? 'public' : 'department'}
-                                    />
-                                </div>
-                                <div style={{ marginBottom: 16 }}>
-                                    <Text strong>Comments *</Text>
-                                    <TextArea
-                                        rows={4}
-                                        placeholder="Please provide detailed feedback (minimum 10 characters)"
-                                        value={rejectionComments}
-                                        onChange={(e) => setRejectionComments(e.target.value)}
-                                        style={{ marginTop: 8 }}
-                                    />
-                                    <Text type="secondary" style={{ fontSize: "12px" }}>
-                                        {rejectionComments.length}/10 characters minimum for rejection
+                            {document.status === "Pending" ? (
+                                <Card>
+                                    <Title level={4} style={{ marginBottom: 16 }}>
+                                        Review Actions
+                                    </Title>
+                                    <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
+                                        Please provide your review comments (required for rejection; optional for approval)
                                     </Text>
-                                </div>
-                                <Space direction="vertical" style={{ width: "100%" }}>
-                                    <Button type="primary" icon={<CheckOutlined />} block size="large" loading={submitting} onClick={() => handleReview(true)}>
-                                        Approve Document
-                                    </Button>
-                                    <Button danger icon={<CloseOutlined />} block size="large" loading={submitting} onClick={() => handleReview(false)} disabled={rejectionComments.length < 10}>
-                                        Reject Document
-                                    </Button>
-                                </Space>
-
-                                {/* Public Folder Tree for Public Documents */}
-                                {document.isPublic && (
-                                    <div style={{ marginTop: 24 }}>
-                                        <Button
-                                            icon={<FolderOpenOutlined />}
-                                            onClick={() => setShowFolderTree(!showFolderTree)}
-                                            type={showFolderTree ? 'primary' : 'default'}
-                                            style={{ width: "100%", marginBottom: 16 }}
-                                        >
-                                            {showFolderTree ? 'Hide Public Folders' : 'Show Public Folders'}
+                                    <div style={{ marginBottom: 16 }}>
+                                        <Text strong>Target Folder (optional)</Text>
+                                        <FolderSelectorInput
+                                            selectedFolderId={targetFolderId}
+                                            onFolderSelect={setTargetFolderId}
+                                            placeholder="Select target folder after approval (optional)"
+                                            allowClear={true}
+                                            filterPermission="write"
+                                            treeType={document.isPublic ? 'public' : 'department'}
+                                        />
+                                    </div>
+                                    <div style={{ marginBottom: 16 }}>
+                                        <Text strong>Comments *</Text>
+                                        <TextArea
+                                            rows={4}
+                                            placeholder="Please provide detailed feedback (minimum 10 characters)"
+                                            value={rejectionComments}
+                                            onChange={(e) => setRejectionComments(e.target.value)}
+                                            style={{ marginTop: 8 }}
+                                        />
+                                        <Text type="secondary" style={{ fontSize: "12px" }}>
+                                            {rejectionComments.length}/10 characters minimum for rejection
+                                        </Text>
+                                    </div>
+                                    <Space direction="vertical" style={{ width: "100%" }}>
+                                        <Button type="primary" icon={<CheckOutlined />} block size="large" loading={submitting} onClick={() => handleReview(true)}>
+                                            Approve Document
                                         </Button>
-                                        {showFolderTree && (
-                                            <Card size="small" title="Public Folder Navigation">
-                                                {folderLoading ? (
-                                                    <Spin />
-                                                ) : (
-                                                    <>
-                                                        {targetFolderId && (
-                                                            <div style={{ marginBottom: 12 }}>
-                                                                <FolderBreadcrumb
-                                                                    folderId={targetFolderId}
-                                                                    folders={folders}
-                                                                    onFolderClick={handleFolderNavigation}
-                                                                />
-                                                            </div>
-                                                        )}
-                                                        <FolderTree
-                                                            folders={folders}
-                                                            selectedFolderId={targetFolderId}
-                                                            onFolderSelect={handleFolderSelect}
-                                                            allowSelection={true}
-                                                            showContextMenu={false}
-                                                            className="max-h-64 overflow-auto"
-                                                        />
-                                                    </>
-                                                )}
-                                            </Card>
+                                        <Button danger icon={<CloseOutlined />} block size="large" loading={submitting} onClick={() => handleReview(false)} disabled={rejectionComments.length < 10}>
+                                            Reject Document
+                                        </Button>
+                                    </Space>
+
+                                    {/* Public Folder Tree for Public Documents */}
+                                    {document.isPublic && (
+                                        <div style={{ marginTop: 24 }}>
+                                            <Button
+                                                icon={<FolderOpenOutlined />}
+                                                onClick={() => setShowFolderTree(!showFolderTree)}
+                                                type={showFolderTree ? 'primary' : 'default'}
+                                                style={{ width: "100%", marginBottom: 16 }}
+                                            >
+                                                {showFolderTree ? 'Hide Public Folders' : 'Show Public Folders'}
+                                            </Button>
+                                            {showFolderTree && (
+                                                <Card size="small" title="Public Folder Navigation">
+                                                    {folderLoading ? (
+                                                        <Spin />
+                                                    ) : (
+                                                        <>
+                                                            {targetFolderId && (
+                                                                <div style={{ marginBottom: 12 }}>
+                                                                    <FolderBreadcrumb
+                                                                        folderId={targetFolderId}
+                                                                        folders={folders}
+                                                                        onFolderClick={handleFolderNavigation}
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                            <FolderTree
+                                                                folders={folders}
+                                                                selectedFolderId={targetFolderId}
+                                                                onFolderSelect={handleFolderSelect}
+                                                                allowSelection={true}
+                                                                showContextMenu={false}
+                                                                className="max-h-64 overflow-auto"
+                                                            />
+                                                        </>
+                                                    )}
+                                                </Card>
+                                            )}
+                                        </div>
+                                    )}
+                                </Card>
+                            ) : (
+                                /* Document Status Info Card - For non-pending documents */
+                                <Card>
+                                    <Title level={4} style={{ marginBottom: 16 }}>
+                                        Document Status
+                                    </Title>
+                                    <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                                        <Tag 
+                                            color={
+                                                document.status === 'Approved' ? 'green' : 
+                                                document.status === 'Rejected' ? 'red' : 
+                                                document.status === 'Draft' ? 'blue' : 'default'
+                                            }
+                                            style={{ fontSize: '14px', padding: '8px 16px' }}
+                                        >
+                                            {document.status}
+                                        </Tag>
+                                        <div style={{ marginTop: 16 }}>
+                                            <Text type="secondary">
+                                                {document.status === 'Approved' && 'This document has already been approved.'}
+                                                {document.status === 'Rejected' && 'This document has been rejected.'}
+                                                {document.status === 'Draft' && 'This document is still in draft status.'}
+                                                {!['Approved', 'Rejected', 'Draft', 'Pending'].includes(document.status) && 
+                                                 'This document is not available for review.'}
+                                            </Text>
+                                        </div>
+                                        {document.status === 'Approved' && (
+                                            <div style={{ marginTop: 12 }}>
+                                                <Text strong>Approved on:</Text>
+                                                <br />
+                                                <Text>{formatDate(document.lastSubmitted)}</Text>
+                                            </div>
+                                        )}
+                                        {document.status === 'Rejected' && (
+                                            <div style={{ marginTop: 12 }}>
+                                                <Text strong>Rejected on:</Text>
+                                                <br />
+                                                <Text>{formatDate(document.lastSubmitted)}</Text>
+                                            </div>
                                         )}
                                     </div>
-                                )}
-                            </Card>
+                                    
+                                    {/* Action buttons for non-pending documents */}
+                                    <Space direction="vertical" style={{ width: "100%", marginTop: 16 }}>
+                                        <Button 
+                                            icon={<EyeOutlined />}
+                                            onClick={handlePreview}
+                                            disabled={!document.versionId}
+                                            loading={previewLoading}
+                                            block
+                                        >
+                                            {previewLoading ? "Loading Preview..." : "Preview Document"}
+                                        </Button>
+                                        <Button 
+                                            icon={<ArrowLeftOutlined />}
+                                            onClick={() => navigate(-1)}
+                                            block
+                                        >
+                                            Back to Queue
+                                        </Button>
+                                    </Space>
+                                </Card>
+                            )}
 
+                            {/* Review Guidelines Card - Always show but with different content */}
                             <Card style={{ marginTop: 16 }}>
                                 <Title level={5} style={{ marginBottom: 12 }}>
-                                    Review Guidelines
+                                    {document.status === "Pending" ? "Review Guidelines" : "Document Information"}
                                 </Title>
                                 <ul style={{ paddingLeft: 16, margin: 0 }}>
-                                    <li style={{ marginBottom: 8 }}>
-                                        <Text type="secondary" style={{ fontSize: "12px" }}>
-                                            Once approved, this document becomes searchable to all department members
-                                        </Text>
-                                    </li>
-                                    <li style={{ marginBottom: 8 }}>
-                                        <Text type="secondary" style={{ fontSize: "12px" }}>
-                                            Approval will archive any previous approved version
-                                        </Text>
-                                    </li>
-                                    <li style={{ marginBottom: 8 }}>
-                                        <Text type="secondary" style={{ fontSize: "12px" }}>
-                                            Rejection requires detailed comments (minimum 10 characters)
-                                        </Text>
-                                    </li>
-                                    <li style={{ marginBottom: 8 }}>
-                                        <Text type="secondary" style={{ fontSize: "12px" }}>
-                                            Rejected documents will be auto-deleted after 7 days if not resubmitted
-                                        </Text>
-                                    </li>
-                                    <li>
-                                        <Text type="secondary" style={{ fontSize: "12px" }}>
-                                            This document is temporarily locked while you review it
-                                        </Text>
-                                    </li>
+                                    {document.status === "Pending" ? (
+                                        /* Guidelines for pending documents */
+                                        <>
+                                            <li style={{ marginBottom: 8 }}>
+                                                <Text type="secondary" style={{ fontSize: "12px" }}>
+                                                    Once approved, this document becomes searchable to all department members
+                                                </Text>
+                                            </li>
+                                            <li style={{ marginBottom: 8 }}>
+                                                <Text type="secondary" style={{ fontSize: "12px" }}>
+                                                    Approval will archive any previous approved version
+                                                </Text>
+                                            </li>
+                                            {document.replacementDocument && (
+                                                <li style={{ marginBottom: 8 }}>
+                                                    <Text type="secondary" style={{ fontSize: "12px" }}>
+                                                        Approving this document will replace the original document in the system
+                                                    </Text>
+                                                </li>
+                                            )}
+                                            {document.isReplaced && (
+                                                <li style={{ marginBottom: 8 }}>
+                                                    <Text type="secondary" style={{ fontSize: "12px" }}>
+                                                        This document has been superseded - consider if approval is still needed
+                                                    </Text>
+                                                </li>
+                                            )}
+                                            <li style={{ marginBottom: 8 }}>
+                                                <Text type="secondary" style={{ fontSize: "12px" }}>
+                                                    Rejection requires detailed comments (minimum 10 characters)
+                                                </Text>
+                                            </li>
+                                            <li style={{ marginBottom: 8 }}>
+                                                <Text type="secondary" style={{ fontSize: "12px" }}>
+                                                    Rejected documents will be auto-deleted after 7 days if not resubmitted
+                                                </Text>
+                                            </li>
+                                            <li>
+                                                <Text type="secondary" style={{ fontSize: "12px" }}>
+                                                    This document is temporarily locked while you review it
+                                                </Text>
+                                            </li>
+                                        </>
+                                    ) : (
+                                        /* Information for non-pending documents */
+                                        <>
+                                            <li style={{ marginBottom: 8 }}>
+                                                <Text type="secondary" style={{ fontSize: "12px" }}>
+                                                    Document Type: <Text strong>{document.documentTypeName}</Text>
+                                                </Text>
+                                            </li>
+                                            <li style={{ marginBottom: 8 }}>
+                                                <Text type="secondary" style={{ fontSize: "12px" }}>
+                                                    File Size: <Text strong>{(document.fileSize / 1024).toFixed(1)} KB</Text>
+                                                </Text>
+                                            </li>
+                                            <li style={{ marginBottom: 8 }}>
+                                                <Text type="secondary" style={{ fontSize: "12px" }}>
+                                                    File Type: <Text strong>{document.fileType}</Text>
+                                                </Text>
+                                            </li>
+                                            <li style={{ marginBottom: 8 }}>
+                                                <Text type="secondary" style={{ fontSize: "12px" }}>
+                                                    Visibility: <Text strong>{document.isPublic ? "Public" : "Private"}</Text>
+                                                </Text>
+                                            </li>
+                                            <li>
+                                                <Text type="secondary" style={{ fontSize: "12px" }}>
+                                                    Version: <Text strong>{document.versionName}</Text>
+                                                </Text>
+                                            </li>
+                                        </>
+                                    )}
                                 </ul>
                             </Card>
                         </Col>
@@ -498,6 +694,7 @@ export default function DocumentReview() {
                     />
                 )}
             </Modal>
+
         </Layout>
     )
 }
