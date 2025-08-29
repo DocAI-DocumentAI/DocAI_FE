@@ -88,8 +88,9 @@ const UpdateConfigNotificationPage: React.FC = () => {
   // Fetch current config data
   const { data: configData, isLoading, isError } = useNotificationConfig();
   const updateMutation = useUpdateNotificationConfig();
+  const [formKey, setFormKey] = useState(0);
 
-  // Populate form with current data
+  // Populate form with current data and update key to force re-render
   useEffect(() => {
     if (configData) {
       setFormData({
@@ -103,6 +104,7 @@ const UpdateConfigNotificationPage: React.FC = () => {
           configData.enableNearExpiredNotifications,
         nearExpiredMode: configData.nearExpiredMode,
       });
+      setFormKey((prev) => prev + 1);
     }
   }, [configData]);
 
@@ -401,6 +403,7 @@ const UpdateConfigNotificationPage: React.FC = () => {
                       Expired Notification Schedule
                     </div>
                     <CronExpressionBuilder
+                      key={`expired-${formKey}`}
                       value={formData.expiredNotificationCron}
                       onChange={(cronExpression) =>
                         handleInputChange(
@@ -423,6 +426,7 @@ const UpdateConfigNotificationPage: React.FC = () => {
                       Near-Expired Notification Schedule
                     </div>
                     <CronExpressionBuilder
+                      key={`near-expired-${formKey}`}
                       value={formData.nearExpiredNotificationCron}
                       onChange={(cronExpression) =>
                         handleInputChange(

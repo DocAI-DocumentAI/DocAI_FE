@@ -36,53 +36,36 @@ const CronExpressionBuilder: React.FC<CronExpressionBuilderProps> = ({
     customExpression: value || placeholder,
   });
 
-  // Parse existing cron expression to populate UI
+  // Parse existing cron expression on initial load
   useEffect(() => {
     if (value && value.trim()) {
       const parts = value.trim().split(/\s+/);
       if (parts.length >= 6) {
-        const [minute, hour, dayOfMonth, dayOfWeek] = parts;
+        const [, minute, hour, dayOfMonth, , dayOfWeek] = parts;
 
-        // Determine mode based on pattern
-        if (dayOfWeek !== "?" && dayOfMonth === "*") {
-          // Weekly mode
-          setConfig((prev) => ({
-            ...prev,
-            mode: "weekly",
-            hour: hour.padStart(2, "0"),
-            minute: minute.padStart(2, "0"),
-            dayOfWeek: dayOfWeek,
-            customExpression: value,
-          }));
+        let mode: CronMode = "custom";
+        let newDayOfWeek = config.dayOfWeek;
+        let newDayOfMonth = config.dayOfMonth;
+
+        if (dayOfWeek !== "?" && (dayOfMonth === "*" || dayOfMonth === "?")) {
+          mode = "weekly";
+          newDayOfWeek = dayOfWeek;
         } else if (dayOfMonth !== "*" && dayOfWeek === "?") {
-          // Monthly mode
-          setConfig((prev) => ({
-            ...prev,
-            mode: "monthly",
-            hour: hour.padStart(2, "0"),
-            minute: minute.padStart(2, "0"),
-            dayOfMonth: dayOfMonth,
-            customExpression: value,
-          }));
+          mode = "monthly";
+          newDayOfMonth = dayOfMonth;
         } else if (dayOfMonth === "*" && dayOfWeek === "?") {
-          // Daily mode
-          setConfig((prev) => ({
-            ...prev,
-            mode: "daily",
-            hour: hour.padStart(2, "0"),
-            minute: minute.padStart(2, "0"),
-            customExpression: value,
-          }));
-        } else {
-          // Custom mode
-          setConfig((prev) => ({
-            ...prev,
-            mode: "custom",
-            customExpression: value,
-          }));
+          mode = "daily";
         }
+
+        setConfig({
+          mode: mode,
+          hour: hour.padStart(2, "0"),
+          minute: minute.padStart(2, "0"),
+          dayOfWeek: newDayOfWeek,
+          dayOfMonth: newDayOfMonth,
+          customExpression: value,
+        });
       } else {
-        // Invalid format, use custom mode
         setConfig((prev) => ({
           ...prev,
           mode: "custom",
@@ -90,7 +73,8 @@ const CronExpressionBuilder: React.FC<CronExpressionBuilderProps> = ({
         }));
       }
     }
-  }, [value]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Generate cron expression based on current config
   const generateCronExpression = (newConfig: CronConfig): string => {
@@ -98,7 +82,7 @@ const CronExpressionBuilder: React.FC<CronExpressionBuilderProps> = ({
       case "daily":
         return `0 ${newConfig.minute} ${newConfig.hour} * * ?`;
       case "weekly":
-        return `0 ${newConfig.minute} ${newConfig.hour} * * ${newConfig.dayOfWeek}`;
+        return `0 ${newConfig.minute} ${newConfig.hour} ? * ${newConfig.dayOfWeek}`;
       case "monthly":
         return `0 ${newConfig.minute} ${newConfig.hour} ${newConfig.dayOfMonth} * ?`;
       case "custom":
