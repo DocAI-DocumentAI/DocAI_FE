@@ -570,3 +570,9 @@ export const canUserPerformAction = (
   const requiredLevel = permissionLevels[action];
   return userLevel >= requiredLevel;
 };
+
+// Get document details in folder context
+export const getFolderDocumentDetail = async (versionId: string) => {
+  const response = await api.get(`/document/folder-documents/${versionId}/detail`);
+  return response.data;
+};

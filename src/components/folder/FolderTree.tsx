@@ -85,8 +85,21 @@ const FolderTree: React.FC<FolderTreeProps> = ({
     if (!searchValue) return data;
 
     const filterNode = (node: DataNode): DataNode | null => {
-      const title = typeof node.title === 'string' ? node.title : '';
-      const matches = title.toLowerCase().includes(searchValue.toLowerCase());
+      // Find the folder object from the original data to get the name
+      const findFolderById = (folders: FolderNode[], id: string): FolderNode | null => {
+        for (const folder of folders) {
+          if (folder.id === id) return folder;
+          if (folder.children) {
+            const found = findFolderById(folder.children, id);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+      
+      const folder = findFolderById(folders, node.key as string);
+      const folderName = folder?.name || '';
+      const matches = folderName.toLowerCase().includes(searchValue.toLowerCase());
       
       let filteredChildren: DataNode[] = [];
       if (node.children) {
@@ -106,7 +119,7 @@ const FolderTree: React.FC<FolderTreeProps> = ({
     };
 
     return data.map(node => filterNode(node)).filter(Boolean) as DataNode[];
-  }, []);
+  }, [folders]);
 
   // Memoized tree data
   const treeData = useMemo(() => {
