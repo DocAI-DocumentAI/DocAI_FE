@@ -211,7 +211,7 @@ const ConfigNotificationPage: React.FC = () => {
                     Expired Notification Schedule
                   </h4>
                 </div>
-                <p className="text-lg font-semibold text-gray-100 mb-1">
+                <p className="mb-1 text-lg font-semibold text-gray-100">
                   {getCronDescription(configData.expiredNotificationCron)}
                 </p>
                 <p className="font-mono text-xs text-gray-400">
@@ -227,7 +227,7 @@ const ConfigNotificationPage: React.FC = () => {
                     Near Expired Notification Schedule
                   </h4>
                 </div>
-                <p className="text-lg font-semibold text-gray-100 mb-1">
+                <p className="mb-1 text-lg font-semibold text-gray-100">
                   {getCronDescription(configData.nearExpiredNotificationCron)}
                 </p>
                 <p className="font-mono text-xs text-gray-400">
