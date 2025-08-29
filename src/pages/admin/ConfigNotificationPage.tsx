@@ -12,7 +12,6 @@ import {
   BellRing,
   ToggleLeft,
   ToggleRight,
-  Info,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/common/Header";
