@@ -17,26 +17,18 @@ const transformModelDataToRadar = (modelData: any[]) => {
   if (!modelData || modelData.length === 0) {
     // Return default data structure if no API data
     return [
-      { subject: "Sessions", A: 0, B: 0, fullMark: 100 },
-      { subject: "Messages", A: 0, B: 0, fullMark: 100 },
-      { subject: "Users", A: 0, B: 0, fullMark: 100 },
-      { subject: "Avg Session", A: 0, B: 0, fullMark: 100 },
-      { subject: "Usage %", A: 0, B: 0, fullMark: 100 },
-      { subject: "Recent Activity", A: 0, B: 0, fullMark: 100 },
+      { subject: "Sessions", fullMark: 100 },
+      { subject: "Messages", fullMark: 100 },
+      { subject: "Users", fullMark: 100 },
+      { subject: "Avg Session", fullMark: 100 },
+      { subject: "Recent Activity", fullMark: 100 },
     ];
   }
 
-  // Get top 2 models by session count
-  const topModels = modelData
-    .sort((a, b) => b.sessionCount - a.sessionCount)
-    .slice(0, 2);
+  // Use all models instead of just top 2
+  const allModels = modelData.sort((a, b) => b.sessionCount - a.sessionCount);
 
-  // If only one model, duplicate it for comparison
-  if (topModels.length === 1) {
-    topModels.push(topModels[0]);
-  }
-
-  if (topModels.length === 0) return [];
+  if (allModels.length === 0) return [];
 
   // Create radar chart data structure
   const subjects = [
@@ -65,27 +57,28 @@ const transformModelDataToRadar = (modelData: any[]) => {
   return subjects.map((subject) => {
     const dataPoint: any = { subject, fullMark: 100 };
 
-    topModels.forEach((model, index) => {
-      const key = index === 0 ? "A" : "B";
+    // Add data for all models
+    allModels.forEach((model, index) => {
+      const modelKey = `model_${index}`;
 
       switch (subject) {
         case "Sessions":
-          dataPoint[key] = Math.round(
+          dataPoint[modelKey] = Math.round(
             (model.sessionCount / maxValues.sessions) * 100
           );
           break;
         case "Messages":
-          dataPoint[key] = Math.round(
+          dataPoint[modelKey] = Math.round(
             (model.messageCount / maxValues.messages) * 100
           );
           break;
         case "Users":
-          dataPoint[key] = Math.round(
+          dataPoint[modelKey] = Math.round(
             (model.uniqueUsers / maxValues.users) * 100
           );
           break;
         case "Avg Session":
-          dataPoint[key] = Math.round(
+          dataPoint[modelKey] = Math.round(
             (model.averageSessionLength / maxValues.avgSession) * 100
           );
           break;
@@ -95,11 +88,11 @@ const transformModelDataToRadar = (modelData: any[]) => {
             (Date.now() - new Date(model.lastUsed).getTime()) /
               (1000 * 60 * 60 * 24)
           );
-          dataPoint[key] = Math.max(0, Math.min(100, 100 - daysSince * 5)); // Recent activity score
+          dataPoint[modelKey] = Math.max(0, Math.min(100, 100 - daysSince * 5)); // Recent activity score
           break;
         }
         default:
-          dataPoint[key] = 0;
+          dataPoint[modelKey] = 0;
       }
     });
 
@@ -118,26 +111,36 @@ const StatisticsModel: React.FC = () => {
   console.log("Model Data from API:", modelData);
   console.log("Transformed Radar Data:", radarData);
 
-  // Get model names for legend
-  const getModelNames = () => {
-    if (!modelData || modelData.length === 0)
-      return { modelA: "No Data", modelB: "No Data" };
+  // Get all model names and colors
+  const getModelInfo = () => {
+    if (!modelData || modelData.length === 0) return [];
 
-    const topModels = modelData
-      .sort((a, b) => b.sessionCount - a.sessionCount)
-      .slice(0, 2);
+    const allModels = modelData.sort((a, b) => b.sessionCount - a.sessionCount);
 
-    const modelA =
-      topModels[0]?.modelName.split("/").pop()?.replace(":free", "") ||
-      "Model A";
-    const modelB =
-      topModels[1]?.modelName.split("/").pop()?.replace(":free", "") ||
-      "Model B";
+    // Define colors for different models
+    const colors = [
+      "#8B5CF6", // Purple
+      "#10B981", // Green
+      "#F59E0B", // Yellow
+      "#EF4444", // Red
+      "#3B82F6", // Blue
+      "#8B5A2B", // Brown
+      "#EC4899", // Pink
+      "#6366F1", // Indigo
+      "#84CC16", // Lime
+      "#F97316", // Orange
+    ];
 
-    return { modelA, modelB };
+    return allModels.map((model, index) => ({
+      key: `model_${index}`,
+      name:
+        model.modelName.split("/").pop()?.replace(":free", "") ||
+        `Model ${index + 1}`,
+      color: colors[index % colors.length],
+    }));
   };
 
-  const modelNames = getModelNames();
+  const modelInfo = getModelInfo();
 
   // Loading state
   if (isLoading) {
@@ -202,7 +205,7 @@ const StatisticsModel: React.FC = () => {
       transition={{ delay: 0.6 }}
     >
       <h2 className="mb-4 text-xl font-semibold text-gray-100">
-        Model Comparison
+        Model Statistics - All Models
       </h2>
       <div style={{ width: "100%", height: 300 }}>
         <ResponsiveContainer>
@@ -210,20 +213,16 @@ const StatisticsModel: React.FC = () => {
             <PolarGrid stroke="#374151" />
             <PolarAngleAxis dataKey="subject" stroke="#9CA3AF" />
             <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#9CA3AF" />
-            <Radar
-              name={modelNames.modelA}
-              dataKey="A"
-              stroke="#8B5CF6"
-              fill="#8B5CF6"
-              fillOpacity={0.6}
-            />
-            <Radar
-              name={modelNames.modelB}
-              dataKey="B"
-              stroke="#10B981"
-              fill="#10B981"
-              fillOpacity={0.6}
-            />
+            {modelInfo.map((model) => (
+              <Radar
+                key={model.key}
+                name={model.name}
+                dataKey={model.key}
+                stroke={model.color}
+                fill={model.color}
+                fillOpacity={0.6}
+              />
+            ))}
             <Legend />
             <Tooltip
               contentStyle={{

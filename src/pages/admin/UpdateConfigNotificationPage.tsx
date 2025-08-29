@@ -446,7 +446,7 @@ const UpdateConfigNotificationPage: React.FC = () => {
 
                 {/* Right Column - Advanced Settings */}
                 <div className="space-y-8">
-                  <div className="mb-6">
+                  {/* <div className="mb-6">
                     <h3 className="flex items-center gap-2 mb-2 text-lg font-semibold text-gray-200">
                       <Zap className="w-5 h-5 text-green-400" />
                       Advanced Settings
@@ -454,10 +454,10 @@ const UpdateConfigNotificationPage: React.FC = () => {
                     <p className="text-sm text-gray-400">
                       Configure advanced notification options
                     </p>
-                  </div>
+                  </div> */}
 
                   {/* Near Expired Mode */}
-                  <div className="p-6 border bg-gray-700/30 rounded-xl border-gray-600/50">
+                  {/* <div className="p-6 border bg-gray-700/30 rounded-xl border-gray-600/50">
                     <label className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-300">
                       <Info className="w-4 h-4 text-blue-400" />
                       Near Expired Mode
@@ -478,7 +478,7 @@ const UpdateConfigNotificationPage: React.FC = () => {
                     <p className="mt-2 text-xs text-gray-500">
                       Select the frequency mode for near-expired notifications
                     </p>
-                  </div>
+                  </div> */}
 
                   {/* System Controls Section */}
                   <div className="mb-6">
