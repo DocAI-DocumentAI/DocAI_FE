@@ -422,7 +422,7 @@ export default function ApprovalQueue() {
   return (
     <Layout style={{ minHeight: "100vh", backgroundColor: "#f5f5f5" }}>
       <Content style={{ padding: "24px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        <div style={{ margin: "0 auto" }}>
           {/* Header */}
           <div style={{ marginBottom: 24 }}>
             <Title level={2} style={{ margin: 0 }}>
