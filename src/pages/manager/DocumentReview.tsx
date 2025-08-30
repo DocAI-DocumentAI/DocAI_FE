@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { Layout, Typography, Card, Button, Input, Space, Tag, Alert, Row, Col, Spin, Modal } from "antd"
+import { Layout, Typography, Card, Button, Input, Space, Tag, Alert, Row, Col, Spin, Modal, Form } from "antd"
 import {
     ArrowLeftOutlined,
     FileTextOutlined,
@@ -12,13 +12,22 @@ import {
     CloseOutlined,
     EyeOutlined,
     FolderOutlined,
-    FolderOpenOutlined
+    FolderOpenOutlined,
+    InboxOutlined,
+    DeleteOutlined,
+    ExclamationCircleOutlined
 } from "@ant-design/icons"
 import { api } from "../../lib/api/api";
 import toast from 'react-hot-toast';
 import { FolderSelectorInput, FolderTree, FolderBreadcrumb } from "../../components/folder";
 import type { FolderNode } from "../../types/folder";
 import { getFolderTree } from "../../lib/api/folder";
+import {
+    archiveDocumentVersion,
+    deleteArchivedDocumentVersion,
+    ArchiveDocumentRequest,
+    DeleteArchivedDocumentRequest
+} from "../../lib/api/document";
 
 const { Title, Text, Paragraph } = Typography
 const { Content } = Layout
@@ -41,6 +50,16 @@ export default function DocumentReview() {
     const [folders, setFolders] = useState<FolderNode[]>([]);
     const [folderLoading, setFolderLoading] = useState(false);
     const [showFolderTree, setShowFolderTree] = useState(false);
+
+    // Archive modal state
+    const [archiveModalVisible, setArchiveModalVisible] = useState(false);
+    const [archiveLoading, setArchiveLoading] = useState(false);
+    const [archiveForm] = Form.useForm();
+
+    // Delete modal state
+    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
+    const [deleteForm] = Form.useForm();
 
     useEffect(() => {
         const fetchDocument = async () => {
@@ -150,6 +169,68 @@ export default function DocumentReview() {
     const handleClosePreview = () => {
         setPreviewVisible(false);
         setPreviewUrl("");
+    };
+
+    // Archive document handler
+    const handleArchiveDocument = () => {
+        setArchiveModalVisible(true);
+        archiveForm.resetFields();
+    };
+
+    const handleArchiveSubmit = async () => {
+        if (!document?.versionId) return;
+
+        try {
+            const values = await archiveForm.validateFields();
+            setArchiveLoading(true);
+
+            const request: ArchiveDocumentRequest = {
+                reason: values.reason,
+                comments: values.comments,
+                forceArchive: values.forceArchive || false,
+            };
+
+            await archiveDocumentVersion(document.versionId, request);
+            toast.success('Document archived successfully');
+            setArchiveModalVisible(false);
+            archiveForm.resetFields();
+            navigate(-1); // Go back to approval queue
+        } catch (error: any) {
+            toast.error(`Failed to archive document: ${error.message}`);
+        } finally {
+            setArchiveLoading(false);
+        }
+    };
+
+    // Delete archived document handler
+    const handleDeleteArchivedDocument = () => {
+        setDeleteModalVisible(true);
+        deleteForm.resetFields();
+    };
+
+    const handleDeleteSubmit = async () => {
+        if (!document?.versionId) return;
+
+        try {
+            const values = await deleteForm.validateFields();
+            setDeleteLoading(true);
+
+            const request: DeleteArchivedDocumentRequest = {
+                confirmPermanentDeletion: true,
+                reason: values.reason,
+                forceDelete: values.forceDelete || false,
+            };
+
+            await deleteArchivedDocumentVersion(document.versionId, request);
+            toast.success('Archived document deleted successfully');
+            setDeleteModalVisible(false);
+            deleteForm.resetFields();
+            navigate(-1); // Go back to approval queue
+        } catch (error: any) {
+            toast.error(`Failed to delete archived document: ${error.message}`);
+        } finally {
+            setDeleteLoading(false);
+        }
     };
 
     if (loading) return <Spin style={{ margin: 40 }} />;
@@ -557,7 +638,7 @@ export default function DocumentReview() {
                                     
                                     {/* Action buttons for non-pending documents */}
                                     <Space direction="vertical" style={{ width: "100%", marginTop: 16 }}>
-                                        <Button 
+                                        <Button
                                             icon={<EyeOutlined />}
                                             onClick={handlePreview}
                                             disabled={!document.versionId}
@@ -566,7 +647,32 @@ export default function DocumentReview() {
                                         >
                                             {previewLoading ? "Loading Preview..." : "Preview Document"}
                                         </Button>
-                                        <Button 
+
+                                        {/* Archive button for approved documents */}
+                                        {document.status === 'Approved' && (
+                                            <Button
+                                                icon={<InboxOutlined />}
+                                                onClick={handleArchiveDocument}
+                                                block
+                                                style={{ backgroundColor: '#faad14', borderColor: '#faad14', color: 'white' }}
+                                            >
+                                                Archive Document
+                                            </Button>
+                                        )}
+
+                                        {/* Delete button for archived documents */}
+                                        {document.status === 'Archived' && (
+                                            <Button
+                                                danger
+                                                icon={<DeleteOutlined />}
+                                                onClick={handleDeleteArchivedDocument}
+                                                block
+                                            >
+                                                Delete Archived Document
+                                            </Button>
+                                        )}
+
+                                        <Button
                                             icon={<ArrowLeftOutlined />}
                                             onClick={() => navigate(-1)}
                                             block
@@ -692,6 +798,128 @@ export default function DocumentReview() {
                         }}
                         title="Document Preview"
                     />
+                )}
+            </Modal>
+
+            {/* Archive Document Modal */}
+            <Modal
+                title={
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <InboxOutlined style={{ marginRight: 8, color: '#faad14' }} />
+                        Archive Document
+                    </div>
+                }
+                open={archiveModalVisible}
+                onCancel={() => {
+                    setArchiveModalVisible(false);
+                    archiveForm.resetFields();
+                }}
+                onOk={handleArchiveSubmit}
+                confirmLoading={archiveLoading}
+                width={600}
+            >
+                {document && (
+                    <div>
+                        <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#f5f5f5', borderRadius: 6 }}>
+                            <Text strong>Document: </Text>
+                            <Text>{document.title}</Text>
+                            <br />
+                            <Text strong>Version: </Text>
+                            <Text>{document.versionName}</Text>
+                            <br />
+                            <Text strong>Status: </Text>
+                            <Tag color="green">{document.status}</Tag>
+                        </div>
+
+                        <Form form={archiveForm} layout="vertical">
+                            <Form.Item
+                                name="reason"
+                                label="Archive Reason"
+                                rules={[{ required: true, message: 'Please provide a reason for archiving' }]}
+                            >
+                                <Input placeholder="Enter reason for archiving this document" />
+                            </Form.Item>
+
+                            <Form.Item
+                                name="comments"
+                                label="Additional Comments"
+                                rules={[{ required: true, message: 'Please provide additional comments' }]}
+                            >
+                                <Input.TextArea
+                                    rows={4}
+                                    placeholder="Enter any additional comments about the archiving process"
+                                />
+                            </Form.Item>
+
+                            <Form.Item
+                                name="forceArchive"
+                                valuePropName="checked"
+                            >
+                                <input type="checkbox" style={{ marginRight: 8 }} />
+                                <Text>Force archive (bypass any warnings)</Text>
+                            </Form.Item>
+                        </Form>
+                    </div>
+                )}
+            </Modal>
+
+            {/* Delete Archived Document Modal */}
+            <Modal
+                title={
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <ExclamationCircleOutlined style={{ marginRight: 8, color: '#ff4d4f' }} />
+                        Delete Archived Document
+                    </div>
+                }
+                open={deleteModalVisible}
+                onCancel={() => {
+                    setDeleteModalVisible(false);
+                    deleteForm.resetFields();
+                }}
+                onOk={handleDeleteSubmit}
+                confirmLoading={deleteLoading}
+                width={600}
+                okText="Delete Permanently"
+                okButtonProps={{ danger: true }}
+            >
+                {document && (
+                    <div>
+                        <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#fff2f0', borderRadius: 6, border: '1px solid #ffccc7' }}>
+                            <Text strong style={{ color: '#ff4d4f' }}>⚠️ Warning: This action cannot be undone!</Text>
+                            <br />
+                            <Text>You are about to permanently delete this archived document.</Text>
+                            <br /><br />
+                            <Text strong>Document: </Text>
+                            <Text>{document.title}</Text>
+                            <br />
+                            <Text strong>Version: </Text>
+                            <Text>{document.versionName}</Text>
+                            <br />
+                            <Text strong>Status: </Text>
+                            <Tag color="gray">{document.status}</Tag>
+                        </div>
+
+                        <Form form={deleteForm} layout="vertical">
+                            <Form.Item
+                                name="reason"
+                                label="Deletion Reason"
+                                rules={[{ required: true, message: 'Please provide a reason for deletion' }]}
+                            >
+                                <Input.TextArea
+                                    rows={3}
+                                    placeholder="Enter reason for permanently deleting this archived document"
+                                />
+                            </Form.Item>
+
+                            <Form.Item
+                                name="forceDelete"
+                                valuePropName="checked"
+                            >
+                                <input type="checkbox" style={{ marginRight: 8 }} />
+                                <Text>Force delete (bypass any warnings)</Text>
+                            </Form.Item>
+                        </Form>
+                    </div>
                 )}
             </Modal>
 

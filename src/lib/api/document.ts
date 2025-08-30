@@ -1294,3 +1294,122 @@ export const createNewVersion = async (id: string, data: any) => {
 
   return response.data;
 };
+
+// Archive document version interfaces
+export interface ArchiveDocumentRequest {
+  reason: string;
+  comments: string;
+  forceArchive: boolean;
+}
+
+export interface ArchiveDocumentResponse {
+  statusCode: number;
+  errorCode: string;
+  message: string;
+  data: {
+    documentVersionId: string;
+    documentFileId: string;
+    title: string;
+    versionName: string;
+    status: string;
+    archivedAt: string;
+    archivedBy: string;
+    archivedByName: string;
+    reason: string;
+    comments: string;
+    folder: {
+      id: string;
+      name: string;
+      description: string;
+      fullPath: string;
+      level: number;
+      isSystemFolder: boolean;
+      isPublic: boolean;
+      folderType: number;
+      subFolderCount: number;
+      documentCount: number;
+      userPermission: number;
+      canCreateSubfolders: boolean;
+      canUploadDocuments: boolean;
+      createdTime: string;
+      lastUpdatedTime: string;
+      departmentId: string;
+      createdBy: string;
+    };
+    removedFromKernelMemory: boolean;
+    warnings: string[];
+    message: string;
+  };
+}
+
+// Delete archived document version interfaces
+export interface DeleteArchivedDocumentRequest {
+  confirmPermanentDeletion: boolean;
+  reason: string;
+  forceDelete: boolean;
+}
+
+export interface DeleteArchivedDocumentResponse {
+  statusCode: number;
+  errorCode: string;
+  message: string;
+  data: {
+    documentVersionId: string;
+    documentFileId: string;
+    title: string;
+    versionName: string;
+    deletedAt: string;
+    deletedBy: string;
+    deletedByName: string;
+    reason: string;
+    fileDeletedFromStorage: boolean;
+    removedFromKernelMemory: boolean;
+    databaseRecordsDeleted: number;
+    warnings: string[];
+    message: string;
+  };
+}
+
+/**
+ * Archive a document version
+ */
+export const archiveDocumentVersion = async (
+  versionId: string,
+  request: ArchiveDocumentRequest
+): Promise<ArchiveDocumentResponse> => {
+  try {
+    const response = await api.post(
+      `/document/archive/${versionId}`,
+      request,
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+    return response.data as ArchiveDocumentResponse;
+  } catch (error: any) {
+    console.error("Error archiving document version:", error);
+    throw new Error(getErrorMessage(error));
+  }
+};
+
+/**
+ * Delete an archived document version
+ */
+export const deleteArchivedDocumentVersion = async (
+  versionId: string,
+  request: DeleteArchivedDocumentRequest
+): Promise<DeleteArchivedDocumentResponse> => {
+  try {
+    const response = await api.delete(
+      `/document/delete-archived/${versionId}`,
+      {
+        data: request,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+    return response.data as DeleteArchivedDocumentResponse;
+  } catch (error: any) {
+    console.error("Error deleting archived document version:", error);
+    throw new Error(getErrorMessage(error));
+  }
+};
