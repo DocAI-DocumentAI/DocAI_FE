@@ -16,6 +16,7 @@ export function Navbar() {
   const logout = () => {
     console.log("Logout");
     localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
     navigate("/login");
   };
