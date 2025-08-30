@@ -253,6 +253,33 @@ export const getApprovalQueue = async (
   );
   return response.data.data;
 };
+// Interface for approval log filters
+export interface ApprovalLogFilters {
+  action?: string;
+  fromDate?: string;
+  toDate?: string;
+  submittedBy?: string;
+  documentTitle?: string;
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+// Function to get approval logs
+export const getApprovalLogs = async (filters: ApprovalLogFilters = {}) => {
+  const params = new URLSearchParams();
+
+  if (filters.action) params.append("action", filters.action);
+  if (filters.fromDate) params.append("fromDate", filters.fromDate);
+  if (filters.toDate) params.append("toDate", filters.toDate);
+  if (filters.submittedBy) params.append("submittedBy", filters.submittedBy);
+  if (filters.documentTitle) params.append("documentTitle", filters.documentTitle);
+
+  params.append("pageNumber", (filters.pageNumber || 1).toString());
+  params.append("pageSize", (filters.pageSize || 10).toString());
+
+  const response = await api.get(`/document/approval-logs?${params.toString()}`);
+  return response.data.data;
+};
 
 export interface SemanticSearchParams {
   Query: string;
@@ -806,7 +833,7 @@ export const getOfficialDocuments = async (
 ): Promise<DocumentLibraryResponse> => {
   try {
     console.log(params);
-    
+
     // Clean and validate parameters
     const cleanedParams = cleanApiParams(params);
     const searchParams = new URLSearchParams();

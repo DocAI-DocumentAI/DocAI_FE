@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import ApprovalLog from "./ApprovalLog"
 import { Layout, Typography, Card, Button, Table, Tag, Badge, Row, Col, Tabs, Input, Select, Space, Modal, Form } from "antd"
 import {
   ClockCircleOutlined,
@@ -500,81 +501,7 @@ export default function ApprovalQueue() {
             </Col>
           </Row>
 
-          {/* Filters */}
-          <Card style={{ marginBottom: 24 }}>
-            <div style={{ marginBottom: 16 }}>
-              <Title level={5} style={{ margin: 0, marginBottom: 16 }}>
-                <FilterOutlined style={{ marginRight: 8 }} />
-                Filters
-              </Title>
-            </div>
-            
-            <Row gutter={16}>
-              <Col xs={24} sm={6}>
-                <Input
-                  placeholder="Search by title..."
-                  prefix={<SearchOutlined />}
-                  value={filters.title}
-                  onChange={(e) => handleFilterChange('title', e.target.value)}
-                  allowClear
-                />
-              </Col>
-              <Col xs={24} sm={5}>
-                <Select
-                  placeholder="Status"
-                  style={{ width: '100%' }}
-                  value={filters.status}
-                  onChange={(value) => handleFilterChange('status', value)}
-                  allowClear
-                  options={statusOptions}
-                />
-              </Col>
-              <Col xs={24} sm={5}>
-                <Select
-                  placeholder="Document Type"
-                  style={{ width: '100%' }}
-                  value={filters.documentTypeId}
-                  onChange={(value) => handleFilterChange('documentTypeId', value)}
-                  loading={loadingDocumentTypes}
-                  allowClear
-                >
-                  {documentTypes.map(type => (
-                    <Select.Option key={type.id} value={type.id}>
-                      {type.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Col>
-              <Col xs={24} sm={4}>
-                <Select
-                  placeholder="Visibility"
-                  style={{ width: '100%' }}
-                  value={filters.isPublic}
-                  onChange={(value) => handleFilterChange('isPublic', value)}
-                  allowClear
-                >
-                  <Select.Option value={true}>Public</Select.Option>
-                  <Select.Option value={false}>Private</Select.Option>
-                </Select>
-              </Col>
-              <Col xs={24} sm={4}>
-                <Space>
-                  <Button
-                    icon={<ReloadOutlined />}
-                    onClick={fetchData}
-                    loading={loading}
-                  >
-                    Refresh
-                  </Button>
-                  <Button onClick={clearFilters}>
-                    Clear
-                  </Button>
-                </Space>
-              </Col>
-            </Row>
-            
-          
-          </Card>
+
 
           {/* Tabs */}
           <Tabs
@@ -589,25 +516,98 @@ export default function ApprovalQueue() {
                 ),
                 children: (
                   <Card>
-                    <div style={{ marginBottom: 16 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                        <Title level={4} style={{ margin: 0 }}>
-                          Approval Queue <Badge count={total} />
-                        </Title>
-                      </div>
+                    <div style={{ marginBottom: 24 }}>
+                      <Title level={4} style={{ margin: 0 }}>
+                        Approval Queue <Badge count={total} />
+                      </Title>
                       <Text type="secondary">Documents awaiting your approval (sorted by priority and submission date)</Text>
                     </div>
-                    <Table 
-                      columns={columns} 
-                      dataSource={documents} 
-                      loading={loading} 
+
+                    <Card style={{ marginBottom: 24 }}>
+                      <div style={{ marginBottom: 16 }}>
+                        <Title level={5} style={{ margin: 0, marginBottom: 16 }}>
+                          <FilterOutlined style={{ marginRight: 8 }} />
+                          Filters
+                        </Title>
+                      </div>
+                      <Row gutter={16}>
+                        <Col xs={24} sm={6}>
+                          <Input
+                            placeholder="Search by title..."
+                            prefix={<SearchOutlined />}
+                            value={filters.title}
+                            onChange={(e) => handleFilterChange('title', e.target.value)}
+                            allowClear
+                          />
+                        </Col>
+                        <Col xs={24} sm={5}>
+                          <Select
+                            placeholder="Status"
+                            style={{ width: '100%' }}
+                            value={filters.status}
+                            onChange={(value) => handleFilterChange('status', value)}
+                            allowClear
+                            options={statusOptions}
+                          />
+                        </Col>
+                        <Col xs={24} sm={5}>
+                          <Select
+                            placeholder="Document Type"
+                            style={{ width: '100%' }}
+                            value={filters.documentTypeId}
+                            onChange={(value) => handleFilterChange('documentTypeId', value)}
+                            loading={loadingDocumentTypes}
+                            allowClear
+                          >
+                            {documentTypes.map(type => (
+                              <Select.Option key={type.id} value={type.id}>
+                                {type.name}
+                              </Select.Option>
+                            ))}
+                          </Select>
+                        </Col>
+                        <Col xs={24} sm={4}>
+                          <Select
+                            placeholder="Visibility"
+                            style={{ width: '100%' }}
+                            value={filters.isPublic}
+                            onChange={(value) => handleFilterChange('isPublic', value)}
+                            allowClear
+                          >
+                            <Select.Option value={true}>Public</Select.Option>
+                            <Select.Option value={false}>Private</Select.Option>
+                          </Select>
+                        </Col>
+                      </Row>
+                      <Row style={{ marginTop: 16 }}>
+                        <Col>
+                          <Space>
+                            <Button
+                              icon={<ReloadOutlined />}
+                              onClick={fetchData}
+                              loading={loading}
+                            >
+                              Refresh
+                            </Button>
+                            <Button onClick={clearFilters}>
+                              Clear
+                            </Button>
+                          </Space>
+                        </Col>
+                      </Row>
+                    </Card>
+
+                    <Table
+                      columns={columns}
+                      dataSource={documents}
+                      loading={loading}
                       rowKey={(r) => r.versionId}
                       pagination={{
                         total,
                         pageSize,
                         current: page,
                         showSizeChanger: true,
-                        onChange: (p, ps) => { setPage(p); if(ps) setPageSize(ps); },
+                        onChange: (p, ps) => { setPage(p); if (ps) setPageSize(ps); },
                         showTotal: (t, range) => `${range[0]}-${range[1]} of ${t} documents`,
                       }}
                     />
@@ -617,7 +617,7 @@ export default function ApprovalQueue() {
               {
                 key: "2",
                 label: "Approval Logs",
-                children: <div>Approval logs content</div>,
+                                children: <ApprovalLog />,
               },
               {
                 key: "3",
