@@ -44,6 +44,26 @@ export const useLogin = () => {
   });
 };
 
+// React Query hook for refresh token
+export const useRefreshToken = () => {
+  return useMutation<User, Error, string>({
+    mutationFn: refreshTokenApi,
+  });
+};
+
+// Function to refresh token using stored refresh token
+export const refreshUserToken = async (): Promise<User | null> => {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) {
+    throw new Error("No refresh token found");
+  }
+
+  return await refreshTokenApi(refreshToken);
+};
+
+// Export utility functions
+export { getAuthToken, getRefreshToken };
+
 const getAuthToken = () => {
   const user = localStorage.getItem("user");
   if (user) {
@@ -51,6 +71,50 @@ const getAuthToken = () => {
     return userData.docaiToken;
   }
   return null;
+};
+
+const getRefreshToken = () => {
+  const user = localStorage.getItem("user");
+  if (user) {
+    const userData = JSON.parse(user);
+    return userData.docaiRefreshToken;
+  }
+  return null;
+};
+
+// Refresh token API call
+const refreshTokenApi = async (refreshToken: string): Promise<User> => {
+  const response = await fetch(
+    "https://production.docai.asia/api/auth/refresh-token",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ refreshToken }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to refresh token");
+  }
+
+  const data = await response.json();
+  return {
+    userId: data.userId || "",
+    email: data.email || "",
+    fullName: data.fullName || "",
+    phone: data.phone || "",
+    role: data.role || "",
+    department: data.department || "",
+    userSetting: data.userSetting || {},
+    permissions: data.permissions || "",
+    docaiToken: data.docaiToken,
+    docaiRefreshToken: data.docaiRefreshToken,
+    googleAccessToken: data.googleAccessToken,
+    googleRefreshToken: data.googleRefreshToken,
+    requirePasswordChange: data.requirePasswordChange || false,
+  };
 };
 
 // Logout API call
