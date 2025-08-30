@@ -452,6 +452,7 @@ export const DocumentChatBox: React.FC<DocumentChatBoxProps> = ({
                     isStreaming={message.isStreaming}
                     documentSources={message.documentSources as any}
                     hasDocumentContext={message.hasDocumentContext}
+                    hideDocumentSources={true}
                   />
                 ))}
 

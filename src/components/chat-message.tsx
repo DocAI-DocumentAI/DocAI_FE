@@ -26,6 +26,8 @@ type ChatMessageProps = {
   // Can be array or JSON string from server; we'll normalize in component
   documentSources?: any;
   hasDocumentContext?: boolean;
+  // Flag to hide "Best Matching Document" section in document chat context
+  hideDocumentSources?: boolean;
 };
 
 // Normalize various documentSources shapes (array or JSON string) into DocumentSource[]
@@ -157,7 +159,7 @@ const DocumentSources: React.FC<{ sources: DocumentSource[]; aiContent?: string 
   // If no [Id] is present or no exact match found, do not render anything
   if (!bestMatch) return null;
 
-  const docUrl = `https://docai.asia/document/${bestMatch.documentId}`;
+  const docUrl = `/document/${bestMatch.documentId}`;
 
   return (
     <div className="pt-3 mt-3 border-t border-gray-200">
@@ -234,6 +236,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   timestamp,
   isStreaming = false,
   documentSources = [],
+  hideDocumentSources = false,
 }) => {
   // Convert role to string if it's a number (from API)
   const messageRole =
@@ -316,8 +319,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
             )}
           </div>
 
-          {/* Document Sources - only for assistant messages */}
+          {/* Document Sources - only for assistant messages and when not hidden */}
           {messageRole === "assistant" &&
+            !hideDocumentSources &&
             normalizedSources.length > 0 && (
               <DocumentSources sources={normalizedSources} aiContent={content} />
             )}

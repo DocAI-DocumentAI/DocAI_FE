@@ -82,7 +82,7 @@ export const parseCronExpression = (
     };
   }
 
-  const [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
+  const [, minute, hour, dayOfMonth, month, dayOfWeek] = parts;
 
   // Format time
   const time = formatTime(hour, minute);
@@ -97,9 +97,9 @@ export const parseCronExpression = (
     };
   }
 
-  // Weekly pattern: 0 MM HH * * DOW
+  // Weekly pattern: 0 MM HH ? * DOW
   if (
-    dayOfMonth === "*" &&
+    (dayOfMonth === "?" || dayOfMonth === "*") &&
     month === "*" &&
     dayOfWeek !== "?" &&
     dayOfWeekMap[dayOfWeek]

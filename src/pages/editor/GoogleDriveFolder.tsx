@@ -13,7 +13,8 @@ import {
   Select,
   Modal,
   Form,
-  Tabs
+  Tabs,
+  Tag
 } from 'antd';
 import {
   FolderOutlined,
@@ -35,8 +36,8 @@ import {
   GlobalOutlined
 } from '@ant-design/icons';
 import { FolderTree, FolderSelectorModal } from '../../components/folder';
-import { getFolderDocumentsList } from '../../lib/api/folder';
-import type { FolderNode } from '../../types/folder';
+import { getFolderDocumentsList, getFolderDocumentDetail } from '../../lib/api/folder';
+import type { FolderNode, DocumentDetail } from '../../types/folder';
 import {
   getFolderTree,
   getPublicFolderTree,
@@ -109,6 +110,11 @@ const GoogleDriveFolder: React.FC = () => {
   // Document move state
   const [movingDocument, setMovingDocument] = useState<FolderItem | null>(null);
   const [documentMoveModalVisible, setDocumentMoveModalVisible] = useState(false);
+
+  // Document detail state
+  const [selectedDocument, setSelectedDocument] = useState<FolderItem | null>(null);
+  const [documentDetail, setDocumentDetail] = useState<DocumentDetail | null>(null);
+  const [documentDetailLoading, setDocumentDetailLoading] = useState(false);
 
 
 
@@ -303,6 +309,19 @@ const GoogleDriveFolder: React.FC = () => {
     // Use current active folders based on tree type
     findPath(getCurrentFolders(), folderId, []);
     setBreadcrumbPath(path);
+  };
+
+  const loadDocumentDetail = async (versionId: string) => {
+    try {
+      setDocumentDetailLoading(true);
+      const response = await getFolderDocumentDetail(versionId);
+      setDocumentDetail(response.data);
+    } catch (error: any) {
+      console.error('Failed to load document details:', error);
+      toast.error('Failed to load document details');
+    } finally {
+      setDocumentDetailLoading(false);
+    }
   };
 
   // Get current active folders based on tree type
@@ -630,9 +649,20 @@ const GoogleDriveFolder: React.FC = () => {
               onDragEnd={handleDragEnd}
               onClick={() => {
                 // Single click selects and loads details without opening
-                const folder = findFolderById(getCurrentFolders(), item.id);
-                if (folder) {
-                  setSelectedFolder(folder);
+                if (item.type === 'folder') {
+                  const folder = findFolderById(getCurrentFolders(), item.id);
+                  if (folder) {
+                    setSelectedFolder(folder);
+                    setSelectedDocument(null);
+                    setDocumentDetail(null);
+                  }
+                } else if (item.type === 'document') {
+                  // Select document and load its details
+                  setSelectedDocument(item);
+                  setSelectedFolder(null);
+                  if (item.versionId) {
+                    loadDocumentDetail(item.versionId);
+                  }
                 }
               }}
               onDoubleClick={() => handleFolderDoubleClick(item)}
@@ -793,7 +823,7 @@ const GoogleDriveFolder: React.FC = () => {
                       onFolderSelect={handleFolderSelect}
                       showContextMenu={false}
                       allowSelection={true}
-                      allowDragDrop={true}
+                      allowDragDrop={false}
                       onMoveFolder={async (dragFolder, newParentId) => {
                         // Prevent moving between trees
                         if (activeTreeType !== 'department') {
@@ -875,7 +905,6 @@ const GoogleDriveFolder: React.FC = () => {
                 >
                   <Option value="name">Name</Option>
                   <Option value="modified">Modified</Option>
-                  <Option value="size">Size</Option>
                 </Select>
               </div>
 
@@ -924,7 +953,7 @@ const GoogleDriveFolder: React.FC = () => {
           <div className="details-panel">
             <div className="details-header">
               <Title level={4} className="details-title">
-                {selectedFolder ? selectedFolder.name : currentFolderId ? 'Open Folder' : 'Details'}
+                {selectedDocument ? selectedDocument.name : selectedFolder ? selectedFolder.name : currentFolderId ? 'Open Folder' : 'Details'}
               </Title>
               <Button
                 type="text"
@@ -935,7 +964,86 @@ const GoogleDriveFolder: React.FC = () => {
             </div>
 
             <div className="details-content">
-              {selectedFolder ? (
+              {selectedDocument && documentDetail ? (
+                // Document details
+                <div>
+                  <div className="google-drive-details-icon">
+                    {selectedDocument.icon || <FilePdfOutlined />}
+                  </div>
+
+                  <div className="details-section">
+                    <div className="details-label">Name</div>
+                    <div className="details-value">{documentDetail.title}</div>
+
+                    <div className="details-label">Type</div>
+                    <div className="details-value">Document</div>
+
+                    <div className="details-label">Version</div>
+                    <div className="details-value">{documentDetail.versionName}</div>
+
+                    <div className="details-label">Status</div>
+                    <div className="details-value">
+                      <Tag color={documentDetail.status === 'Approved' ? 'green' : 'orange'}>
+                        {documentDetail.status}
+                      </Tag>
+                    </div>
+
+                    <div className="details-label">Document Type</div>
+                    <div className="details-value">{documentDetail.documentType.name}</div>
+
+                    <div className="details-label">File Size</div>
+                    <div className="details-value">{Math.round(documentDetail.fileInfo.fileSize / 1024)} KB</div>
+
+                    <div className="details-label">File Type</div>
+                    <div className="details-value">{documentDetail.fileInfo.fileType}</div>
+
+                    <div className="details-label">Signed By</div>
+                    <div className="details-value">{documentDetail.ownership.signedBy}</div>
+
+                    <div className="details-label">Created</div>
+                    <div className="details-value">
+                      {new Date(documentDetail.dates.createdTime).toLocaleDateString()}
+                    </div>
+
+                    <div className="details-label">Last Modified</div>
+                    <div className="details-value">
+                      {new Date(documentDetail.dates.lastUpdatedTime).toLocaleDateString()}
+                    </div>
+
+                    <div className="details-label">Effective Period</div>
+                    <div className="details-value">
+                      {new Date(documentDetail.dates.effectiveFrom).toLocaleDateString()} - {new Date(documentDetail.dates.effectiveUntil).toLocaleDateString()}
+                    </div>
+
+                    {documentDetail.tags && documentDetail.tags.length > 0 && (
+                      <>
+                        <div className="details-label">Tags</div>
+                        <div className="details-value">
+                          {documentDetail.tags.map(tag => (
+                            <Tag key={tag} style={{ marginBottom: '4px' }}>{tag}</Tag>
+                          ))}
+                        </div>
+                      </>
+                    )}
+
+                    {documentDetail.description && (
+                      <>
+                        <div className="details-label">Description</div>
+                        <div className="details-value" style={{ maxHeight: '100px', overflow: 'auto' }}>
+                          {documentDetail.description}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ) : selectedDocument && documentDetailLoading ? (
+                // Loading document details
+                <div style={{ textAlign: 'center', padding: '40px' }}>
+                  <Spin size="large" />
+                  <div style={{ marginTop: '16px' }}>Loading document details...</div>
+                </div>
+              ) : selectedFolder ? (
+                // Folder details (existing code)
                 <>
                   <div className="google-drive-details-icon">
                     <FolderOutlined />
@@ -984,7 +1092,7 @@ const GoogleDriveFolder: React.FC = () => {
               ) : (
                 <div className="empty-details">
                   <FolderOutlined style={{ fontSize: '48px', color: '#dadce0', marginBottom: '16px' }} />
-                  <div>Select a folder to view details</div>
+                  <div>Select a folder or document to view details</div>
                 </div>
               )}
             </div>

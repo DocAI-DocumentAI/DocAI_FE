@@ -12,6 +12,7 @@ import {
   Row,
   Col,
   Collapse,
+  Tooltip,
 } from "antd";
 import {
   UserOutlined,
@@ -183,12 +184,17 @@ const DocumentCard: React.FC<{ document: DocumentDraftResponse }> = ({
             {getFileTypeIcon(document.fileName || document.title)}
           </div>
           <div className="flex-1 min-w-0">
-            <Title
-              level={5}
-              className="mb-2 leading-tight text-gray-800 line-clamp-2"
+            <Tooltip 
+              title={document.title}
+              placement="top"
             >
-              {document.title}
-            </Title>
+              <Title
+                level={5}
+                className="mb-2 leading-tight text-gray-800 line-clamp-2 cursor-help"
+              >
+                {document.title}
+              </Title>
+            </Tooltip>
             <Text type="secondary" className="block text-sm leading-relaxed">
               {truncateDescription(document.description, 85)}
             </Text>
@@ -224,20 +230,19 @@ const DocumentCard: React.FC<{ document: DocumentDraftResponse }> = ({
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center space-x-1 text-gray-500">
                 <UserAddOutlined style={{ color: "#6b7280" }} />
-                <span>Author:</span>
+                <span>Signed By:</span>
               </div>
-              <span
-                className="ml-2 font-semibold text-blue-700 truncate max-w-24"
-                title={
-                  document.createdBy?.fullName ||
-                  document.ownerName ||
-                  "Unknown"
-                }
+              <Tooltip 
+                title={document.signedBy || "Not signed"}
+                placement="topRight"
               >
-                {document.createdBy?.fullName ||
-                  document.ownerName ||
-                  "Unknown"}
-              </span>
+                <span
+                  className="ml-2 font-semibold text-blue-700 truncate max-w-24 cursor-help"
+                  title={document.signedBy || "Not signed"}
+                >
+                  {document.signedBy || "Not signed"}
+                </span>
+              </Tooltip>
             </div>
 
             <div className="flex items-center justify-between text-xs">

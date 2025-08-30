@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Search, BellRing } from "lucide-react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
+import { Link, Navigate, useNavigate } from "react-router-dom"; 
 import { api } from "../../lib/api/api";
 
 export function Navbar() {
@@ -17,6 +16,7 @@ export function Navbar() {
   const logout = () => {
     console.log("Logout");
     localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
     navigate("/login");
   };
@@ -72,8 +72,7 @@ export function Navbar() {
   }, [getUnreadNotificationCount]);
 
   // Check if user exists after hooks
-  if (!user) {
-    toast.error("Không tìm thấy thông tin user, vui lòng đăng nhập lại!");
+  if (!user) { 
     return <Navigate to="/login" replace />;
   }
 

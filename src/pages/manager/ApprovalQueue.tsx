@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Layout, Typography, Card, Button, Table, Tag, Badge, Row, Col, Tabs, Input, Select,  Space } from "antd"
+import { Layout, Typography, Card, Button, Table, Tag, Badge, Row, Col, Tabs, Input, Select, Space, Modal, Form } from "antd"
 import {
   ClockCircleOutlined,
   CheckCircleOutlined,
@@ -12,14 +12,26 @@ import {
   SearchOutlined,
   FilterOutlined,
   ReloadOutlined,
-} from "@ant-design/icons" 
+  InboxOutlined,
+  DeleteOutlined,
+  ExclamationCircleOutlined,
+} from "@ant-design/icons"
 import { useNavigate } from "react-router-dom"
-import { getApprovalQueue, getDocumentTypes, DocumentType } from "../../lib/api/document"
+import {
+  getApprovalQueue,
+  getDocumentTypes,
+  DocumentType,
+  archiveDocumentVersion,
+  deleteArchivedDocumentVersion,
+  ArchiveDocumentRequest,
+  DeleteArchivedDocumentRequest
+} from "../../lib/api/document"
 import toast from 'react-hot-toast'
 import moment from 'moment'
 
 const { Title, Text } = Typography
 const { Content } = Layout
+const { TextArea } = Input
 
 const statusOptions = [
   { value: "", label: "All Status" },
@@ -114,6 +126,18 @@ export default function ApprovalQueue() {
   const [filters, setFilters] = useState<ApprovalQueueFilters>({});
   const navigate = useNavigate();
 
+  // Archive modal state
+  const [archiveModalVisible, setArchiveModalVisible] = useState(false);
+  const [archiveLoading, setArchiveLoading] = useState(false);
+  const [selectedDocumentForArchive, setSelectedDocumentForArchive] = useState<ApprovalQueueItem | null>(null);
+  const [archiveForm] = Form.useForm();
+
+  // Delete modal state
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [selectedDocumentForDelete, setSelectedDocumentForDelete] = useState<ApprovalQueueItem | null>(null);
+  const [deleteForm] = Form.useForm();
+
   // Fetch document types
   useEffect(() => {
     const fetchDocumentTypes = async () => {
@@ -152,7 +176,7 @@ export default function ApprovalQueue() {
       setStatistics(data.statistics);
 
     } catch (error: any) {
-      toast.error(`Lỗi khi tải dữ liệu: ${error?.response?.data?.message || error.message}`);
+      toast.error(`Error loading data: ${error?.response?.data?.message || error.message}`);
       setDocuments([]);
       setTotal(0);
     } finally {
@@ -173,6 +197,72 @@ export default function ApprovalQueue() {
   const clearFilters = () => {
     setFilters({});
     setPage(1);
+  };
+
+  // Archive document handler
+  const handleArchiveDocument = (document: ApprovalQueueItem) => {
+    setSelectedDocumentForArchive(document);
+    setArchiveModalVisible(true);
+    archiveForm.resetFields();
+  };
+
+  const handleArchiveSubmit = async () => {
+    if (!selectedDocumentForArchive) return;
+
+    try {
+      const values = await archiveForm.validateFields();
+      setArchiveLoading(true);
+
+      const request: ArchiveDocumentRequest = {
+        reason: values.reason,
+        comments: values.comments,
+        forceArchive: values.forceArchive || false,
+      };
+
+      await archiveDocumentVersion(selectedDocumentForArchive.versionId, request);
+      toast.success('Document archived successfully');
+      setArchiveModalVisible(false);
+      setSelectedDocumentForArchive(null);
+      archiveForm.resetFields();
+      fetchData(); // Refresh the data
+    } catch (error: any) {
+      toast.error(`Failed to archive document: ${error.message}`);
+    } finally {
+      setArchiveLoading(false);
+    }
+  };
+
+  // Delete archived document handler
+  const handleDeleteArchivedDocument = (document: ApprovalQueueItem) => {
+    setSelectedDocumentForDelete(document);
+    setDeleteModalVisible(true);
+    deleteForm.resetFields();
+  };
+
+  const handleDeleteSubmit = async () => {
+    if (!selectedDocumentForDelete) return;
+
+    try {
+      const values = await deleteForm.validateFields();
+      setDeleteLoading(true);
+
+      const request: DeleteArchivedDocumentRequest = {
+        confirmPermanentDeletion: true,
+        reason: values.reason,
+        forceDelete: values.forceDelete || false,
+      };
+
+      await deleteArchivedDocumentVersion(selectedDocumentForDelete.versionId, request);
+      toast.success('Archived document deleted successfully');
+      setDeleteModalVisible(false);
+      setSelectedDocumentForDelete(null);
+      deleteForm.resetFields();
+      fetchData(); // Refresh the data
+    } catch (error: any) {
+      toast.error(`Failed to delete archived document: ${error.message}`);
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -300,6 +390,27 @@ export default function ApprovalQueue() {
               onClick={() => navigate(`/manager/document-review/${record.documentFileId}/${record.versionId}`)}
             >
               Review
+            </Button>
+          )}
+          {record.status === 'Approved' && (
+            <Button
+              type="default"
+              size="small"
+              icon={<InboxOutlined />}
+              onClick={() => handleArchiveDocument(record)}
+            >
+              Archive
+            </Button>
+          )}
+          {record.status === 'Archived' && (
+            <Button
+              type="primary"
+              danger
+              size="small"
+              icon={<DeleteOutlined />}
+              onClick={() => handleDeleteArchivedDocument(record)}
+            >
+              Delete
             </Button>
           )}
         </Space>
@@ -539,6 +650,130 @@ export default function ApprovalQueue() {
           />
         </div>
       </Content>
+
+      {/* Archive Document Modal */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <InboxOutlined style={{ marginRight: 8, color: '#faad14' }} />
+            Archive Document
+          </div>
+        }
+        open={archiveModalVisible}
+        onCancel={() => {
+          setArchiveModalVisible(false);
+          setSelectedDocumentForArchive(null);
+          archiveForm.resetFields();
+        }}
+        onOk={handleArchiveSubmit}
+        confirmLoading={archiveLoading}
+        width={600}
+      >
+        {selectedDocumentForArchive && (
+          <div>
+            <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#f5f5f5', borderRadius: 6 }}>
+              <Text strong>Document: </Text>
+              <Text>{selectedDocumentForArchive.title}</Text>
+              <br />
+              <Text strong>Version: </Text>
+              <Text>{selectedDocumentForArchive.versionName}</Text>
+              <br />
+              <Text strong>Status: </Text>
+              <Tag color="green">{selectedDocumentForArchive.status}</Tag>
+            </div>
+
+            <Form form={archiveForm} layout="vertical">
+              <Form.Item
+                name="reason"
+                label="Archive Reason"
+                rules={[{ required: true, message: 'Please provide a reason for archiving' }]}
+              >
+                <Input placeholder="Enter reason for archiving this document" />
+              </Form.Item>
+
+              <Form.Item
+                name="comments"
+                label="Additional Comments"
+                rules={[{ required: true, message: 'Please provide additional comments' }]}
+              >
+                <TextArea
+                  rows={4}
+                  placeholder="Enter any additional comments about the archiving process"
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="forceArchive"
+                valuePropName="checked"
+              >
+                <input type="checkbox" style={{ marginRight: 8 }} />
+                <Text>Force archive (bypass any warnings)</Text>
+              </Form.Item>
+            </Form>
+          </div>
+        )}
+      </Modal>
+
+      {/* Delete Archived Document Modal */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <ExclamationCircleOutlined style={{ marginRight: 8, color: '#ff4d4f' }} />
+            Delete Archived Document
+          </div>
+        }
+        open={deleteModalVisible}
+        onCancel={() => {
+          setDeleteModalVisible(false);
+          setSelectedDocumentForDelete(null);
+          deleteForm.resetFields();
+        }}
+        onOk={handleDeleteSubmit}
+        confirmLoading={deleteLoading}
+        width={600}
+        okText="Delete Permanently"
+        okButtonProps={{ danger: true }}
+      >
+        {selectedDocumentForDelete && (
+          <div>
+            <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#fff2f0', borderRadius: 6, border: '1px solid #ffccc7' }}>
+              <Text strong style={{ color: '#ff4d4f' }}>⚠️ Warning: This action cannot be undone!</Text>
+              <br />
+              <Text>You are about to permanently delete this archived document.</Text>
+              <br /><br />
+              <Text strong>Document: </Text>
+              <Text>{selectedDocumentForDelete.title}</Text>
+              <br />
+              <Text strong>Version: </Text>
+              <Text>{selectedDocumentForDelete.versionName}</Text>
+              <br />
+              <Text strong>Status: </Text>
+              <Tag color="gray">{selectedDocumentForDelete.status}</Tag>
+            </div>
+
+            <Form form={deleteForm} layout="vertical">
+              <Form.Item
+                name="reason"
+                label="Deletion Reason"
+                rules={[{ required: true, message: 'Please provide a reason for deletion' }]}
+              >
+                <TextArea
+                  rows={3}
+                  placeholder="Enter reason for permanently deleting this archived document"
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="forceDelete"
+                valuePropName="checked"
+              >
+                <input type="checkbox" style={{ marginRight: 8 }} />
+                <Text>Force delete (bypass any warnings)</Text>
+              </Form.Item>
+            </Form>
+          </div>
+        )}
+      </Modal>
     </Layout>
   )
 }

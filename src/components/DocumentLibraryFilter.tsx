@@ -10,8 +10,6 @@ import {
 } from "antd";
 import {
   ClearOutlined,
-  SearchOutlined,
-  FileTextOutlined,
   TagsOutlined,
   CalendarOutlined,
   FolderOutlined,
@@ -41,23 +39,10 @@ export const DocumentLibraryFilter: React.FC<DocumentLibraryFilterProps> = ({
   documentTypes = [],
   tags = [],
 }) => {
-  const handleFilterChange = (key: string, value: any) => {
-    // Build proper query parameters for the API call
-    const filterParams = {
-      [key]: value,
-      pageNumber: 1,
-      pageSize: 10
-    };
-    
-    onFilterChange(filterParams);
-  };
-
   // Handle multiple tags selection
   const handleTagsChange = (selectedTags: string[]) => {
-    console.log(123, selectedTags);
-
     const filterParams = {
-      tags: selectedTags, // API expects Tags parameter
+      tags: selectedTags, // API expects tags parameter (lowercase)
       pageNumber: 1,
       pageSize: 10
     };
@@ -68,7 +53,67 @@ export const DocumentLibraryFilter: React.FC<DocumentLibraryFilterProps> = ({
   // Handle document type change
   const handleDocumentTypeChange = (documentTypeId: string) => {
     const filterParams = {
-      documentTypeId: documentTypeId,
+      documentTypeId: documentTypeId, // API expects documentTypeId (lowercase)
+      pageNumber: 1,
+      pageSize: 10
+    };
+    
+    onFilterChange(filterParams);
+  };
+
+  // Handle date range change
+  const handleDateRangeChange = (dates: any) => {
+    const filterParams: any = {
+      pageNumber: 1,
+      pageSize: 10
+    };
+    
+    if (dates && dates.length === 2) {
+      // Convert to ISO datetime format (start of day and end of day)
+      filterParams.fromDate = dates[0]?.startOf('day').toISOString();
+      filterParams.toDate = dates[1]?.endOf('day').toISOString();
+    } else {
+      filterParams.fromDate = undefined;
+      filterParams.toDate = undefined;
+    }
+    
+    onFilterChange(filterParams);
+  };
+
+  // Handle effective date range change
+  const handleEffectiveDateRangeChange = (dates: any) => {
+    const filterParams: any = {
+      pageNumber: 1,
+      pageSize: 10
+    };
+    
+    if (dates && dates.length === 2) {
+      // Convert to ISO datetime format (start of day and end of day)
+      filterParams.effectiveFrom = dates[0]?.startOf('day').toISOString();
+      filterParams.effectiveUntil = dates[1]?.endOf('day').toISOString();
+    } else {
+      filterParams.effectiveFrom = undefined;
+      filterParams.effectiveUntil = undefined;
+    }
+    
+    onFilterChange(filterParams);
+  };
+
+  // Handle signed by change (changed from submitted by)
+  const handleSignedByChange = (value: string) => {
+    const filterParams = {
+      signedBy: value, // API expects signedBy (lowercase)
+      pageNumber: 1,
+      pageSize: 10
+    };
+    
+    onFilterChange(filterParams);
+  };
+
+  // Handle access level change
+  const handleAccessLevelChange = (value: boolean | undefined) => {
+    const filterParams = {
+      isPublic: value, // API expects isPublic (lowercase)
       pageNumber: 1,
       pageSize: 10
     };
@@ -77,50 +122,12 @@ export const DocumentLibraryFilter: React.FC<DocumentLibraryFilterProps> = ({
   };
 
   return (
-    <div className="p-4">
-      <Space direction="vertical" style={{ width: "100%" }} size="middle">
-        {/* Title Search */}
-        <div>
-          <div className="flex items-center mb-2">
-            <FileTextOutlined
-              style={{ color: "#1e40af", marginRight: "6px" }}
-            />
-            <Text type="secondary" className="text-sm font-medium">
-              Document Title
-            </Text>
-          </div>
-          <Input
-            prefix={<SearchOutlined style={{ color: "#6b7280" }} />}
-            placeholder="Search by title..."
-            onChange={(e) => handleFilterChange("title", e.target.value)}
-            allowClear
-            className="border-blue-200 focus:border-blue-500"
-          />
-        </div>
-
-        {/* Keyword Search */}
-        <div>
-          <div className="flex items-center mb-2">
-            <SearchOutlined style={{ color: "#1e40af", marginRight: "6px" }} />
-            <Text type="secondary" className="text-sm font-medium">
-              Keywords
-            </Text>
-          </div>
-          <Input
-            prefix={<SearchOutlined style={{ color: "#6b7280" }} />}
-            placeholder="Search by keywords..."
-            onChange={(e) => handleFilterChange("keyword", e.target.value)}
-            allowClear
-            className="border-blue-200 focus:border-blue-500"
-          />
-        </div>
-
-        <Divider className="my-3" />
-
+    <div>
+      <Space direction="vertical" style={{ width: "100%" }} size="small">
         {/* Document Type */}
         <div>
-          <div className="flex items-center mb-2">
-            <FolderOutlined style={{ color: "#1e40af", marginRight: "6px" }} />
+          <div className="flex items-center mb-1">
+            <FolderOutlined style={{ color: "#1e40af", marginRight: "8px", fontSize: "14px" }} />
             <Text type="secondary" className="text-sm font-medium">
               Document Type
             </Text>
@@ -129,22 +136,22 @@ export const DocumentLibraryFilter: React.FC<DocumentLibraryFilterProps> = ({
             placeholder="Select document type..."
             onChange={handleDocumentTypeChange}
             allowClear
-            style={{ width: "100%" }}
-            className="[&_.ant-select-selector]:border-blue-200 [&_.ant-select-focused_.ant-select-selector]:border-blue-500"
+            style={{ width: "100%", height: "36px" }}
+            className="[&_.ant-select-selector]:border-blue-200 [&_.ant-select-focused_.ant-select-selector]:border-blue-500 [&_.ant-select-selector]:h-[36px] [&_.ant-select-selector]:flex [&_.ant-select-selector]:items-center"
           >
             <Select.Option key="all" value="">
-              <div className="flex items-center">
+              <div className="flex items-center py-1">
                 <FolderOutlined
-                  style={{ color: "#1e40af", marginRight: "8px" }}
+                  style={{ color: "#1e40af", marginRight: "10px" }}
                 />
                 <span className="font-medium">All Document Types</span>
               </div>
             </Select.Option>
             {documentTypes.map((type) => (
               <Select.Option key={type.id} value={type.id}>
-                <div className="flex items-center">
+                <div className="flex items-center py-1">
                   <FolderOutlined
-                    style={{ color: "#1e40af", marginRight: "8px" }}
+                    style={{ color: "#1e40af", marginRight: "10px" }}
                   />
                   {type.name}
                 </div>
@@ -156,7 +163,7 @@ export const DocumentLibraryFilter: React.FC<DocumentLibraryFilterProps> = ({
         {/* Tags */}
         <div>
           <div className="flex items-center mb-2">
-            <TagsOutlined style={{ color: "#1e40af", marginRight: "6px" }} />
+            <TagsOutlined style={{ color: "#1e40af", marginRight: "8px", fontSize: "14px" }} />
             <Text type="secondary" className="text-sm font-medium">
               Tags
             </Text>
@@ -168,12 +175,14 @@ export const DocumentLibraryFilter: React.FC<DocumentLibraryFilterProps> = ({
             allowClear
             style={{ width: "100%" }}
             className="[&_.ant-select-selector]:border-blue-200 [&_.ant-select-focused_.ant-select-selector]:border-blue-500"
+            maxTagCount={20}
+            showArrow={true}
           >
             {tags.map((tag) => (
               <Select.Option key={tag.id} value={tag.name}>
                 <div className="flex items-center">
                   <TagsOutlined
-                    style={{ color: "#1e40af", marginRight: "8px" }}
+                    style={{ color: "#1e40af", marginRight: "10px" }}
                   />
                   {tag.name}
                 </div>
@@ -182,92 +191,103 @@ export const DocumentLibraryFilter: React.FC<DocumentLibraryFilterProps> = ({
           </Select>
         </div>
 
-        {/* Date Range */}
+        <Divider className="my-2" />
+
+        {/* Creation Date Range */}
         <div>
-          <div className="flex items-center mb-2">
+          <div className="flex items-center mb-1">
             <CalendarOutlined
-              style={{ color: "#1e40af", marginRight: "6px" }}
+              style={{ color: "#1e40af", marginRight: "8px", fontSize: "14px" }}
             />
             <Text type="secondary" className="text-sm font-medium">
-              Date Range
+              Creation Date Range
             </Text>
           </div>
           <RangePicker
-            style={{ width: "100%" }}
-            className="[&_.ant-picker]:border-blue-200 [&_.ant-picker-focused]:border-blue-500"
-            onChange={(dates) => {
-              const filterParams: any = {
-                pageNumber: 1,
-                pageSize: 10
-              };
-              
-              if (dates) {
-                filterParams.fromDate = dates[0]?.format("YYYY-MM-DD");
-                filterParams.toDate = dates[1]?.format("YYYY-MM-DD");
-              } else {
-                filterParams.fromDate = "";
-                filterParams.toDate = "";
-              }
-              
-              onFilterChange(filterParams);
-            }}
+            style={{ width: "100%", height: "36px" }}
+            className="[&_.ant-picker]:border-blue-200 [&_.ant-picker-focused]:border-blue-500 [&_.ant-picker]:h-[36px] [&_.ant-picker]:flex [&_.ant-picker]:items-center"
+            onChange={handleDateRangeChange}
+            format="YYYY-MM-DD"
+            placeholder={["From Date", "To Date"]}
+            showTime={false}
           />
         </div>
 
-        {/* Author */}
+        {/* Effective Date Range */}
         <div>
-          <div className="flex items-center mb-2">
-            <UserOutlined style={{ color: "#1e40af", marginRight: "6px" }} />
+          <div className="flex items-center mb-1">
+            <CalendarOutlined
+              style={{ color: "#10b981", marginRight: "8px", fontSize: "14px" }}
+            />
             <Text type="secondary" className="text-sm font-medium">
-              Author
+              Effective Date Range
+            </Text>
+          </div>
+          <RangePicker
+            style={{ width: "100%", height: "36px" }}
+            className="[&_.ant-picker]:border-green-200 [&_.ant-picker-focused]:border-green-500 [&_.ant-picker]:h-[36px] [&_.ant-picker]:flex [&_.ant-picker]:items-center"
+            onChange={handleEffectiveDateRangeChange}
+            format="YYYY-MM-DD"
+            placeholder={["Effective From", "Effective Until"]}
+            showTime={false}
+          />
+        </div>
+
+        {/* Signed By */}
+        <div>
+          <div className="flex items-center mb-1">
+            <UserOutlined style={{ color: "#1e40af", marginRight: "8px", fontSize: "14px" }} />
+            <Text type="secondary" className="text-sm font-medium">
+              Signed By
             </Text>
           </div>
           <Input
-            prefix={<UserOutlined style={{ color: "#6b7280" }} />}
-            placeholder="Search by author..."
-            onChange={(e) => handleFilterChange("submittedBy", e.target.value)}
+            // prefix={<UserOutlined style={{ color: "#6b7280" }} />}
+            placeholder="Search by signer name..."
+            onChange={(e) => handleSignedByChange(e.target.value)}
             allowClear
+            style={{ height: "36px" }}
             className="border-blue-200 focus:border-blue-500"
           />
         </div>
 
-        <Divider className="my-3" />
+        <Divider className="my-2" />
 
         {/* Access Level */}
         <div>
-          <div className="flex items-center mb-2">
-            <LockOutlined style={{ color: "#1e40af", marginRight: "6px" }} />
+          <div className="flex items-center mb-1">
+            <LockOutlined style={{ color: "#1e40af", marginRight: "8px", fontSize: "14px" }} />
             <Text type="secondary" className="text-sm font-medium">
               Access Level
             </Text>
           </div>
           <Select
             placeholder="Select access level..."
-            onChange={(value) => handleFilterChange("isPublic", value)}
+            onChange={handleAccessLevelChange}
             allowClear
-            style={{ width: "100%" }}
-            className="[&_.ant-select-selector]:border-blue-200 [&_.ant-select-focused_.ant-select-selector]:border-blue-500"
+            style={{ width: "100%", height: "36px" }}
+            className="[&_.ant-select-selector]:border-blue-200 [&_.ant-select-focused_.ant-select-selector]:border-blue-500 [&_.ant-select-selector]:h-[36px] [&_.ant-select-selector]:flex [&_.ant-select-selector]:items-center"
           >
-            <Select.Option key="all" value="">
-              <div className="flex items-center">
+            <Select.Option key="all" value={undefined}>
+              <div className="flex items-center py-1">
                 <LockOutlined
-                  style={{ color: "#1e40af", marginRight: "8px" }}
+                  style={{ color: "#1e40af", marginRight: "10px" }}
                 />
                 <span className="font-medium">All Documents</span>
               </div>
             </Select.Option>
             <Select.Option key="public" value={true}>
-              <div className="flex items-center">
+              <div className="flex items-center py-1">
                 <UnlockOutlined
-                  style={{ color: "#10b981", marginRight: "8px" }}
+                  style={{ color: "#10b981", marginRight: "10px" }}
                 />
                 <span className="text-green-600 font-medium">Public Only</span>
               </div>
             </Select.Option>
             <Select.Option key="private" value={false}>
-              <div className="flex items-center">
+              <div className="flex items-center py-1">
                 <LockOutlined
-                  style={{ color: "#ef4444", marginRight: "8px" }}
+                  style={{ color: "#ef4444", marginRight: "10px" }}
                 />
                 <span className="text-red-600 font-medium">Private Only</span>
               </div>
@@ -278,11 +298,11 @@ export const DocumentLibraryFilter: React.FC<DocumentLibraryFilterProps> = ({
         {/* Clear All Button */}
         <div className="pt-4 border-t border-gray-100">
           <Button
-            type="text"
+            type="primary"
             size="small"
             icon={<ClearOutlined />}
             onClick={onClearFilters}
-            className="text-blue-800 hover:text-blue-600 w-full"
+            className="bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700 w-full min-h-[36px]"
             block
           >
             Clear All Filters

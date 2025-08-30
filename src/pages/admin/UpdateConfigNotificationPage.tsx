@@ -88,8 +88,9 @@ const UpdateConfigNotificationPage: React.FC = () => {
   // Fetch current config data
   const { data: configData, isLoading, isError } = useNotificationConfig();
   const updateMutation = useUpdateNotificationConfig();
+  const [formKey, setFormKey] = useState(0);
 
-  // Populate form with current data
+  // Populate form with current data and update key to force re-render
   useEffect(() => {
     if (configData) {
       setFormData({
@@ -103,6 +104,7 @@ const UpdateConfigNotificationPage: React.FC = () => {
           configData.enableNearExpiredNotifications,
         nearExpiredMode: configData.nearExpiredMode,
       });
+      setFormKey((prev) => prev + 1);
     }
   }, [configData]);
 
@@ -401,6 +403,7 @@ const UpdateConfigNotificationPage: React.FC = () => {
                       Expired Notification Schedule
                     </div>
                     <CronExpressionBuilder
+                      key={`expired-${formKey}`}
                       value={formData.expiredNotificationCron}
                       onChange={(cronExpression) =>
                         handleInputChange(
@@ -423,6 +426,7 @@ const UpdateConfigNotificationPage: React.FC = () => {
                       Near-Expired Notification Schedule
                     </div>
                     <CronExpressionBuilder
+                      key={`near-expired-${formKey}`}
                       value={formData.nearExpiredNotificationCron}
                       onChange={(cronExpression) =>
                         handleInputChange(
@@ -442,7 +446,7 @@ const UpdateConfigNotificationPage: React.FC = () => {
 
                 {/* Right Column - Advanced Settings */}
                 <div className="space-y-8">
-                  <div className="mb-6">
+                  {/* <div className="mb-6">
                     <h3 className="flex items-center gap-2 mb-2 text-lg font-semibold text-gray-200">
                       <Zap className="w-5 h-5 text-green-400" />
                       Advanced Settings
@@ -450,10 +454,10 @@ const UpdateConfigNotificationPage: React.FC = () => {
                     <p className="text-sm text-gray-400">
                       Configure advanced notification options
                     </p>
-                  </div>
+                  </div> */}
 
                   {/* Near Expired Mode */}
-                  <div className="p-6 border bg-gray-700/30 rounded-xl border-gray-600/50">
+                  {/* <div className="p-6 border bg-gray-700/30 rounded-xl border-gray-600/50">
                     <label className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-300">
                       <Info className="w-4 h-4 text-blue-400" />
                       Near Expired Mode
@@ -474,7 +478,7 @@ const UpdateConfigNotificationPage: React.FC = () => {
                     <p className="mt-2 text-xs text-gray-500">
                       Select the frequency mode for near-expired notifications
                     </p>
-                  </div>
+                  </div> */}
 
                   {/* System Controls Section */}
                   <div className="mb-6">

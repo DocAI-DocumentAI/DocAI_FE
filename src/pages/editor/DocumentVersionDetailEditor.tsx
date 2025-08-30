@@ -7,8 +7,7 @@ import {
     UserOutlined,
     CalendarOutlined,
     FileOutlined,
-    TeamOutlined,
-    SwapOutlined,
+    TeamOutlined, 
     EyeOutlined,
     EditOutlined,
     GlobalOutlined,
@@ -18,11 +17,12 @@ import {
 } from "@ant-design/icons"
 import { api } from "../../lib/api/api";
 import toast from 'react-hot-toast';
+import { Link } from "react-router-dom";
 
 const { Title, Text, Paragraph } = Typography
 const { Content } = Layout
 
-export default function DocumentDetail({ onViewChange, }: any) {
+export default function DocumentVersionDetailEditor({ onViewChange, }: any) {
     const { id, versionId } = useParams();
     const navigate = useNavigate();
     const [document, setDocument] = useState<any>(null);
@@ -84,7 +84,7 @@ export default function DocumentDetail({ onViewChange, }: any) {
         }
         const userStr = localStorage.getItem("user");
         if (!userStr) {
-             
+
             return;
         }
         /* const user = JSON.parse(userStr); */
@@ -94,8 +94,8 @@ export default function DocumentDetail({ onViewChange, }: any) {
             // Use folder-approval submit; attempt to include current folderId if present on document
             const targetFolderId = document.folderId || document.currentFolderId || undefined;
             const url = targetFolderId
-              ? `/document/folder-approval/${document.versionId}/submit${targetFolderId ? `?targetFolderId=${encodeURIComponent(targetFolderId)}` : ''}`
-              : `/document/folder-approval/${document.versionId}/submit`;
+                ? `/document/folder-approval/${document.versionId}/submit${targetFolderId ? `?targetFolderId=${encodeURIComponent(targetFolderId)}` : ''}`
+                : `/document/folder-approval/${document.versionId}/submit`;
             await api.post(url);
             toast.success("Document submitted for approval successfully!");
             await fetchDocument();
@@ -213,23 +213,63 @@ export default function DocumentDetail({ onViewChange, }: any) {
                         </div>
                     </div>
 
-                    {/* Replacement Document Alert */}
-                    {document.isReplaced && document.replacementDocument && (
-                        <Alert
-                            message="Document Replacement"
-                            description={
-                                <div>
-                                    This document has been replaced by: <strong>{document.replacementDocumentName}</strong>
-                                    <br />
-                                    <Button type="link" icon={<SwapOutlined />} style={{ padding: 0, marginTop: 4 }}>
-                                        View Replacement Document
-                                    </Button>
-                                </div>
-                            }
-                            type="warning"
-                            showIcon
-                            style={{ marginBottom: 24 }}
-                        />
+                    {/* Replacement Document Alert - Updated to show both cases */}
+                    {(document.replacementDocument || (document.isReplaced && document.replacedByDocument)) && (
+                        <div style={{ marginBottom: 24 }}>
+                            {/* Case 1: This document replaces another document */}
+                            {document.replacementDocument && (
+                                <Alert
+                                    message="Document Replacement"
+                                    description={
+                                        <div>
+                                            <div style={{ marginBottom: 8 }}>
+                                                This document replaces: <strong> <Link to={`/editor/doc/${document.replacementDocument.id}`}>{document.replacementDocument.title || 'Untitled Document'}</Link></strong>
+                                            </div>
+                                            <div style={{ fontSize: '12px', color: '#666', marginBottom: 8 }}>
+                                                <div>Original Document ID: <span style={{ fontFamily: 'monospace' }}>{document.replacementDocument.id}</span></div>
+                                                {document.replacementDocument.createdTime && (
+                                                    <div>Created: {new Date(document.replacementDocument.createdTime).toLocaleDateString('en-US')}</div>
+                                                )}
+                                                {document.replacementDocument.documentTypeName && (
+                                                    <div>Type: {document.replacementDocument.documentTypeName}</div>
+                                                )}
+                                            </div>
+
+                                        </div>
+                                    }
+                                    type="info"
+                                    showIcon
+                                    style={{ marginBottom: 16 }}
+                                />
+                            )}
+
+                            {/* Case 2: This document is replaced by another document */}
+                            {document.isReplaced && document.replacedByDocument && (
+                                <Alert
+                                    message="Document Status"
+                                    description={
+                                        <div>
+                                            <div style={{ marginBottom: 8 }}>
+                                                This document has been replaced by: <strong><Link to={`/editor/doc/${document.replacedByDocument.id}`}>{document.replacedByDocument.title || 'Untitled Document'}</Link></strong>
+                                            </div>
+                                            <div style={{ fontSize: '12px', color: '#666', marginBottom: 8 }}>
+                                                <div>Replacement Document ID: <span style={{ fontFamily: 'monospace' }}>{document.replacedByDocument.id}</span></div>
+                                                {document.replacedByDocument.createdTime && (
+                                                    <div>Created: {new Date(document.replacedByDocument.createdTime).toLocaleDateString('en-US')}</div>
+                                                )}
+                                                {document.replacedByDocument.documentTypeName && (
+                                                    <div>Type: {document.replacedByDocument.documentTypeName}</div>
+                                                )}
+                                            </div>
+
+                                        </div>
+                                    }
+                                    type="warning"
+                                    showIcon
+                                    style={{ marginBottom: 16 }}
+                                />
+                            )}
+                        </div>
                     )}
 
                     {/* Basic Information Card */}
@@ -461,7 +501,7 @@ export default function DocumentDetail({ onViewChange, }: any) {
 
                                             <Button
                                                 type="default"
-                                                 
+
                                                 block
                                                 size="large"
                                                 onClick={() => {

@@ -301,3 +301,146 @@ export interface FolderApiError {
   message: string;
   errors?: FolderError[];
 }
+
+// Document detail interfaces for folder context
+export interface DocumentDetailFileInfo {
+  fileName: string;
+  filePath: string;
+  fileSize: number;
+  fileType: string;
+  fileHash: string;
+}
+
+export interface DocumentDetailDocumentType {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface DocumentDetailDates {
+  createdTime: string;
+  lastUpdatedTime: string;
+  effectiveFrom: string;
+  effectiveUntil: string;
+  approvedAt: string | null;
+  submittedAt: string;
+}
+
+export interface DocumentDetailOwnership {
+  ownerId: string;
+  ownerName: string | null;
+  ownerEmail: string | null;
+  departmentId: string;
+  departmentName: string | null;
+  signedBy: string;
+}
+
+export interface DocumentDetailFolderContext {
+  currentFolder: {
+    id: string;
+    name: string;
+    description: string | null;
+    fullPath: string;
+    level: number;
+    isSystemFolder: boolean;
+    isPublic: boolean;
+    folderType: string | null;
+    subFolderCount: number;
+    documentCount: number;
+    userPermission: string | null;
+    canCreateSubfolders: boolean;
+    canUploadDocuments: boolean;
+    createdTime: string;
+    lastUpdatedTime: string | null;
+    departmentId: string;
+    createdBy: string;
+  };
+  targetFolder: {
+    id: string;
+    name: string;
+    description: string | null;
+    fullPath: string;
+    level: number;
+    isSystemFolder: boolean;
+    isPublic: boolean;
+    folderType: string | null;
+    subFolderCount: number;
+    documentCount: number;
+    userPermission: string | null;
+    canCreateSubfolders: boolean;
+    canUploadDocuments: boolean;
+    createdTime: string;
+    lastUpdatedTime: string | null;
+    departmentId: string;
+    createdBy: string;
+  };
+  breadcrumb: Array<{
+    id: string;
+    name: string;
+    level: number;
+    isSystemFolder: boolean;
+    isCurrent: boolean;
+  }>;
+  canMoveDocument: boolean;
+}
+
+export interface DocumentDetailPermissions {
+  canView: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canMove: boolean;
+  canDownload: boolean;
+  canShare: boolean;
+  canApprove: boolean;
+  canReject: boolean;
+}
+
+export interface DocumentDetailApprovalInfo {
+  reviewerId: string;
+  reviewerName: string | null;
+  reviewComments: string | null;
+  reviewedAt: string;
+  reviewAction: string;
+  approvalHistory: Array<{
+    action: string;
+    comments: string | null;
+    reviewerId: string;
+    reviewerName: string | null;
+    reviewedAt: string;
+  }>;
+}
+
+export interface DocumentDetailGoogleDrive {
+  googleDriveFileId: string | null;
+  googleDriveFolderId: string;
+  webViewLink: string | null;
+  downloadLink: string | null;
+}
+
+export interface DocumentDetail {
+  documentId: string;
+  versionId: string;
+  title: string;
+  description: string;
+  summary: string;
+  versionName: string;
+  status: string;
+  isPublic: boolean;
+  isOfficial: boolean;
+  fileInfo: DocumentDetailFileInfo;
+  documentType: DocumentDetailDocumentType;
+  tags: string[];
+  dates: DocumentDetailDates;
+  ownership: DocumentDetailOwnership;
+  folderContext: DocumentDetailFolderContext;
+  permissions: DocumentDetailPermissions;
+  approvalInfo: DocumentDetailApprovalInfo;
+  googleDrive: DocumentDetailGoogleDrive;
+}
+
+export interface DocumentDetailResponse {
+  statusCode: number;
+  errorCode: string | null;
+  message: string;
+  data: DocumentDetail;
+}

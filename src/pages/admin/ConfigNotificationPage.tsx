@@ -12,7 +12,6 @@ import {
   BellRing,
   ToggleLeft,
   ToggleRight,
-  Info,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/common/Header";
@@ -211,7 +210,7 @@ const ConfigNotificationPage: React.FC = () => {
                     Expired Notification Schedule
                   </h4>
                 </div>
-                <p className="text-lg font-semibold text-gray-100 mb-1">
+                <p className="mb-1 text-lg font-semibold text-gray-100">
                   {getCronDescription(configData.expiredNotificationCron)}
                 </p>
                 <p className="font-mono text-xs text-gray-400">
@@ -227,7 +226,7 @@ const ConfigNotificationPage: React.FC = () => {
                     Near Expired Notification Schedule
                   </h4>
                 </div>
-                <p className="text-lg font-semibold text-gray-100 mb-1">
+                <p className="mb-1 text-lg font-semibold text-gray-100">
                   {getCronDescription(configData.nearExpiredNotificationCron)}
                 </p>
                 <p className="font-mono text-xs text-gray-400">
@@ -236,7 +235,7 @@ const ConfigNotificationPage: React.FC = () => {
               </div>
 
               {/* Near Expired Mode */}
-              <div className="p-4 bg-gray-900 bg-opacity-50 rounded-lg">
+              {/* <div className="p-4 bg-gray-900 bg-opacity-50 rounded-lg">
                 <div className="flex items-center gap-3 mb-2">
                   <Info className="w-5 h-5 text-blue-400" />
                   <h4 className="text-sm font-medium text-gray-300">
@@ -246,7 +245,7 @@ const ConfigNotificationPage: React.FC = () => {
                 <p className="text-lg font-semibold text-gray-100">
                   {configData.nearExpiredModeDescription}
                 </p>
-              </div>
+              </div> */}
 
               {/* Enable Expired Notifications */}
               <div className="p-4 bg-gray-900 bg-opacity-50 rounded-lg">

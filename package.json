@@ -22,6 +22,7 @@
     "@vitejs/plugin-basic-ssl": "^2.1.0",
     "antd": "^5.26.4",
     "axios": "^1.8.4",
+    "dayjs": "^1.11.15",
     "firebase": "^11.8.1",
     "framer-motion": "^12.12.2",
     "lucide-react": "^0.510.0",

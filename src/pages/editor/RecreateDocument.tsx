@@ -124,7 +124,7 @@ export default function RecreateDocument() {
 
   const handleDocumentAction = async (values: any, action: 'draft' | 'submit') => {
     if (!id) {
-      toast.error("Không tìm thấy documentId trên URL!");
+      toast.error("DocumentId not found on URL!");
       return;
     }
     console.log(123, values);
@@ -181,7 +181,7 @@ export default function RecreateDocument() {
       navigate(-1);
     } catch (error: any) {
       if (error.errorFields) {
-        toast.error("Vui lòng kiểm tra lại thông tin form!");
+        toast.error("Please check the form information again!");
       } else {
         const errorMessage = error?.response?.data?.message || error.message;
         toast.error(`${action === 'draft' ? 'Save as draft' : 'Submit'} failed: ${errorMessage}`);
