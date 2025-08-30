@@ -37,7 +37,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { Navbar } from "../../components/layout/Navbar";
 import { DocumentLibraryFilter } from "../../components/DocumentLibraryFilter";
-import { FolderTree, FolderBreadcrumb } from "../../components/folder";
+// import { FolderTree, FolderBreadcrumb } from "../../components/folder";
 import {
   getOfficialDocuments,
   getDocumentTypesEnhanced,
@@ -50,7 +50,7 @@ import type {
   TagResponse,
   OfficialDocumentsRequest,
 } from "../../types/DocumentLibrary";
-import type { FolderNode } from "../../types/folder";
+// import type { FolderNode } from "../../types/folder";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -327,13 +327,13 @@ const DocumentLibrary: React.FC = () => {
   const [authChecked, setAuthChecked] = useState<boolean>(false);
 
   // Folder navigation state
-  const [folders, setFolders] = useState<FolderNode[]>([]);
+  // const [folders, setFolders] = useState<FolderNode[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
     undefined
   );
 
   // Collapse state for sidebar cards
-  const [folderCollapsed, setFolderCollapsed] = useState(false);
+  // const [folderCollapsed, setFolderCollapsed] = useState(false);
   const [filterCollapsed, setFilterCollapsed] = useState(false);
 
   // Check authentication
@@ -391,7 +391,7 @@ const DocumentLibrary: React.FC = () => {
     try {
       const response = await getFolderTree(undefined, true);
       if (response.success) {
-        setFolders(response.data.rootNodes);
+        // setFolders(response.data.rootNodes);
       }
     } catch (error) {
       console.error("Error loading folders:", error);
@@ -489,16 +489,16 @@ const DocumentLibrary: React.FC = () => {
   };
 
   // Handle folder selection
-  const handleFolderSelect = (folder: FolderNode) => {
-    setSelectedFolderId(folder.id);
-    setCurrentPage(1);
-  };
+  // const handleFolderSelect = (folder: FolderNode) => {
+  //   setSelectedFolderId(folder.id);
+  //   setCurrentPage(1);
+  // };
 
   // Handle folder navigation
-  const handleFolderNavigation = (folderId: string | null) => {
-    setSelectedFolderId(folderId || undefined);
-    setCurrentPage(1);
-  };
+  // const handleFolderNavigation = (folderId: string | null) => {
+  //   setSelectedFolderId(folderId || undefined);
+  //   setCurrentPage(1);
+  // };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -556,65 +556,67 @@ const DocumentLibrary: React.FC = () => {
               {/* Sidebar with Folder and Filter */}
               <Col xs={24} sm={24} md={8} lg={6} xl={5}>
                 <div className="space-y-4">
-                  {/* Folder Navigation Card */}
-                  <Card
-                    title={
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm sm:text-base">
-                          <FolderOutlined style={{ marginRight: 8 }} />
-                          <span className="hidden sm:inline">
-                            Folder Navigation
-                          </span>
-                          <span className="sm:hidden">Folders</span>
-                        </span>
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={
-                            folderCollapsed ? <DownOutlined /> : <UpOutlined />
-                          }
-                          onClick={() => setFolderCollapsed(!folderCollapsed)}
-                          className="text-blue-800 hover:text-blue-600"
-                        />
-                      </div>
-                    }
-                    className="border border-blue-100 shadow-sm"
-                    size="small"
-                  >
-                    <Collapse
-                      ghost
-                      activeKey={folderCollapsed ? [] : ["folder"]}
-                      items={[
-                        {
-                          key: "folder",
-                          label: "",
-                          children: (
-                            <div>
-                              {selectedFolderId && (
-                                <div className="mb-4">
-                                  <FolderBreadcrumb
-                                    folderId={selectedFolderId}
-                                    folders={folders}
-                                    onFolderClick={handleFolderNavigation}
-                                    className="text-sm"
-                                  />
-                                </div>
-                              )}
-                              <FolderTree
-                                folders={folders}
-                                selectedFolderId={selectedFolderId}
-                                onFolderSelect={handleFolderSelect}
-                                allowSelection={true}
-                                showContextMenu={false}
-                                className="overflow-auto max-h-96"
-                              />
-                            </div>
-                          ),
-                          showArrow: false,
-                        },
-                      ]}
-                    />
-                  </Card>
+                  {/* Remove/Comment out Folder Navigation Card */}
+      {/* 
+      <Card
+        title={
+          <div className="flex items-center justify-between">
+            <span className="text-sm sm:text-base">
+              <FolderOutlined style={{ marginRight: 8 }} />
+              <span className="hidden sm:inline">
+                Folder Navigation
+              </span>
+              <span className="sm:hidden">Folders</span>
+            </span>
+            <Button
+              type="text"
+              size="small"
+              icon={
+                folderCollapsed ? <DownOutlined /> : <UpOutlined />
+              }
+              onClick={() => setFolderCollapsed(!folderCollapsed)}
+              className="text-blue-800 hover:text-blue-600"
+            />
+          </div>
+        }
+        className="border border-blue-100 shadow-sm"
+        size="small"
+      >
+        <Collapse
+          ghost
+          activeKey={folderCollapsed ? [] : ["folder"]}
+          items={[
+            {
+              key: "folder",
+              label: "",
+              children: (
+                <div>
+                  {selectedFolderId && (
+                    <div className="mb-4">
+                      <FolderBreadcrumb
+                        folderId={selectedFolderId}
+                        folders={folders}
+                        onFolderClick={handleFolderNavigation}
+                        className="text-sm"
+                      />
+                    </div>
+                  )}
+                  <FolderTree
+                    folders={folders}
+                    selectedFolderId={selectedFolderId}
+                    onFolderSelect={handleFolderSelect}
+                    allowSelection={true}
+                    showContextMenu={false}
+                    className="overflow-auto max-h-96"
+                  />
+                </div>
+              ),
+              showArrow: false,
+            },
+          ]}
+        />
+      </Card>
+      */}
 
                   {/* Filter Card */}
                   <Card
