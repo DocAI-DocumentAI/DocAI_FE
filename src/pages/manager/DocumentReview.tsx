@@ -58,7 +58,7 @@ export default function DocumentReview() {
                     loadFolders();
                 }
             } catch (error: any) {
-                toast.error(`Không thể tải chi tiết tài liệu: ${error?.response?.data?.message || error.message}`);
+                toast.error(`Unable to load document details: ${error?.response?.data?.message || error.message}`);
                 setDocument(null);
             } finally {
                 setLoading(false);
@@ -92,7 +92,7 @@ export default function DocumentReview() {
 
     const handleReview = async (isApproved: boolean) => {
         if (!document?.versionId) {
-            toast.error("Không tìm thấy versionId!");
+            toast.error("Cannot find versionId!");
             return;
         }
         const userStr = localStorage.getItem("user");
@@ -101,7 +101,7 @@ export default function DocumentReview() {
             return;
         }
         if (!isApproved && rejectionComments.trim().length < 10) {
-            toast.error("Vui lòng nhập nhận xét tối thiểu 10 ký tự khi từ chối!");
+            toast.error("Please enter at least 10 characters of comments when rejecting!");
             return;
         }
         /* const user = JSON.parse(userStr); */
@@ -113,10 +113,10 @@ export default function DocumentReview() {
                 ? { isApproved: true, ...(rejectionComments.trim() ? { comments: rejectionComments } : {}), ...(targetFolderId ? { targetFolderId } : {}) }
                 : { isApproved: false, comments: rejectionComments, returnToDrafts: true };
             await api.post(url, body);
-            toast.success(isApproved ? "Duyệt tài liệu thành công!" : "Từ chối tài liệu thành công!");
+            toast.success(isApproved ? "Document browsing successful!" : "Document rejection successful!");
             navigate(-1);
         } catch (error: any) {
-            toast.error(`Gửi kết quả duyệt thất bại: ${error?.response?.data?.message || error.message}`);
+            toast.error(`Submit review result failed: ${error?.response?.data?.message || error.message}`);
         } finally {
             setSubmitting(false);
         }
@@ -124,7 +124,7 @@ export default function DocumentReview() {
 
     const handlePreview = async () => {
         if (!document?.versionId) {
-            toast.error("Không tìm thấy versionId!");
+            toast.error("Cannot find versionId!");
             return;
         }
 

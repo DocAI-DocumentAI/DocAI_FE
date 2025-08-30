@@ -900,9 +900,7 @@ export default function DocumentPage() {
                           <h5 className="text-base font-semibold text-gray-900 mb-2 hover:text-blue-600">
                             {mainDoc.replacementDocument.title || "Untitled Document"}
                           </h5>
-
                           <div className="flex flex-wrap gap-4 mb-3 text-xs text-gray-500">
-                            
                             <div className="flex items-center">
                               <Calendar className="w-3 h-3 mr-1" />
                               {mainDoc.replacementDocument.createdTime
@@ -913,13 +911,10 @@ export default function DocumentPage() {
                               <FileText className="w-3 h-3 mr-1" />
                               {mainDoc.replacementDocument.documentTypeName || "N/A"}
                             </div>
-                         
                           </div>
-
                           <div className="text-sm text-gray-700 mb-3">
                             {mainDoc.replacementDocument.description || "No description available."}
                           </div>
-
                           <div className="text-xs text-gray-600">
                             <span className="font-medium">Document ID:</span>
                             <span className="font-mono ml-1">{mainDoc.replacementDocument.id}</span>
@@ -952,7 +947,7 @@ export default function DocumentPage() {
                           </h5>
 
                           <div className="flex flex-wrap gap-4 mb-3 text-xs text-gray-500">
-                            
+
                             <div className="flex items-center">
                               <Calendar className="w-3 h-3 mr-1" />
                               {mainDoc.replacedByDocument.createdTime
@@ -963,7 +958,7 @@ export default function DocumentPage() {
                               <FileText className="w-3 h-3 mr-1" />
                               {mainDoc.replacedByDocument.documentTypeName || "N/A"}
                             </div>
-                           
+
                           </div>
 
                           <div className="text-sm text-gray-700 mb-3">
@@ -992,7 +987,7 @@ export default function DocumentPage() {
                     This document is not involved in any replacement relationship.
                   </p>
                 </div>
-              )} 
+              )}
             </div>
           )}
 

@@ -152,7 +152,7 @@ export default function ApprovalQueue() {
       setStatistics(data.statistics);
 
     } catch (error: any) {
-      toast.error(`Lỗi khi tải dữ liệu: ${error?.response?.data?.message || error.message}`);
+      toast.error(`Error loading data: ${error?.response?.data?.message || error.message}`);
       setDocuments([]);
       setTotal(0);
     } finally {

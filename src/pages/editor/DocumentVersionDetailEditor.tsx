@@ -17,11 +17,12 @@ import {
 } from "@ant-design/icons"
 import { api } from "../../lib/api/api";
 import toast from 'react-hot-toast';
+import { Link } from "react-router-dom";
 
 const { Title, Text, Paragraph } = Typography
 const { Content } = Layout
 
-export default function DocumentDetail({ onViewChange, }: any) {
+export default function DocumentVersionDetailEditor({ onViewChange, }: any) {
     const { id, versionId } = useParams();
     const navigate = useNavigate();
     const [document, setDocument] = useState<any>(null);
@@ -222,7 +223,7 @@ export default function DocumentDetail({ onViewChange, }: any) {
                                     description={
                                         <div>
                                             <div style={{ marginBottom: 8 }}>
-                                                This document replaces: <strong>{document.replacementDocument.title || 'Untitled Document'}</strong>
+                                                This document replaces: <strong> <Link to={`/editor/doc/${document.replacementDocument.id}`}>{document.replacementDocument.title || 'Untitled Document'}</Link></strong>
                                             </div>
                                             <div style={{ fontSize: '12px', color: '#666', marginBottom: 8 }}>
                                                 <div>Original Document ID: <span style={{ fontFamily: 'monospace' }}>{document.replacementDocument.id}</span></div>
@@ -249,7 +250,7 @@ export default function DocumentDetail({ onViewChange, }: any) {
                                     description={
                                         <div>
                                             <div style={{ marginBottom: 8 }}>
-                                                This document has been replaced by: <strong>{document.replacedByDocument.title || 'Untitled Document'}</strong>
+                                                This document has been replaced by: <strong><Link to={`/editor/doc/${document.replacedByDocument.id}`}>{document.replacedByDocument.title || 'Untitled Document'}</Link></strong>
                                             </div>
                                             <div style={{ fontSize: '12px', color: '#666', marginBottom: 8 }}>
                                                 <div>Replacement Document ID: <span style={{ fontFamily: 'monospace' }}>{document.replacedByDocument.id}</span></div>

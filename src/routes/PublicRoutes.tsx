@@ -25,7 +25,6 @@ import ManagerLayoutLayout from "../components/layout/ManagerLayoutLayout";
 import ApprovalQueue from "../pages/manager/ApprovalQueue";
 import DocumentReview from "../pages/manager/DocumentReview";
 import DocumentManagement from "../pages/manager/DocumentManagement";
-import DocumentDetail from "../pages/editor/DocumentDetail";
 import RecreateDocument from "../pages/editor/RecreateDocument";
 import BookmarksPage from "../pages/bookmarks/BookmarksPage";
 import NewVersionDocument from "../pages/editor/NewVersionDocument";
@@ -42,6 +41,9 @@ import AdminRouteTestPage from "../pages/AdminRouteTestPage";
 import DocumentVersionDetail from "../pages/document/DocumentVersionDetail.tsx";
 import EditDocument from "../pages/editor/EditDocument.tsx";
 import UserManagerPage from "../pages/manager/UserManagerPage";
+import DocumentVersionDetailEditor from "../pages/editor/DocumentVersionDetailEditor.tsx";
+import DocumentDetailEditor from "../pages/editor/DocumentDetailEditor.tsx";
+import DocumentDetailManager from "../pages/manager/DocumentDetailManager.tsx";
 
 const PublicRoutes: RouteObject[] = [
   // {
@@ -148,6 +150,10 @@ const PublicRoutes: RouteObject[] = [
         path: "document-review/:id/:versionId",
         element: <DocumentReview />,
       },
+      {
+        path: "doc/:id",
+        element: <DocumentDetailManager />,
+      },
     ],
   },
   {
@@ -189,7 +195,11 @@ const PublicRoutes: RouteObject[] = [
       },
       {
         path: "doc/:id/:versionId",
-        element: <DocumentDetail />,
+        element: <DocumentVersionDetailEditor />,
+      },
+      {
+        path: "doc/:id",
+        element: <DocumentDetailEditor />,
       },
       {
         path: "document/recreate/:id",

@@ -131,7 +131,7 @@ export default function NewVersionDocument() {
       const values = await form.validateFields();
       
       if (!id) {
-        toast.error("Không tìm thấy documentId trên URL!");
+        toast.error("DocumentId not found on URL!");
         return;
       }
 
@@ -178,9 +178,9 @@ export default function NewVersionDocument() {
       navigate(-1); // hoặc chuyển hướng sang trang chi tiết mới nếu muốn
     } catch (error: any) {
       if (error.errorFields) {
-        toast.error("Vui lòng kiểm tra lại thông tin form!");
+        toast.error("Please check the form information again!");
       } else {
-        toast.error(`Tạo version mới thất bại. Vui lòng thử lại! ${error?.response?.data?.message}`);
+        toast.error(`Failed to create new version. Please try again! ${error?.response?.data?.message}`);
         console.error(error);
       }
     } finally {
