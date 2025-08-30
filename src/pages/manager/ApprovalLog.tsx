@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { Layout, Typography, Card, Button, Table, Tag, Row, Col, Input, Select, Space, DatePicker } from "antd";
+import { Typography, Card, Button, Table, Tag, Row, Col, Input, Select, Space, DatePicker } from "antd";
 import {
   SearchOutlined,
   FilterOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
-import { getApprovalLogs, DocumentType } from "../../lib/api/document";
+import { getApprovalLogs } from "../../lib/api/document";
 import toast from 'react-hot-toast';
 import moment from 'moment';
 
@@ -96,7 +96,7 @@ const ApprovalLog = () => {
         setPage(1); // Reset to first page when filtering
     };
 
-    const handleDateRangeChange = (dates: any, dateStrings: [string, string]) => {
+    const handleDateRangeChange = (_dates: any, dateStrings: [string, string]) => {
         setFilters(prev => ({
             ...prev,
             fromDate: dateStrings[0] ? moment(dateStrings[0]).startOf('day').toISOString() : undefined,
