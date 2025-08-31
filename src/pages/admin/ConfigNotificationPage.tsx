@@ -202,19 +202,19 @@ const ConfigNotificationPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Expired Notification Cron */}
+              {/* Document Status Update Cron */}
               <div className="p-4 bg-gray-900 bg-opacity-50 rounded-lg">
                 <div className="flex items-center gap-3 mb-2">
-                  <Calendar className="w-5 h-5 text-red-400" />
+                  <Calendar className="w-5 h-5 text-blue-400" />
                   <h4 className="text-sm font-medium text-gray-300">
-                    Expired Notification Schedule
+                    Document Status Update Schedule
                   </h4>
                 </div>
                 <p className="mb-1 text-lg font-semibold text-gray-100">
-                  {getCronDescription(configData.expiredNotificationCron)}
+                  {getCronDescription(configData.documentStatusUpdateCron)}
                 </p>
                 <p className="font-mono text-xs text-gray-400">
-                  {configData.expiredNotificationCron}
+                  {configData.documentStatusUpdateCron}
                 </p>
               </div>
 
@@ -234,18 +234,7 @@ const ConfigNotificationPage: React.FC = () => {
                 </p>
               </div>
 
-              {/* Near Expired Mode */}
-              {/* <div className="p-4 bg-gray-900 bg-opacity-50 rounded-lg">
-                <div className="flex items-center gap-3 mb-2">
-                  <Info className="w-5 h-5 text-blue-400" />
-                  <h4 className="text-sm font-medium text-gray-300">
-                    Near Expired Mode
-                  </h4>
-                </div>
-                <p className="text-lg font-semibold text-gray-100">
-                  {configData.nearExpiredModeDescription}
-                </p>
-              </div> */}
+
 
               {/* Enable Expired Notifications */}
               <div className="p-4 bg-gray-900 bg-opacity-50 rounded-lg">
@@ -311,18 +300,18 @@ const ConfigNotificationPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-gray-400" />
                   <span className="text-sm text-gray-400">
-                    Next Expired Check:{" "}
+                    Next Near-Expired Check:{" "}
                     <span className="text-gray-300">
-                      {formatDate(configData.nextExpiredNotificationTime)}
+                      {formatDate(configData.nextNearExpiredNotificationTime)}
                     </span>
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-gray-400" />
                   <span className="text-sm text-gray-400">
-                    Next Near-Expired Check:{" "}
+                    Next Document Status Update:{" "}
                     <span className="text-gray-300">
-                      {formatDate(configData.nextNearExpiredNotificationTime)}
+                      {formatDate(configData.nextDocumentStatusUpdateTime)}
                     </span>
                   </span>
                 </div>
