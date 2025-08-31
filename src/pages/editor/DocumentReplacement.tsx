@@ -370,7 +370,7 @@ const DocumentReplacement: React.FC = () => {
                 <Space direction="vertical" style={{ width: '100%' }}>
                   <div>
                     <Text style={{ display: 'block', marginBottom: 4, fontSize: '12px' }}>
-                      Minimum Similarity: {Math.round(minSimilarityThreshold * 100)}%
+                      Minimum Similarity
                     </Text>
                     <input
                       type="range"
@@ -413,7 +413,7 @@ const DocumentReplacement: React.FC = () => {
                 <div style={{ marginBottom: 24 }}>
                   <div style={{ marginBottom: 12, padding: 8, backgroundColor: '#e6f7ff', borderRadius: 4, border: '1px solid #91d5ff' }}>
                     <Text style={{ fontSize: '11px', color: '#1890ff' }}>
-                      Showing {replacementSuggestions.length} suggestions with ≥{Math.round(minSimilarityThreshold * 100)}% similarity
+                      Showing {replacementSuggestions.length} suggestions
                       {sameDepartmentOnly ? ' (same department only)' : ' (all departments)'}
                     </Text>
                   </div>
@@ -461,9 +461,6 @@ const DocumentReplacement: React.FC = () => {
                           <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
                             <FileTextOutlined style={{ marginRight: 8, color: '#1890ff' }} />
                             <Text strong>{suggestion.title}</Text>
-                            <Tag color="blue" style={{ marginLeft: 8 }}>
-                              {Math.round((suggestion.similarityScore || 0) * 100)}% match
-                            </Tag>
                           </div>
                           <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: 4 }}>
                             {suggestion.description}
@@ -484,7 +481,7 @@ const DocumentReplacement: React.FC = () => {
                       <div>
                         <div>No similar documents found for replacement</div>
                         <Text type="secondary" style={{ fontSize: '11px', marginTop: 8, display: 'block' }}>
-                          Try lowering the similarity threshold (currently {Math.round(minSimilarityThreshold * 100)}%)
+                          Try lowering the similarity threshold
                           {sameDepartmentOnly && ' or include other departments'}
                         </Text>
                       </div>

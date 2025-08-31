@@ -214,8 +214,8 @@ export function SearchFilter({ value, onChange,  documentTypes }: SearchFilterPr
           </Select>
         </div>
 
-        {/* Folder Filtering */}
-        <div>
+        {/* Folder Filtering - Hidden */}
+        {/* <div>
           <div className="flex items-center mb-2">
             <FolderOutlined style={{ color: '#1e40af', marginRight: '6px' }} />
             <Text type="secondary" className="text-sm font-medium">Folder Filter</Text>
@@ -240,7 +240,7 @@ export function SearchFilter({ value, onChange,  documentTypes }: SearchFilterPr
               </div>
             </div>
           )}
-        </div>
+        </div> */}
 
         {/* Tags */}
         {/* <div>

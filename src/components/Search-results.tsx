@@ -111,11 +111,6 @@ export function SearchResults({ results }: SearchResultsProps) {
                 >
                   {result.status}
                 </Tag>
-                {(result.relevanceScore || result.relevance) && (
-                  <Tag color="blue" className="font-medium">
-                    {Math.round((result.relevanceScore || result.relevance) * 100)}% match
-                  </Tag>
-                )}
               </div>
 
               {Array.isArray(result.tags) && result.tags.length > 0 && (
