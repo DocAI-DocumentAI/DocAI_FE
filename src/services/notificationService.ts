@@ -6,27 +6,24 @@ export interface NotificationConfig {
   warningThresholdDays: number;
   logRetentionDays: number;
   quartzEnabled: boolean;
-  expiredNotificationCron: string;
   nearExpiredNotificationCron: string;
+  documentStatusUpdateCron: string;
   enableExpiredNotifications: boolean;
   enableNearExpiredNotifications: boolean;
-  nearExpiredMode: number;
   createAt: string;
   updateAt: string;
-  nextExpiredNotificationTime: string;
   nextNearExpiredNotificationTime: string;
-  nearExpiredModeDescription: string;
+  nextDocumentStatusUpdateTime: string;
 }
 
 export interface UpdateNotificationConfigRequest {
   warningThresholdDays: number;
   logRetentionDays: number;
   quartzEnabled: boolean;
-  expiredNotificationCron: string;
   nearExpiredNotificationCron: string;
+  documentStatusUpdateCron: string;
   enableExpiredNotifications: boolean;
   enableNearExpiredNotifications: boolean;
-  nearExpiredMode: number;
 }
 
 export interface NotificationLog {

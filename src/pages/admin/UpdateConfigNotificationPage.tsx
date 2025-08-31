@@ -76,11 +76,10 @@ const UpdateConfigNotificationPage: React.FC = () => {
     warningThresholdDays: 7,
     logRetentionDays: 90,
     quartzEnabled: true,
-    expiredNotificationCron: "0 0 8 * * ?",
     nearExpiredNotificationCron: "0 0 9 * * MON",
+    documentStatusUpdateCron: "0 0 0 * * ?",
     enableExpiredNotifications: true,
     enableNearExpiredNotifications: true,
-    nearExpiredMode: 1,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -97,12 +96,11 @@ const UpdateConfigNotificationPage: React.FC = () => {
         warningThresholdDays: configData.warningThresholdDays,
         logRetentionDays: configData.logRetentionDays,
         quartzEnabled: configData.quartzEnabled,
-        expiredNotificationCron: fixCronExpression(configData.expiredNotificationCron),
         nearExpiredNotificationCron: fixCronExpression(configData.nearExpiredNotificationCron),
+        documentStatusUpdateCron: fixCronExpression(configData.documentStatusUpdateCron),
         enableExpiredNotifications: configData.enableExpiredNotifications,
         enableNearExpiredNotifications:
           configData.enableNearExpiredNotifications,
-        nearExpiredMode: configData.nearExpiredMode,
       });
       setFormKey((prev) => prev + 1);
     }
@@ -138,10 +136,13 @@ const UpdateConfigNotificationPage: React.FC = () => {
       }
     };
 
-    validateCron(formData.expiredNotificationCron, "expiredNotificationCron");
     validateCron(
       formData.nearExpiredNotificationCron,
       "nearExpiredNotificationCron"
+    );
+    validateCron(
+      formData.documentStatusUpdateCron,
+      "documentStatusUpdateCron"
     );
 
     setErrors(newErrors);
@@ -396,26 +397,26 @@ const UpdateConfigNotificationPage: React.FC = () => {
                     </p>
                   </div>
 
-                  {/* Expired Notification Cron */}
+                  {/* Document Status Update Cron */}
                   <div className="p-6 border bg-gray-700/30 rounded-xl border-gray-600/50">
                     <div className="flex items-center gap-2 mb-4 text-sm font-medium text-gray-300">
-                      <Calendar className="w-4 h-4 text-red-400" />
-                      Expired Notification Schedule
+                      <Calendar className="w-4 h-4 text-blue-400" />
+                      Document Status Update Schedule
                     </div>
                     <CronExpressionBuilder
-                      key={`expired-${formKey}`}
-                      value={formData.expiredNotificationCron}
+                      key={`document-status-${formKey}`}
+                      value={formData.documentStatusUpdateCron}
                       onChange={(cronExpression) =>
                         handleInputChange(
-                          "expiredNotificationCron",
+                          "documentStatusUpdateCron",
                           cronExpression
                         )
                       }
-                      error={errors.expiredNotificationCron}
-                      placeholder="0 0 8 * * ?"
+                      error={errors.documentStatusUpdateCron}
+                      placeholder="0 0 0 * * ?"
                     />
                     <p className="mt-3 text-xs text-gray-500">
-                      Configure when to send notifications for expired documents
+                      Configure when to update document status
                     </p>
                   </div>
 
