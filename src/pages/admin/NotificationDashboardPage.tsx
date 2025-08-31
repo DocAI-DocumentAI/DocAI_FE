@@ -23,7 +23,7 @@ const formatDate = (dateString: string) => {
   return date.toLocaleDateString() + " " + date.toLocaleTimeString();
 };
 
-// Get notification type label - updated with real data
+// Get notification type label for display - user friendly
 const getNotificationTypeLabel = (type: number) => {
   switch (type) {
     case 1:
@@ -60,6 +60,8 @@ const getNotificationTypeLabel = (type: number) => {
       return { label: "Unknown", color: "text-gray-400 bg-gray-900" };
   }
 };
+
+
 
 // Get recipient type label
 const getRecipientTypeLabel = (type: number) => {
@@ -249,12 +251,12 @@ const NotificationDashboardPage: React.FC = () => {
               <table className="w-full text-sm text-left text-gray-300">
                 <thead className="text-xs text-gray-400 uppercase bg-gray-700 bg-opacity-50">
                   <tr>
-                    <th className="px-6 py-3">Type</th>
+                    <th className="px-6 py-3 w-48">Type</th>
                     <th className="px-6 py-3">Recipient</th>
                     <th className="px-6 py-3">Subject</th>
-                    <th className="px-6 py-3">Status</th>
-                    <th className="px-6 py-3">Sent At</th>
-                    <th className="px-6 py-3">Actions</th>
+                    <th className="px-6 py-3 w-24">Status</th>
+                    <th className="px-6 py-3 w-40">Sent At</th>
+                    <th className="px-6 py-3 w-24">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -272,7 +274,7 @@ const NotificationDashboardPage: React.FC = () => {
                       >
                         <td className="px-6 py-4">
                           <span
-                            className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-opacity-50 ${notificationType.color}`}
+                            className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-opacity-50 whitespace-nowrap ${notificationType.color}`}
                           >
                             {notificationType.label}
                           </span>
