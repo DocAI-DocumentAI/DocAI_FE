@@ -52,15 +52,14 @@ const CronExpressionBuilder: React.FC<CronExpressionBuilderProps> = ({
       }
 
       // Handle both 5-part and 6-part cron expressions
-      let second, minute, hour, dayOfMonth, month, dayOfWeek;
+      let minute, hour, dayOfMonth, month, dayOfWeek;
 
       if (parts.length === 5) {
         // Standard 5-part: minute hour day month dow
         [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
-        second = "0";
       } else if (parts.length >= 6) {
         // 6-part with seconds: second minute hour day month dow
-        [second, minute, hour, dayOfMonth, month, dayOfWeek] = parts;
+        [, minute, hour, dayOfMonth, month, dayOfWeek] = parts;
       }
 
       if (minute && hour && dayOfMonth && month && dayOfWeek) {

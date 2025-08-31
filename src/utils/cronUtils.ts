@@ -266,18 +266,17 @@ export const parseCronExpression = (
   const parts = fixedExpression.trim().split(/\s+/);
 
   // Handle both 5-part (minute hour day month dow) and 6-part (second minute hour day month dow) cron expressions
-  let second, minute, hour, dayOfMonth, month, dayOfWeek;
+  let minute, hour, dayOfMonth, month, dayOfWeek;
 
   if (parts.length === 5) {
     // Standard 5-part cron: minute hour day month dow
     [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
-    second = "0";
   } else if (parts.length === 6) {
     // 6-part cron with seconds: second minute hour day month dow
-    [second, minute, hour, dayOfMonth, month, dayOfWeek] = parts;
+    [, minute, hour, dayOfMonth, month, dayOfWeek] = parts;
   } else if (parts.length === 7) {
     // 7-part cron with year: second minute hour day month dow year
-    [second, minute, hour, dayOfMonth, month, dayOfWeek] = parts;
+    [, minute, hour, dayOfMonth, month, dayOfWeek] = parts;
   } else {
     return {
       type: "custom",
