@@ -277,9 +277,10 @@ export default function UploadDocument() {
     try {
       console.log("Analyzing document...");
 
-      // Simulate step progression for better UX - make extracting text longer
-      setTimeout(() => setAnalysisStep('analyzing'), 2500);
-      setTimeout(() => setAnalysisStep('generating'), 4000);
+      // Simulate realistic step progression for better UX
+      // Total: 15 seconds (5s extracting, 5s analyzing, 5s generating)
+      setTimeout(() => setAnalysisStep('analyzing'), 5000);  // After 5s: start analyzing
+      setTimeout(() => setAnalysisStep('generating'), 10000); // After 10s: start generating (remaining 5s)
 
       // Only call analyze API, not regenerate summary
       const analyzeResult = await analyzeDocument(selectedFile);
@@ -483,6 +484,28 @@ export default function UploadDocument() {
                             'Processing...'
                           ) : 'Analyze Document'}
                         </Button>
+                      </div>
+                    </Card>
+                  )}
+
+                  {/* Analysis Progress */}
+                  {isAnalyzing && (
+                    <Card size="small" style={{ marginBottom: 16 }}>
+                      <div style={{ marginBottom: 8 }}>
+                        <Text strong>
+                          {analysisStep === 'extracting' ? '📄 Extracting text from document...' :
+                           analysisStep === 'analyzing' ? '🔍 Analyzing document structure...' :
+                           analysisStep === 'generating' ? '✨ Generating AI response...' :
+                           '🔄 Processing...'}
+                        </Text>
+                      </div>
+                      <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
+                        <Text type="secondary">
+                          {analysisStep === 'extracting' ? 'Reading document content and extracting text...' :
+                           analysisStep === 'analyzing' ? 'Analyzing structure, metadata, and key information...' :
+                           analysisStep === 'generating' ? 'AI is generating summary and extracting details...' :
+                           'Initializing analysis...'}
+                        </Text>
                       </div>
                     </Card>
                   )}
@@ -733,35 +756,6 @@ export default function UploadDocument() {
                     )}
                   </Form.List>
                 </Form.Item>
-
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="folderId"
-                      label={
-                        <span>
-                          <FolderOutlined style={{ marginRight: 4 }} />
-                          Folder Location
-                        </span>
-                      }
-                    >
-                      <FolderSelectorInput
-                        selectedFolderId={selectedFolderId}
-                        onFolderSelect={(folderId) => {
-                          setSelectedFolderId(folderId);
-                          form.setFieldValue('folderId', folderId);
-                        }}
-                        placeholder="Select folder (optional)"
-                        allowClear={true}
-                        filterPermission="write"
-                        treeType={isPublicState ? 'public' : 'department'}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    {/* Empty column for spacing */}
-                  </Col>
-                </Row>
 
                 <Row gutter={16}>
                   <Col xs={24} sm={12}>
