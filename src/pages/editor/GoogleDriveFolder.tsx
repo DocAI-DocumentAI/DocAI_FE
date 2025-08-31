@@ -154,14 +154,8 @@ const GoogleDriveFolder: React.FC = () => {
 
   // Handle tree type changes - reload content for current context
   useEffect(() => {
-    if (currentFolderId) {
-      // If we have a current folder, try to load it in the new tree context
-      loadFolderContents(currentFolderId);
-      updateBreadcrumbPath(currentFolderId);
-    } else {
-      // Load root contents for the new tree
-      loadRootContents();
-    }
+    // Don't reload if we just switched trees (the onChange handler already handles this)
+    // This useEffect is for other cases where activeTreeType might change
   }, [activeTreeType]);
 
   const loadFolderTree = async () => {
@@ -261,7 +255,9 @@ const GoogleDriveFolder: React.FC = () => {
       // Show the root folder's children (subfolders) when no specific folder is selected
       if (foldersToUse.length > 0) {
         const rootFolder = foldersToUse[0]; // The main root folder (department or public)
-        const contents: FolderItem[] = rootFolder.children.map(folder => ({
+        
+        // Load subfolders
+        const subfolderItems: FolderItem[] = rootFolder.children.map(folder => ({
           id: folder.id,
           name: folder.name,
           type: 'folder' as const,
@@ -269,7 +265,41 @@ const GoogleDriveFolder: React.FC = () => {
           modifiedBy: folder.folderType === 'system' ? 'System' : 'User',
           icon: <FolderOutlined />
         }));
-        setCurrentFolderContents(contents);
+
+        // Load documents from the root folder
+        let documentItems: FolderItem[] = [];
+        try {
+          const docsResp = await getFolderDocumentsList(rootFolder.id);
+          documentItems = (docsResp.data.documents || []).map(d => {
+            const ext = (d.fileType || d.fileName || '').toString().toLowerCase();
+            let icon: React.ReactNode | undefined;
+            let color: string | undefined;
+            if (ext.includes('pdf')) {
+              color = '#cf1322';
+              icon = <FilePdfOutlined style={{ color }} />;
+            } else if (ext.includes('doc') || ext.includes('docx')) {
+              color = '#1d39c4';
+              icon = <FileWordOutlined style={{ color }} />;
+            }
+            return {
+              id: d.id, // This is the version ID
+              documentId: d.documentFileId || d.id, // Use documentFileId if available, fallback to id
+              versionId: d.versionId || d.id, // Use versionId if available, fallback to id
+              name: d.title || d.fileName,
+              type: 'document' as const,
+              size: d.fileSize ? `${Math.round(d.fileSize / 1024)} KB` : undefined,
+              modifiedAt: d.lastUpdatedTime || '',
+              modifiedBy: 'System',
+              icon,
+              color,
+            };
+          });
+        } catch (docError) {
+          console.warn('No documents found in root folder or error loading documents:', docError);
+        }
+
+        // Combine subfolders and documents
+        setCurrentFolderContents([...subfolderItems, ...documentItems]);
         setSelectedFolder(null);
       } else {
         setCurrentFolderContents([]);
@@ -508,16 +538,6 @@ const GoogleDriveFolder: React.FC = () => {
             setMovingDocument(item);
             setDocumentMoveModalVisible(true);
           }
-        },
-        {
-          key: 'delete',
-          icon: <DeleteOutlined />,
-          label: 'Delete',
-          danger: true,
-          onClick: () => {
-            // TODO: Implement document delete functionality
-            toast('Document delete functionality not yet implemented');
-          }
         }
       ];
     }
@@ -715,6 +735,21 @@ const GoogleDriveFolder: React.FC = () => {
                 </div>
               </div>
 
+              {/* Drag handle icon */}
+              <div className="drag-handle" style={{
+                position: 'absolute',
+                top: '8px',
+                left: '8px',
+                opacity: 0,
+                transition: 'opacity 0.2s',
+                zIndex: 5,
+                pointerEvents: 'none',
+                color: '#5f6368',
+                fontSize: '16px'
+              }}>
+                <Menu />
+              </div>
+
               {/* Hover overlay with actions */}
               <div className="folder-actions" onClick={(e) => e.stopPropagation()} style={{
                 position: 'absolute',
@@ -736,6 +771,16 @@ const GoogleDriveFolder: React.FC = () => {
                     icon={<MoreOutlined />}
                     size="small"
                     className="folder-action-button"
+                    style={{
+                      border: 'none',
+                      background: 'rgba(255, 255, 255, 0.9)',
+                      backdropFilter: 'blur(4px)',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                      borderRadius: '6px',
+                      width: '28px',
+                      height: '28px',
+                      pointerEvents: 'auto'
+                    }}
                   />
                 </Dropdown>
               </div>
@@ -799,12 +844,27 @@ const GoogleDriveFolder: React.FC = () => {
           <div className="sidebar-content">
             <Tabs
               activeKey={activeTreeType}
-              onChange={(key) => {
-                setActiveTreeType(key as 'department' | 'public');
+              onChange={async (key) => {
+                const newTreeType = key as 'department' | 'public';
+                setActiveTreeType(newTreeType);
                 // Reset current folder when switching trees
                 setCurrentFolderId(null);
                 setSelectedFolder(null);
                 setBreadcrumbPath([]);
+                setSelectedDocument(null);
+                setDocumentDetail(null);
+                
+                // Immediately load root contents for the new tree
+                try {
+                  setLoading(true);
+                  const foldersToUse = newTreeType === 'department' ? folders : publicFolders;
+                  await loadRootContents(foldersToUse);
+                } catch (error: any) {
+                  console.error('Failed to load root contents after tree switch:', error);
+                  toast.error('Failed to load folder contents');
+                } finally {
+                  setLoading(false);
+                }
               }}
               size="small"
               items={[
