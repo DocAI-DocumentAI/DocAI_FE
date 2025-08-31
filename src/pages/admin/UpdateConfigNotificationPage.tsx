@@ -16,7 +16,7 @@ import {
 import toast from "react-hot-toast";
 import Header from "../../components/common/Header";
 import CronExpressionBuilder from "../../components/common/CronExpressionBuilder";
-import { validateCronExpression } from "../../utils/cronUtils";
+import { validateCronExpression, fixCronExpression } from "../../utils/cronUtils";
 import {
   useNotificationConfig,
   useUpdateNotificationConfig,
@@ -97,8 +97,8 @@ const UpdateConfigNotificationPage: React.FC = () => {
         warningThresholdDays: configData.warningThresholdDays,
         logRetentionDays: configData.logRetentionDays,
         quartzEnabled: configData.quartzEnabled,
-        expiredNotificationCron: configData.expiredNotificationCron,
-        nearExpiredNotificationCron: configData.nearExpiredNotificationCron,
+        expiredNotificationCron: fixCronExpression(configData.expiredNotificationCron),
+        nearExpiredNotificationCron: fixCronExpression(configData.nearExpiredNotificationCron),
         enableExpiredNotifications: configData.enableExpiredNotifications,
         enableNearExpiredNotifications:
           configData.enableNearExpiredNotifications,

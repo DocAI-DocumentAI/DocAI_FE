@@ -8,7 +8,7 @@ interface NotificationFiltersProps {
   onReset: () => void;
 }
 
-// Get notification type label - updated with real data
+// Get notification type label for display - user friendly
 const getNotificationTypeLabel = (type: number) => {
   switch (type) {
     case 1:
@@ -46,6 +46,38 @@ const getNotificationTypeLabel = (type: number) => {
   }
 };
 
+// Convert notification type number to enum name for API
+const getNotificationTypeEnumName = (type: number): string => {
+  switch (type) {
+    case 1: return "NearingExpiration";
+    case 2: return "Expired";
+    case 3: return "DocumentUpdate";
+    case 4: return "SystemMaintenance";
+    case 5: return "SystemEscalation";
+    case 6: return "General";
+    case 7: return "DocumentSubmitted";
+    case 8: return "DocumentApproved";
+    case 9: return "DocumentRejected";
+    default: return "Unknown";
+  }
+};
+
+// Convert enum name back to number for dropdown display
+const getNotificationTypeNumber = (enumName: string): number | undefined => {
+  switch (enumName) {
+    case "NearingExpiration": return 1;
+    case "Expired": return 2;
+    case "DocumentUpdate": return 3;
+    case "SystemMaintenance": return 4;
+    case "SystemEscalation": return 5;
+    case "General": return 6;
+    case "DocumentSubmitted": return 7;
+    case "DocumentApproved": return 8;
+    case "DocumentRejected": return 9;
+    default: return undefined;
+  }
+};
+
 const NotificationFilters: React.FC<NotificationFiltersProps> = ({
   filters,
   onFiltersChange,
@@ -57,6 +89,11 @@ const NotificationFilters: React.FC<NotificationFiltersProps> = ({
     field: keyof NotificationLogsFilters,
     value: any
   ) => {
+    // Convert notification type number to enum name for API
+    if (field === "notificationType" && value && !isNaN(Number(value))) {
+      value = getNotificationTypeEnumName(Number(value));
+    }
+
     onFiltersChange({
       ...filters,
       [field]: value,
@@ -144,7 +181,11 @@ const NotificationFilters: React.FC<NotificationFiltersProps> = ({
             Notification Type
           </label>
           <select
-            value={filters.notificationType || ""}
+            value={
+              filters.notificationType
+                ? getNotificationTypeNumber(filters.notificationType) || ""
+                : ""
+            }
             onChange={(e) =>
               handleInputChange("notificationType", e.target.value || undefined)
             }

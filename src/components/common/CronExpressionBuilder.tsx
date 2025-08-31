@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Clock, Calendar, Settings } from "lucide-react";
+import { Clock, Calendar, Settings, Info } from "lucide-react";
+import { getCronDescription, fixCronExpression } from "../../utils/cronUtils";
 
 interface CronExpressionBuilderProps {
   value: string;
@@ -36,40 +37,82 @@ const CronExpressionBuilder: React.FC<CronExpressionBuilderProps> = ({
     customExpression: value || placeholder,
   });
 
+  const [autoFixMessage, setAutoFixMessage] = useState<string>("");
+
   // Parse existing cron expression on initial load
   useEffect(() => {
     if (value && value.trim()) {
-      const parts = value.trim().split(/\s+/);
-      if (parts.length >= 6) {
-        const [, minute, hour, dayOfMonth, , dayOfWeek] = parts;
+      // Auto-fix the value first
+      const fixedValue = fixCronExpression(value);
+      const parts = fixedValue.trim().split(/\s+/);
 
+      // If value was fixed, notify parent
+      if (fixedValue !== value) {
+        onChange(fixedValue);
+      }
+
+      // Handle both 5-part and 6-part cron expressions
+      let second, minute, hour, dayOfMonth, month, dayOfWeek;
+
+      if (parts.length === 5) {
+        // Standard 5-part: minute hour day month dow
+        [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
+        second = "0";
+      } else if (parts.length >= 6) {
+        // 6-part with seconds: second minute hour day month dow
+        [second, minute, hour, dayOfMonth, month, dayOfWeek] = parts;
+      }
+
+      if (minute && hour && dayOfMonth && month && dayOfWeek) {
         let mode: CronMode = "custom";
         let newDayOfWeek = config.dayOfWeek;
         let newDayOfMonth = config.dayOfMonth;
 
-        if (dayOfWeek !== "?" && (dayOfMonth === "*" || dayOfMonth === "?")) {
-          mode = "weekly";
-          newDayOfWeek = dayOfWeek;
-        } else if (dayOfMonth !== "*" && dayOfWeek === "?") {
-          mode = "monthly";
-          newDayOfMonth = dayOfMonth;
-        } else if (dayOfMonth === "*" && dayOfWeek === "?") {
-          mode = "daily";
+        // Check if minute and hour are simple values (not patterns)
+        const isSimpleMinute = /^\d+$/.test(minute);
+        const isSimpleHour = /^\d+$/.test(hour);
+
+        // Only classify as simple modes if minute and hour are simple values
+        if (isSimpleMinute && isSimpleHour) {
+          // Apply cron rules: day of month and day of week are mutually exclusive
+          if (dayOfWeek !== "?" && dayOfWeek !== "*" && (dayOfMonth === "?" || dayOfMonth === "*")) {
+            // Weekly pattern: specific day of week, any day of month
+            mode = "weekly";
+            newDayOfWeek = dayOfWeek;
+          } else if ((dayOfMonth !== "*" && dayOfMonth !== "?") && (dayOfWeek === "?" || dayOfWeek === "*")) {
+            // Monthly pattern: specific day of month, any day of week
+            mode = "monthly";
+            newDayOfMonth = dayOfMonth;
+          } else if (dayOfMonth === "*" && (dayOfWeek === "?" || dayOfWeek === "*")) {
+            // Daily pattern: any day of month, any day of week
+            mode = "daily";
+          }
         }
+        // If minute or hour contains patterns like */30, 0/15, etc., keep as custom mode
+
+        // Only pad simple numeric values, not complex patterns
+        const formatTimeValue = (value: string): string => {
+          // If it's a simple number, pad it
+          if (/^\d+$/.test(value)) {
+            return value.padStart(2, "0");
+          }
+          // For complex patterns like "0/30", "*/15", etc., return as-is
+          return value;
+        };
 
         setConfig({
           mode: mode,
-          hour: hour.padStart(2, "0"),
-          minute: minute.padStart(2, "0"),
+          hour: formatTimeValue(hour),
+          minute: formatTimeValue(minute),
           dayOfWeek: newDayOfWeek,
           dayOfMonth: newDayOfMonth,
-          customExpression: value,
+          customExpression: fixedValue,
         });
       } else {
         setConfig((prev) => ({
           ...prev,
           mode: "custom",
-          customExpression: value,
+          customExpression: fixedValue,
         }));
       }
     }
@@ -80,10 +123,18 @@ const CronExpressionBuilder: React.FC<CronExpressionBuilderProps> = ({
   const generateCronExpression = (newConfig: CronConfig): string => {
     switch (newConfig.mode) {
       case "daily":
+        // Daily: run every day at specified time
+        // Format: second minute hour * * ?
         return `0 ${newConfig.minute} ${newConfig.hour} * * ?`;
       case "weekly":
+        // Weekly: run on specific day of week at specified time
+        // Format: second minute hour ? * dayOfWeek
+        // IMPORTANT: Use ? for day of month when specifying day of week
         return `0 ${newConfig.minute} ${newConfig.hour} ? * ${newConfig.dayOfWeek}`;
       case "monthly":
+        // Monthly: run on specific day of month at specified time
+        // Format: second minute hour dayOfMonth * ?
+        // IMPORTANT: Use ? for day of week when specifying day of month
         return `0 ${newConfig.minute} ${newConfig.hour} ${newConfig.dayOfMonth} * ?`;
       case "custom":
         return newConfig.customExpression;
@@ -101,15 +152,15 @@ const CronExpressionBuilder: React.FC<CronExpressionBuilderProps> = ({
     onChange(cronExpression);
   };
 
-  // Generate hour options (00-23)
+  // Generate hour options (0-23, no leading zeros in value)
   const hourOptions = Array.from({ length: 24 }, (_, i) => {
-    const hour = i.toString().padStart(2, "0");
+    const hour = i.toString(); // No leading zeros for value
     return { value: hour, label: hour };
   });
 
-  // Generate minute options (00-59)
+  // Generate minute options (0-59, no leading zeros in value)
   const minuteOptions = Array.from({ length: 60 }, (_, i) => {
-    const minute = i.toString().padStart(2, "0");
+    const minute = i.toString(); // No leading zeros for value
     return { value: minute, label: minute };
   });
 
@@ -149,7 +200,7 @@ const CronExpressionBuilder: React.FC<CronExpressionBuilderProps> = ({
       )}
 
       {/* Tabs */}
-      <div className="flex p-1 space-x-1 bg-gray-700 rounded-lg">
+      <div className="flex p-1 space-x-1 bg-gray-800/50 rounded-lg border border-gray-600/30">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
@@ -157,10 +208,10 @@ const CronExpressionBuilder: React.FC<CronExpressionBuilderProps> = ({
               key={tab.id}
               type="button"
               onClick={() => updateConfig({ mode: tab.id as CronMode })}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium rounded-md transition-all duration-200 ${
                 config.mode === tab.id
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-300 hover:text-white hover:bg-gray-600"
+                  ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/25"
+                  : "text-gray-300 hover:text-white hover:bg-gray-600/50 hover:shadow-md"
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -173,55 +224,60 @@ const CronExpressionBuilder: React.FC<CronExpressionBuilderProps> = ({
       {/* Configuration based on selected mode */}
       <div className="space-y-4">
         {config.mode !== "custom" && (
-          <div className="grid grid-cols-2 gap-4">
-            {/* Hour */}
-            <div>
-              <label className="block mb-2 text-sm font-medium text-gray-300">
-                Giờ
-              </label>
-              <select
-                value={config.hour}
-                onChange={(e) => updateConfig({ hour: e.target.value })}
-                className="w-full px-3 py-2 text-gray-100 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {hourOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="p-4 bg-gray-800/30 rounded-lg border border-gray-600/30">
+            <div className="grid grid-cols-2 gap-4">
+              {/* Hour */}
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-300">
+                  <Clock className="w-4 h-4 inline mr-1" />
+                  Giờ
+                </label>
+                <select
+                  value={config.hour}
+                  onChange={(e) => updateConfig({ hour: e.target.value })}
+                  className="w-full px-3 py-2 text-gray-100 bg-gray-700/50 border border-gray-600/50 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                >
+                  {hourOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}:00
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            {/* Minute */}
-            <div>
-              <label className="block mb-2 text-sm font-medium text-gray-300">
-                Phút
-              </label>
-              <select
-                value={config.minute}
-                onChange={(e) => updateConfig({ minute: e.target.value })}
-                className="w-full px-3 py-2 text-gray-100 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {minuteOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              {/* Minute */}
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-300">
+                  <Clock className="w-4 h-4 inline mr-1" />
+                  Phút
+                </label>
+                <select
+                  value={config.minute}
+                  onChange={(e) => updateConfig({ minute: e.target.value })}
+                  className="w-full px-3 py-2 text-gray-100 bg-gray-700/50 border border-gray-600/50 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                >
+                  {minuteOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         )}
 
         {/* Weekly specific */}
         {config.mode === "weekly" && (
-          <div>
+          <div className="p-4 bg-gray-800/30 rounded-lg border border-gray-600/30">
             <label className="block mb-2 text-sm font-medium text-gray-300">
+              <Calendar className="w-4 h-4 inline mr-1" />
               Ngày trong tuần
             </label>
             <select
               value={config.dayOfWeek}
               onChange={(e) => updateConfig({ dayOfWeek: e.target.value })}
-              className="w-full px-3 py-2 text-gray-100 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 text-gray-100 bg-gray-700/50 border border-gray-600/50 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
             >
               {dayOfWeekOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -234,14 +290,15 @@ const CronExpressionBuilder: React.FC<CronExpressionBuilderProps> = ({
 
         {/* Monthly specific */}
         {config.mode === "monthly" && (
-          <div>
+          <div className="p-4 bg-gray-800/30 rounded-lg border border-gray-600/30">
             <label className="block mb-2 text-sm font-medium text-gray-300">
+              <Calendar className="w-4 h-4 inline mr-1" />
               Ngày trong tháng
             </label>
             <select
               value={config.dayOfMonth}
               onChange={(e) => updateConfig({ dayOfMonth: e.target.value })}
-              className="w-full px-3 py-2 text-gray-100 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 text-gray-100 bg-gray-700/50 border border-gray-600/50 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
             >
               {dayOfMonthOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -254,37 +311,90 @@ const CronExpressionBuilder: React.FC<CronExpressionBuilderProps> = ({
 
         {/* Custom expression */}
         {config.mode === "custom" && (
-          <div>
+          <div className="p-4 bg-gray-800/30 rounded-lg border border-gray-600/30">
             <label className="block mb-2 text-sm font-medium text-gray-300">
+              <Settings className="w-4 h-4 inline mr-1" />
               Cron Expression
             </label>
             <input
               type="text"
               value={config.customExpression}
-              onChange={(e) =>
-                updateConfig({ customExpression: e.target.value })
-              }
-              className={`w-full px-3 py-2 bg-gray-700 border rounded-md text-gray-100 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                error ? "border-red-500" : "border-gray-600"
+              onChange={(e) => {
+                const rawValue = e.target.value;
+                const fixedValue = fixCronExpression(rawValue);
+                updateConfig({ customExpression: fixedValue });
+
+                // Show warning if value was auto-fixed
+                if (rawValue !== fixedValue && rawValue.length > 0) {
+                  setAutoFixMessage(`Đã tự động sửa: "${rawValue}" → "${fixedValue}"`);
+                  setTimeout(() => setAutoFixMessage(""), 3000);
+                } else {
+                  setAutoFixMessage("");
+                }
+              }}
+              className={`w-full px-3 py-2 bg-gray-700/50 border rounded-md text-gray-100 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+                error ? "border-red-500 focus:ring-red-500" : "border-gray-600/50"
               }`}
               placeholder={placeholder}
             />
+            <div className="mt-2 space-y-2">
+              <p className="text-xs text-gray-400">
+                Định dạng: <code className="text-blue-300">second minute hour day month dayOfWeek</code>
+              </p>
+
+
+
+              {/* Auto-fix message */}
+              {autoFixMessage && (
+                <div className="mt-2 p-2 bg-green-900/20 border border-green-500/30 rounded text-xs text-green-300">
+                  <Info className="w-3 h-3 inline mr-1" />
+                  {autoFixMessage}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
         {/* Preview */}
-        <div className="p-3 bg-gray-900 bg-opacity-50 rounded-lg">
-          <div className="flex items-center gap-2 mb-1">
-            <Clock className="w-4 h-4 text-blue-400" />
-            <span className="text-sm font-medium text-gray-300">Preview:</span>
+        <div className="p-4 bg-gradient-to-r from-gray-900/50 to-gray-800/50 rounded-lg border border-gray-600/30">
+          <div className="space-y-3">
+            {/* Cron Expression */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="w-4 h-4 text-blue-400" />
+                <span className="text-sm font-medium text-gray-300">Cron Expression:</span>
+              </div>
+              <div className="p-2 bg-gray-800/50 rounded border border-gray-600/50">
+                <code className="font-mono text-sm text-blue-300 break-all">
+                  {generateCronExpression(config)}
+                </code>
+              </div>
+            </div>
+
+            {/* Human Readable Description */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Info className="w-4 h-4 text-green-400" />
+                <span className="text-sm font-medium text-gray-300">Mô tả:</span>
+              </div>
+              <div className="p-2 bg-gray-800/50 rounded border border-gray-600/50">
+                <p className="text-sm text-green-300 font-medium">
+                  {getCronDescription(generateCronExpression(config))}
+                </p>
+              </div>
+            </div>
           </div>
-          <code className="font-mono text-sm text-blue-300">
-            {generateCronExpression(config)}
-          </code>
         </div>
       </div>
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && (
+        <div className="p-3 bg-red-900/20 border border-red-500/30 rounded-lg">
+          <p className="text-sm text-red-400 flex items-center gap-2">
+            <Info className="w-4 h-4" />
+            {error}
+          </p>
+        </div>
+      )}
     </div>
   );
 };

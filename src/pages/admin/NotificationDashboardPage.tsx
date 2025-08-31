@@ -23,7 +23,7 @@ const formatDate = (dateString: string) => {
   return date.toLocaleDateString() + " " + date.toLocaleTimeString();
 };
 
-// Get notification type label - updated with real data
+// Get notification type label for display - user friendly
 const getNotificationTypeLabel = (type: number) => {
   switch (type) {
     case 1:
@@ -58,6 +58,22 @@ const getNotificationTypeLabel = (type: number) => {
       return { label: "Document Rejected", color: "text-red-400 bg-red-900" };
     default:
       return { label: "Unknown", color: "text-gray-400 bg-gray-900" };
+  }
+};
+
+// Convert notification type number to enum name for API
+const getNotificationTypeEnumName = (type: number): string => {
+  switch (type) {
+    case 1: return "NearingExpiration";
+    case 2: return "Expired";
+    case 3: return "DocumentUpdate";
+    case 4: return "SystemMaintenance";
+    case 5: return "SystemEscalation";
+    case 6: return "General";
+    case 7: return "DocumentSubmitted";
+    case 8: return "DocumentApproved";
+    case 9: return "DocumentRejected";
+    default: return "Unknown";
   }
 };
 
