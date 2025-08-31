@@ -487,7 +487,7 @@ export const enhancedSemanticSearchDocuments = async (
     );
 
   const response = await api.get(
-    `/document/enhanced-semantic-search?${searchParams.toString()}`
+    `/document/kernel-memory-search?${searchParams.toString()}`
   );
   return response.data;
 };

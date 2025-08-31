@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Navbar } from "../../components/layout/Navbar";
 import { SearchBox } from "../../components/Search-box";
 import { SearchResults } from "../../components/Search-results";
@@ -323,8 +325,51 @@ export default function SearchPage() {
                             AI
                           </span>
                         </div>
-                        <div className="leading-relaxed text-gray-700">
-                          {aiAnswer}
+                        <div className="leading-relaxed text-gray-700 prose prose-sm max-w-none">
+                          <ReactMarkdown 
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              // Custom styling for markdown elements
+                              p: ({ children }) => (
+                                <p className="mb-3 last:mb-0">{children}</p>
+                              ),
+                              ul: ({ children }) => (
+                                <ul className="mb-3 ml-4 list-disc">{children}</ul>
+                              ),
+                              ol: ({ children }) => (
+                                <ol className="mb-3 ml-4 list-decimal">{children}</ol>
+                              ),
+                              li: ({ children }) => (
+                                <li className="mb-1">{children}</li>
+                              ),
+                              h1: ({ children }) => (
+                                <h1 className="mb-2 text-lg font-bold text-blue-800">{children}</h1>
+                              ),
+                              h2: ({ children }) => (
+                                <h2 className="mb-2 text-base font-semibold text-blue-700">{children}</h2>
+                              ),
+                              h3: ({ children }) => (
+                                <h3 className="mb-1 text-sm font-semibold text-blue-600">{children}</h3>
+                              ),
+                              strong: ({ children }) => (
+                                <strong className="font-semibold text-gray-800">{children}</strong>
+                              ),
+                              em: ({ children }) => (
+                                <em className="italic text-gray-700">{children}</em>
+                              ),
+                              code: ({ children }) => (
+                                <code className="px-1 py-0.5 text-sm bg-gray-200 rounded">{children}</code>
+                              ),
+                              pre: ({ children }) => (
+                                <pre className="p-3 mb-3 overflow-x-auto bg-gray-100 rounded">{children}</pre>
+                              ),
+                              blockquote: ({ children }) => (
+                                <blockquote className="pl-4 mb-3 border-l-4 border-blue-300 bg-blue-50">{children}</blockquote>
+                              ),
+                            }}
+                          >
+                            {aiAnswer}
+                          </ReactMarkdown>
                         </div>
                       </div>
                     </div>
