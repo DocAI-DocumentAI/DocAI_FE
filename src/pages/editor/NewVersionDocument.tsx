@@ -124,6 +124,10 @@ export default function NewVersionDocument() {
   const handleSwitchChange = (checked: boolean) => {
     setIsPublicState(checked);
     form.setFieldValue('isPublic', checked);
+    
+    // Clear folder selection when switching between public/private
+    setSelectedFolderId(undefined);
+    form.setFieldValue('folderId', undefined);
   };
 
   const handleSubmit = async () => {
@@ -590,24 +594,6 @@ export default function NewVersionDocument() {
                   </Col>
                 </Row>
 
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item 
-                      name="isPublic" 
-                      label="Document Visibility"
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Switch 
-                          checked={isPublicState}
-                          onChange={handleSwitchChange}
-                          disabled={isAnyOperationInProgress}
-                        />
-                        <Text>Make this document public</Text>
-                      </div>
-                    </Form.Item>
-                  </Col>
-                </Row>
-
                 <Form.Item label="Description">
                   <WysiwygEditor
                     value={htmlDescription}
@@ -686,6 +672,50 @@ export default function NewVersionDocument() {
                   </Form.List>
                 </Form.Item>
 
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      name="folderId"
+                      label={
+                        <span>
+                          <FolderOutlined style={{ marginRight: 4 }} />
+                          Folder Location
+                        </span>
+                      }
+                    >
+                      <FolderSelectorInput
+                        selectedFolderId={selectedFolderId}
+                        onFolderSelect={(folderId) => {
+                          setSelectedFolderId(folderId);
+                          form.setFieldValue('folderId', folderId);
+                        }}
+                        placeholder="Select folder (optional)"
+                        allowClear={true}
+                        filterPermission="write"
+                        disabled={isAnyOperationInProgress}
+                        treeType={isPublicState ? 'public' : 'department'}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      name="isPublic"
+                      label="Document Visibility"
+                      valuePropName="checked"
+                      initialValue={false}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Switch 
+                          checked={isPublicState}
+                          onChange={handleSwitchChange}
+                          disabled={isAnyOperationInProgress}
+                        />
+                        <Text>Make this document public</Text>
+                      </div>
+                    </Form.Item>
+                  </Col>
+                </Row>
+
                 <Form.Item style={{ marginTop: 32, textAlign: "center" }}>
                   <Button
                     type="primary"
@@ -748,36 +778,6 @@ export default function NewVersionDocument() {
                 <Row gutter={16}>
                   <Col xs={24} sm={12}>
                     <Form.Item
-                      name="folderId"
-                      label={
-                        <span>
-                          <FolderOutlined style={{ marginRight: 4 }} />
-                          Folder Location
-                        </span>
-                      }
-                    >
-                      <FolderSelectorInput
-                        selectedFolderId={selectedFolderId}
-                        onFolderSelect={(folderId) => {
-                          setSelectedFolderId(folderId);
-                          form.setFieldValue('folderId', folderId);
-                        }}
-                        placeholder="Select folder (optional)"
-                        allowClear={true}
-                        filterPermission="write"
-                        disabled={isAnyOperationInProgress}
-                        treeType={isPublicState ? 'public' : 'department'}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    {/* Empty column for spacing */}
-                  </Col>
-                </Row>
-
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
                       name="versionName"
                       label="Version Name"
                       rules={[{ required: true, message: "Please enter version name" }]}
@@ -801,24 +801,6 @@ export default function NewVersionDocument() {
                   <Col xs={24} sm={12}>
                     <Form.Item name="effectiveTo" label="Effective Until">
                       <DatePicker style={{ width: "100%" }} disabled={isAnyOperationInProgress} />
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item 
-                      name="isPublic" 
-                      label="Document Visibility"
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Switch 
-                          checked={isPublicState}
-                          onChange={handleSwitchChange}
-                          disabled={isAnyOperationInProgress}
-                        />
-                        <Text>Make this document public</Text>
-                      </div>
                     </Form.Item>
                   </Col>
                 </Row>
@@ -902,6 +884,50 @@ export default function NewVersionDocument() {
                     )}
                   </Form.List>
                 </Form.Item>
+
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      name="folderId"
+                      label={
+                        <span>
+                          <FolderOutlined style={{ marginRight: 4 }} />
+                          Folder Location
+                        </span>
+                      }
+                    >
+                      <FolderSelectorInput
+                        selectedFolderId={selectedFolderId}
+                        onFolderSelect={(folderId) => {
+                          setSelectedFolderId(folderId);
+                          form.setFieldValue('folderId', folderId);
+                        }}
+                        placeholder="Select folder (optional)"
+                        allowClear={true}
+                        filterPermission="write"
+                        disabled={isAnyOperationInProgress}
+                        treeType={isPublicState ? 'public' : 'department'}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      name="isPublic"
+                      label="Document Visibility"
+                      valuePropName="checked"
+                      initialValue={false}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Switch 
+                          checked={isPublicState}
+                          onChange={handleSwitchChange}
+                          disabled={isAnyOperationInProgress}
+                        />
+                        <Text>Make this document public</Text>
+                      </div>
+                    </Form.Item>
+                  </Col>
+                </Row>
 
                 <Form.Item style={{ marginTop: 32 }}>
                   <Space>

@@ -17,7 +17,6 @@ import {
   GlobalOutlined
 } from '@ant-design/icons';
 import type { Dayjs } from 'dayjs';
-import FolderSelector from './folder/FolderSelector';
 
 const { Text } = Typography; 
 

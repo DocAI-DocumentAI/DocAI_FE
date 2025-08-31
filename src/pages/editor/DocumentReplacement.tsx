@@ -608,37 +608,6 @@ const DocumentReplacement: React.FC = () => {
                 <Row gutter={16}>
                   <Col xs={24} sm={12}>
                     <Form.Item
-                      name="folderId"
-                      label={
-                        <span>
-                          <FolderOutlined style={{ marginRight: 4 }} />
-                          Folder Location
-                        </span>
-                      }
-                    >
-                      <FolderSelectorInput
-                        selectedFolderId={selectedFolderId}
-                        onFolderSelect={(folderId) => {
-                          setSelectedFolderId(folderId);
-                          form.setFieldValue('folderId', folderId);
-                          // Update suggestions when folder changes
-                          debouncedRefreshSuggestions(100);
-                        }}
-                        placeholder="Select folder (optional)"
-                        allowClear={true}
-                        filterPermission="write"
-                        treeType={isPublicState ? 'public' : 'department'}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    {/* Empty column for spacing */}
-                  </Col>
-                </Row>
-
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
                       name="versionName"
                       label="Version Name"
                       rules={[{ required: true, message: "Please enter version name" }]}
@@ -680,6 +649,11 @@ const DocumentReplacement: React.FC = () => {
                           onChange={(checked) => {
                             setIsPublicState(checked);
                             form.setFieldValue('isPublic', checked);
+                            
+                            // Clear folder selection when switching between public/private
+                            setSelectedFolderId(undefined);
+                            form.setFieldValue('folderId', undefined);
+                            
                             // Update suggestions when visibility changes
                             debouncedRefreshSuggestions(100);
                           }}
@@ -759,6 +733,34 @@ const DocumentReplacement: React.FC = () => {
                     )}
                   </Form.List>
                 </Form.Item>
+
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      name="folderId"
+                      label={
+                        <span>
+                          <FolderOutlined style={{ marginRight: 4 }} />
+                          Folder Location
+                        </span>
+                      }
+                    >
+                      <FolderSelectorInput
+                        selectedFolderId={selectedFolderId}
+                        onFolderSelect={(folderId) => {
+                          setSelectedFolderId(folderId);
+                          form.setFieldValue('folderId', folderId);
+                          // Update suggestions when folder changes
+                          debouncedRefreshSuggestions(100);
+                        }}
+                        placeholder="Select folder (optional)"
+                        allowClear={true}
+                        filterPermission="write"
+                        treeType={isPublicState ? 'public' : 'department'}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
 
                 {/* Action Buttons */}
                 <Form.Item style={{ marginTop: 32 }}>

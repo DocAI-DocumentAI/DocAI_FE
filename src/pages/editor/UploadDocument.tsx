@@ -736,6 +736,35 @@ export default function UploadDocument() {
 
                 <Row gutter={16}>
                   <Col xs={24} sm={12}>
+                    <Form.Item
+                      name="folderId"
+                      label={
+                        <span>
+                          <FolderOutlined style={{ marginRight: 4 }} />
+                          Folder Location
+                        </span>
+                      }
+                    >
+                      <FolderSelectorInput
+                        selectedFolderId={selectedFolderId}
+                        onFolderSelect={(folderId) => {
+                          setSelectedFolderId(folderId);
+                          form.setFieldValue('folderId', folderId);
+                        }}
+                        placeholder="Select folder (optional)"
+                        allowClear={true}
+                        filterPermission="write"
+                        treeType={isPublicState ? 'public' : 'department'}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    {/* Empty column for spacing */}
+                  </Col>
+                </Row>
+
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
                     <Form.Item 
                       name="isPublic" 
                       label="Document Visibility" 
@@ -819,35 +848,6 @@ export default function UploadDocument() {
                         ))}
                       </Select>
                     </Form.Item>
-                  </Col>
-                </Row>
-
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="folderId"
-                      label={
-                        <span>
-                          <FolderOutlined style={{ marginRight: 4 }} />
-                          Folder Location
-                        </span>
-                      }
-                    >
-                      <FolderSelectorInput
-                        selectedFolderId={selectedFolderId}
-                        onFolderSelect={(folderId) => {
-                          setSelectedFolderId(folderId);
-                          form.setFieldValue('folderId', folderId);
-                        }}
-                        placeholder="Select folder (optional)"
-                        allowClear={true}
-                        filterPermission="write"
-                        treeType={isPublicState ? 'public' : 'department'}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    {/* Empty column for spacing */}
                   </Col>
                 </Row>
 
@@ -953,7 +953,36 @@ export default function UploadDocument() {
 
                 <Row gutter={16}>
                   <Col xs={24} sm={12}>
-                    <Form.Item 
+                    <Form.Item
+                      name="folderId"
+                      label={
+                        <span>
+                          <FolderOutlined style={{ marginRight: 4 }} />
+                          Folder Location
+                        </span>
+                      }
+                    >
+                      <FolderSelectorInput
+                        selectedFolderId={selectedFolderId}
+                        onFolderSelect={(folderId) => {
+                          setSelectedFolderId(folderId);
+                          form.setFieldValue('folderId', folderId);
+                        }}
+                        placeholder="Select folder (optional)"
+                        allowClear={true}
+                        filterPermission="write"
+                        treeType={isPublicState ? 'public' : 'department'}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    {/* Empty column for spacing */}
+                  </Col>
+                </Row>
+
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
                       name="isPublic" 
                       label="Document Visibility" 
                       valuePropName="checked"
@@ -967,15 +996,18 @@ export default function UploadDocument() {
                             setIsPublicState(checked);
                             form.setFieldValue('isPublic', checked);
                             
+                            // Clear folder selection when switching between public/private
+                            setSelectedFolderId(undefined);
+                            form.setFieldValue('folderId', undefined);
+                            
                             // Verify form value after setting
                             setTimeout(() => {
                               console.log('Form value after change:', form.getFieldValue('isPublic'));
+                              console.log('Folder cleared:', form.getFieldValue('folderId'));
                             }, 0);
                           }}
                         />
-                        <Text>Make this document public</Text>
-                 
-                      </div>
+                        <Text>Make this document public</Text>                      </div>
                     </Form.Item>
                   </Col>
                 </Row>

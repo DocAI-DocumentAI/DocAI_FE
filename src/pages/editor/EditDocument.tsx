@@ -173,6 +173,10 @@ export default function EditDocument() {
   const handleSwitchChange = (checked: boolean) => {
     setIsPublicState(checked);
     form.setFieldValue('isPublic', checked);
+    
+    // Clear folder selection when switching between public/private
+    setSelectedFolderId(undefined);
+    form.setFieldValue('folderId', undefined);
   };
 
   const handleDocumentAction = async (values: any, action: 'draft' | 'submit') => {
@@ -391,36 +395,6 @@ export default function EditDocument() {
                   </Col>
                 </Row>
 
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="folderId"
-                      label={
-                        <span>
-                          <FolderOutlined style={{ marginRight: 4 }} />
-                          Folder Location
-                        </span>
-                      }
-                    >
-                      <FolderSelectorInput
-                        selectedFolderId={selectedFolderId}
-                        onFolderSelect={(folderId) => {
-                          setSelectedFolderId(folderId);
-                          form.setFieldValue('folderId', folderId);
-                        }}
-                        placeholder="Select folder (optional)"
-                        allowClear={true}
-                        filterPermission="write"
-                        disabled={isAnyOperationInProgress}
-                        treeType={isPublicState ? 'public' : 'department'}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    {/* Empty column for spacing */}
-                  </Col>
-                </Row>
-
                 <Form.Item label="Description">
                   <WysiwygEditor
                     value={htmlDescription}
@@ -498,6 +472,36 @@ export default function EditDocument() {
                     )}
                   </Form.List>
                 </Form.Item>
+
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      name="folderId"
+                      label={
+                        <span>
+                          <FolderOutlined style={{ marginRight: 4 }} />
+                          Folder Location
+                        </span>
+                      }
+                    >
+                      <FolderSelectorInput
+                        selectedFolderId={selectedFolderId}
+                        onFolderSelect={(folderId) => {
+                          setSelectedFolderId(folderId);
+                          form.setFieldValue('folderId', folderId);
+                        }}
+                        placeholder="Select folder (optional)"
+                        allowClear={true}
+                        filterPermission="write"
+                        disabled={isAnyOperationInProgress}
+                        treeType={isPublicState ? 'public' : 'department'}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    {/* Empty column for spacing */}
+                  </Col>
+                </Row>
 
                 {/* Next Button */}
                 <Form.Item style={{ marginTop: 32, textAlign: "center" }}>
@@ -592,35 +596,6 @@ export default function EditDocument() {
                 <Row gutter={16}>
                   <Col xs={24} sm={12}>
                     <Form.Item
-                      name="folderId"
-                      label={
-                        <span>
-                          <FolderOutlined style={{ marginRight: 4 }} />
-                          Folder Location
-                        </span>
-                      }
-                    >
-                      <FolderSelectorInput
-                        selectedFolderId={selectedFolderId}
-                        onFolderSelect={(folderId) => {
-                          setSelectedFolderId(folderId);
-                          form.setFieldValue('folderId', folderId);
-                        }}
-                        placeholder="Select folder (optional)"
-                        allowClear={true}
-                        filterPermission="write"
-                        disabled={isAnyOperationInProgress}
-                        treeType={isPublicState ? 'public' : 'department'}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    {/* Empty column for spacing */}
-                  </Col>
-                </Row>
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
                       name="isPublic"
                       label="Document Visibility"
                     >
@@ -635,35 +610,6 @@ export default function EditDocument() {
                     </Form.Item>
                   </Col>
                 </Row>
-
-                {/* <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="folderId"
-                      label={
-                        <span>
-                          <FolderOutlined style={{ marginRight: 4 }} />
-                          Folder Location
-                        </span>
-                      }
-                    >
-                      <FolderSelectorInput
-                        selectedFolderId={selectedFolderId}
-                        onFolderSelect={(folderId) => {
-                          setSelectedFolderId(folderId);
-                          form.setFieldValue('folderId', folderId);
-                        }}
-                        placeholder="Select folder (optional)"
-                        allowClear={true}
-                        filterPermission="write"
-                        disabled={isAnyOperationInProgress}
-                        treeType={isPublicState ? 'public' : 'department'}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={12}> 
-                  </Col>
-                </Row> */}
 
                 <Form.Item label="Description">
                   <WysiwygEditor
@@ -744,6 +690,36 @@ export default function EditDocument() {
                     )}
                   </Form.List>
                 </Form.Item>
+
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      name="folderId"
+                      label={
+                        <span>
+                          <FolderOutlined style={{ marginRight: 4 }} />
+                          Folder Location
+                        </span>
+                      }
+                    >
+                      <FolderSelectorInput
+                        selectedFolderId={selectedFolderId}
+                        onFolderSelect={(folderId) => {
+                          setSelectedFolderId(folderId);
+                          form.setFieldValue('folderId', folderId);
+                        }}
+                        placeholder="Select folder (optional)"
+                        allowClear={true}
+                        filterPermission="write"
+                        disabled={isAnyOperationInProgress}
+                        treeType={isPublicState ? 'public' : 'department'}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    {/* Empty column for spacing */}
+                  </Col>
+                </Row>
 
                 {/* Action Buttons */}
                 <Form.Item style={{ marginTop: 32 }}>
