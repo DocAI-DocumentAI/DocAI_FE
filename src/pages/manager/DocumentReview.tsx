@@ -362,7 +362,7 @@ export default function DocumentReview() {
                                         <Text type="secondary">{document.content}</Text>
                                         {/* Thêm thông tin tổng quan */}
                                         <div style={{ marginTop: 12 }}>
-                                            <Text strong>Tóm tắt:</Text>
+                                            <Text strong>Summary:</Text>
                                             <div
                                                 style={{ background: "#f6f8fa", padding: 12, borderRadius: 6, marginTop: 4 }}
                                                 dangerouslySetInnerHTML={{ __html: document.summary }}
@@ -399,7 +399,7 @@ export default function DocumentReview() {
                                 <Row gutter={16} style={{ marginBottom: 16 }}>
                                     <Col span={12}>
                                         <div>
-                                            <Text strong>Chủ sở hữu</Text>
+                                            <Text strong>Owner</Text>
                                             <div style={{ display: "flex", alignItems: "center", marginTop: 4 }}>
                                                 <UserOutlined style={{ marginRight: 4, color: "#666" }} />
                                                 <Text>{document.ownerName || document.ownerId}</Text>
@@ -408,7 +408,7 @@ export default function DocumentReview() {
                                     </Col>
                                     <Col span={12}>
                                         <div>
-                                            <Text strong>Phòng ban</Text>
+                                            <Text strong>Department</Text>
                                             <div style={{ marginTop: 4 }}>
                                                 <Tag color="blue">{document.departmentName || document.departmentId}</Tag>
                                             </div>
@@ -419,7 +419,7 @@ export default function DocumentReview() {
                                 <Row gutter={16} style={{ marginBottom: 16 }}>
                                     <Col span={12}>
                                         <div>
-                                            <Text strong>Người nộp</Text>
+                                            <Text strong>Submitted By</Text>
                                             <div style={{ display: "flex", alignItems: "center", marginTop: 4 }}>
                                                 <UserOutlined style={{ marginRight: 4, color: "#666" }} />
                                                 <Text>{document.submittedByName || document.submittedBy}</Text>
@@ -428,7 +428,7 @@ export default function DocumentReview() {
                                     </Col>
                                     <Col span={12}>
                                         <div>
-                                            <Text strong>Ngày tạo</Text>
+                                            <Text strong>Created At</Text>
                                             <div style={{ display: "flex", alignItems: "center", marginTop: 4 }}>
                                                 <CalendarOutlined style={{ marginRight: 4, color: "#666" }} />
                                                 <Text>{formatDate(document.createdTime)}</Text>
@@ -440,7 +440,7 @@ export default function DocumentReview() {
                                 <Row gutter={16} style={{ marginBottom: 16 }}>
                                     <Col span={12}>
                                         <div>
-                                            <Text strong>Ngày nộp</Text>
+                                            <Text strong>Last Submitted</Text>
                                             <div style={{ display: "flex", alignItems: "center", marginTop: 4 }}>
                                                 <CalendarOutlined style={{ marginRight: 4, color: "#666" }} />
                                                 <Text>{formatDate(document.lastSubmitted)}</Text>
@@ -449,7 +449,7 @@ export default function DocumentReview() {
                                     </Col>
                                     <Col span={12}>
                                         <div>
-                                            <Text strong>Phiên bản</Text>
+                                            <Text strong>Version</Text>
                                             <div style={{ marginTop: 4 }}>
                                                 <Tag color="geekblue">{document.versionName}</Tag>
                                             </div>
@@ -463,7 +463,7 @@ export default function DocumentReview() {
                                         {document.folderName && (
                                             <Col span={12}>
                                                 <div>
-                                                    <Text strong>Thư mục hiện tại</Text>
+                                                    <Text strong>Current Folder</Text>
                                                     <div style={{ display: "flex", alignItems: "center", marginTop: 4 }}>
                                                         <FolderOutlined style={{ marginRight: 4, color: "#666" }} />
                                                         <Text>{document.folderName}</Text>
@@ -474,13 +474,13 @@ export default function DocumentReview() {
                                         {document.targetFolderName && (
                                             <Col span={12}>
                                                 <div>
-                                                    <Text strong>Thư mục đích</Text>
+                                                    <Text strong>Target Folder</Text>
                                                     <div style={{ display: "flex", alignItems: "center", marginTop: 4 }}>
                                                         <FolderOutlined style={{ marginRight: 4, color: "#1890ff" }} />
                                                         <Text style={{ color: "#1890ff" }}>{document.targetFolderName}</Text>
                                                     </div>
                                                     <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                        Tài liệu sẽ được chuyển đến đây khi được duyệt
+                                                        Document will be moved here upon approval
                                                     </Text>
                                                 </div>
                                             </Col>

@@ -382,7 +382,7 @@ export default function NewVersionDocument() {
                       Choose File
                     </Button>
                     <p style={{ color: "#999", fontSize: 12, marginTop: 8 }}>
-                      Supported formats: PDF, DOCX (max 3MB)
+                      Supported formats: PDF, DOCX (max 1MB)
                     </p>
                   </Dragger>
 
