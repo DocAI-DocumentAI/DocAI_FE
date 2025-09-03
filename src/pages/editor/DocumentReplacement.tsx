@@ -50,8 +50,8 @@ const DocumentReplacement: React.FC = () => {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
   // Replacement suggestion filters
-  const [minSimilarityThreshold, setMinSimilarityThreshold] = useState<number>(0.45);
-  const [sameDepartmentOnly, setSameDepartmentOnly] = useState<boolean>(false);
+  const [minSimilarityThreshold, setMinSimilarityThreshold] = useState<number>(0.3);
+  const [sameDepartmentOnly, setSameDepartmentOnly] = useState<boolean>(true);
 
   // Folder selection
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(undefined);

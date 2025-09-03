@@ -694,7 +694,7 @@ export const getReplacementSuggestions = async (
     tags: request.tags || [],
     isPublic: request.isPublic || false,
     maxSuggestions: request.maxSuggestions || 10,
-    minSimilarityThreshold: request.minSimilarityThreshold || 0.45,
+    minSimilarityThreshold: request.minSimilarityThreshold || 0.3,
     sameDepartmentOnly: request.sameDepartmentOnly || false,
   };
 
@@ -720,7 +720,7 @@ export const getReplacementSuggestionsForDocument = async (
     tags: request.tags || [],
     isPublic: request.isPublic || false,
     maxSuggestions: request.maxSuggestions || 10,
-    minSimilarityThreshold: request.minSimilarityThreshold || 0.45,
+    minSimilarityThreshold: request.minSimilarityThreshold || 0.3,
     sameDepartmentOnly: request.sameDepartmentOnly || false,
   };
 
