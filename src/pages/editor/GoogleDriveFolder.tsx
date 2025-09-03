@@ -166,7 +166,16 @@ const GoogleDriveFolder: React.FC = () => {
       return response.data.rootNodes; // Return the fresh data
     } catch (error: any) {
       console.error('Failed to load folder tree:', error);
-      toast.error('Failed to load folders');
+      const status = error?.response?.status;
+      const message = error?.response?.data?.message || error?.message;
+      
+      if (status === 403) {
+        toast.error('Access denied: You do not have permission to view these folders');
+      } else if (status === 401) {
+        toast.error('Authentication required: Please log in again');
+      } else {
+        toast.error(message || 'Failed to load folders');
+      }
       return [];
     } finally {
       setLoading(false);
@@ -181,7 +190,16 @@ const GoogleDriveFolder: React.FC = () => {
       return response.data.rootNodes; // Return the fresh data
     } catch (error: any) {
       console.error('Failed to load public folder tree:', error);
-      toast.error('Failed to load public folders');
+      const status = error?.response?.status;
+      const message = error?.response?.data?.message || error?.message;
+      
+      if (status === 403) {
+        toast.error('Access denied: You do not have permission to view public folders');
+      } else if (status === 401) {
+        toast.error('Authentication required: Please log in again');
+      } else {
+        toast.error(message || 'Failed to load public folders');
+      }
       return [];
     } finally {
       setLoading(false);
@@ -239,7 +257,18 @@ const GoogleDriveFolder: React.FC = () => {
       if (folder) setSelectedFolder(folder);
     } catch (error: any) {
       console.error('Failed to load folder contents:', error);
-      toast.error('Failed to load folder contents');
+      const status = error?.response?.status;
+      const message = error?.response?.data?.message || error?.message;
+      
+      if (status === 403) {
+        toast.error('Access denied: You do not have permission to view this folder');
+      } else if (status === 404) {
+        toast.error('Folder not found or has been deleted');
+      } else if (status === 401) {
+        toast.error('Authentication required: Please log in again');
+      } else {
+        toast.error(message || 'Failed to load folder contents');
+      }
     } finally {
       setLoading(false);
     }
@@ -306,7 +335,16 @@ const GoogleDriveFolder: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Failed to load root contents:', error);
-      toast.error('Failed to load root contents');
+      const status = error?.response?.status;
+      const message = error?.response?.data?.message || error?.message;
+      
+      if (status === 403) {
+        toast.error('Access denied: You do not have permission to view root folder contents');
+      } else if (status === 401) {
+        toast.error('Authentication required: Please log in again');
+      } else {
+        toast.error(message || 'Failed to load root contents');
+      }
     } finally {
       setLoading(false);
     }
@@ -348,7 +386,18 @@ const GoogleDriveFolder: React.FC = () => {
       setDocumentDetail(response.data);
     } catch (error: any) {
       console.error('Failed to load document details:', error);
-      toast.error('Failed to load document details');
+      const status = error?.response?.status;
+      const message = error?.response?.data?.message || error?.message;
+      
+      if (status === 403) {
+        toast.error('Access denied: You do not have permission to view this document');
+      } else if (status === 404) {
+        toast.error('Document not found or has been deleted');
+      } else if (status === 401) {
+        toast.error('Authentication required: Please log in again');
+      } else {
+        toast.error(message || 'Failed to load document details');
+      }
     } finally {
       setDocumentDetailLoading(false);
     }
@@ -468,7 +517,20 @@ const GoogleDriveFolder: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Failed to move item:', error);
-      toast.error(error?.response?.data?.message || `Failed to move ${draggedItem.type}`);
+      const status = error?.response?.status;
+      const message = error?.response?.data?.message || error?.message;
+      
+      if (status === 403) {
+        toast.error(`Access denied: You do not have permission to move this ${draggedItem.type}`);
+      } else if (status === 404) {
+        toast.error(`${draggedItem.type} not found or destination does not exist`);
+      } else if (status === 409) {
+        toast.error(`Cannot move ${draggedItem.type}: Name conflict or circular reference`);
+      } else if (status === 400) {
+        toast.error(`Invalid move operation`);
+      } else {
+        toast.error(message || `Failed to move ${draggedItem.type}`);
+      }
     } finally {
       setLoading(false);
       setDraggedItem(null);
@@ -1202,7 +1264,19 @@ const GoogleDriveFolder: React.FC = () => {
                   await loadRootContents(freshFolders);
                 }
               } catch (e: any) {
-                toast.error(e?.response?.data?.message || 'Failed to create folder');
+                console.error('Create folder error:', e);
+                const status = e?.response?.status;
+                const message = e?.response?.data?.message || e?.message;
+                
+                if (status === 403) {
+                  toast.error('Access denied: You do not have permission to create folders in this location');
+                } else if (status === 409) {
+                  toast.error('A folder with this name already exists in this location');
+                } else if (status === 400) {
+                  toast.error('Invalid folder name or parameters');
+                } else {
+                  toast.error(message || 'Failed to create folder');
+                }
               } finally {
                 setCreateLoading(false);
               }
@@ -1236,7 +1310,21 @@ const GoogleDriveFolder: React.FC = () => {
                 await loadRootContents(freshFolders);
               }
             } catch (e: any) {
-              toast.error(e?.response?.data?.message || 'Failed to move folder');
+              console.error('Move folder error:', e);
+              const status = e?.response?.status;
+              const message = e?.response?.data?.message || e?.message;
+              
+              if (status === 403) {
+                toast.error('Access denied: You do not have permission to move this folder');
+              } else if (status === 404) {
+                toast.error('Folder not found or destination folder does not exist');
+              } else if (status === 409) {
+                toast.error('Cannot move folder: It would create a circular reference or conflict');
+              } else if (status === 400) {
+                toast.error('Invalid move operation');
+              } else {
+                toast.error(message || 'Failed to move folder');
+              }
             } finally {
               setMoveLoading(false);
             }
@@ -1273,7 +1361,21 @@ const GoogleDriveFolder: React.FC = () => {
                 await loadRootContents();
               }
             } catch (e: any) {
-              toast.error(e?.response?.data?.message || 'Failed to move document');
+              console.error('Move document error:', e);
+              const status = e?.response?.status;
+              const message = e?.response?.data?.message || e?.message;
+              
+              if (status === 403) {
+                toast.error('Access denied: You do not have permission to move this document');
+              } else if (status === 404) {
+                toast.error('Document not found or destination folder does not exist');
+              } else if (status === 409) {
+                toast.error('Cannot move document: A document with this name already exists in the destination');
+              } else if (status === 400) {
+                toast.error('Invalid move operation');
+              } else {
+                toast.error(message || 'Failed to move document');
+              }
             } finally {
               setMoveLoading(false);
             }
@@ -1319,7 +1421,21 @@ const GoogleDriveFolder: React.FC = () => {
                   setSelectedFolder(folder);
                 }
               } catch (e: any) {
-                toast.error(e?.response?.data?.message || 'Failed to rename folder');
+                console.error('Rename folder error:', e);
+                const status = e?.response?.status;
+                const message = e?.response?.data?.message || e?.message;
+                
+                if (status === 403) {
+                  toast.error('Access denied: You do not have permission to rename this folder');
+                } else if (status === 404) {
+                  toast.error('Folder not found or has already been deleted');
+                } else if (status === 409) {
+                  toast.error('A folder with this name already exists in this location');
+                } else if (status === 400) {
+                  toast.error('Invalid folder name');
+                } else {
+                  toast.error(message || 'Failed to rename folder');
+                }
               } finally {
                 setRenameLoading(false);
               }
@@ -1353,7 +1469,19 @@ const GoogleDriveFolder: React.FC = () => {
                 await loadRootContents(freshFolders);
               }
             } catch (e: any) {
-              toast.error(e?.response?.data?.message || 'Failed to delete folder');
+              console.error('Delete folder error:', e);
+              const status = e?.response?.status;
+              const message = e?.response?.data?.message || e?.message;
+              
+              if (status === 403) {
+                toast.error('Access denied: You do not have permission to delete this folder');
+              } else if (status === 404) {
+                toast.error('Folder not found or has already been deleted');
+              } else if (status === 409) {
+                toast.error('Cannot delete folder: It contains items that cannot be deleted');
+              } else {
+                toast.error(message || 'Failed to delete folder');
+              }
             } finally {
               setDeleteLoading(false);
             }
