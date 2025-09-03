@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Typography, Card, Button, Table, Tag, Row, Col, Input, Select, Space, DatePicker } from "antd";
+import { Typography, Card, Button, Table, Tag, Row, Col, Input, Select, Space, DatePicker, Modal, Tooltip } from "antd";
 import {
   SearchOutlined,
   FilterOutlined,
   ReloadOutlined,
+  CommentOutlined,
 } from "@ant-design/icons";
 import { getApprovalLogs } from "../../lib/api/document";
 import toast from 'react-hot-toast';
@@ -67,6 +68,7 @@ const ApprovalLog = () => {
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [filters, setFilters] = useState<ApprovalLogFilter>({});
+    const [selectedComment, setSelectedComment] = useState<{text: string, isVisible: boolean}>({text: '', isVisible: false});
 
     useEffect(() => {
         fetchData();
@@ -123,6 +125,14 @@ const ApprovalLog = () => {
         }
     };
 
+    const showCommentModal = (comment: string) => {
+        setSelectedComment({text: comment, isVisible: true});
+    };
+
+    const hideCommentModal = () => {
+        setSelectedComment({text: '', isVisible: false});
+    };
+
     const columns = [
         {
             title: 'Document Title',
@@ -136,6 +146,29 @@ const ApprovalLog = () => {
             render: (action: number) => {
                 const { text, color } = getActionInfo(action);
                 return <Tag color={color}>{text}</Tag>;
+            },
+        },
+        {
+            title: 'Comments',
+            dataIndex: 'comments',
+            key: 'comments',
+            width: 120,
+            render: (comments: string | null) => {
+                if (!comments || comments.trim() === '') {
+                    return <Text type="secondary">No comments</Text>;
+                }
+                return (
+                    <Tooltip title="Click to view comment">
+                        <Button 
+                            type="link" 
+                            icon={<CommentOutlined />}
+                            size="small"
+                            onClick={() => showCommentModal(comments)}
+                        >
+                            View Comment
+                        </Button>
+                    </Tooltip>
+                );
             },
         },
         {
@@ -252,6 +285,28 @@ const ApprovalLog = () => {
                     showTotal: (t, range) => `${range[0]}-${range[1]} of ${t} logs`,
                 }}
             />
+
+            {/* Comment Modal */}
+            <Modal
+                title={
+                    <Space>
+                        <CommentOutlined />
+                        <span>Approval Comment</span>
+                    </Space>
+                }
+                open={selectedComment.isVisible}
+                onCancel={hideCommentModal}
+                footer={[
+                    <Button key="close" onClick={hideCommentModal}>
+                        Close
+                    </Button>
+                ]}
+                width={600}
+            >
+                <div style={{ padding: '16px 0' }}>
+                    <Text>{selectedComment.text}</Text>
+                </div>
+            </Modal>
         </Card>
     );
 }
