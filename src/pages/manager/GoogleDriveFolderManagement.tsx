@@ -14,7 +14,6 @@ import {
   Tabs,
   Table,
   Tag,
-  Popconfirm,
   Modal,
   Form
 } from 'antd';
@@ -49,9 +48,7 @@ import {
   createFolder,
   updateFolder,
   deleteFolder,
-  moveFolder,
-  revokeUserPermission,
-  revokeDepartmentPermission
+  moveFolder
 } from '../../lib/api/folder';
 import { api } from '../../lib/api/api';
 import toast from 'react-hot-toast';
@@ -429,23 +426,6 @@ const GoogleDriveFolderManagement: React.FC = () => {
       toast.error('Failed to load document details');
     } finally {
       setDocumentDetailLoading(false);
-    }
-  };
-
-  const handleRevokePermission = async (permission: FolderPermission) => {
-    try {
-      const folderId = permission.folderId || selectedFolder?.id || currentFolderId;
-      if (!folderId) return;
-      if (permission.userId) {
-        await revokeUserPermission(folderId, permission.userId);
-      } else if (permission.departmentId) {
-        await revokeDepartmentPermission(folderId, permission.departmentId);
-      }
-      toast.success('Permission revoked successfully');
-      await loadPermissions(folderId);
-    } catch (error: any) {
-      console.error('Failed to revoke permission:', error);
-      toast.error('Failed to revoke permission');
     }
   };
 
@@ -1291,10 +1271,12 @@ const GoogleDriveFolderManagement: React.FC = () => {
                                     <div>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                         {record.userId ? (
-                                          <>
-                                            <UserOutlined style={{ color: '#1890ff' }} />
-                                            <span>{record.userFullName || record.userEmail || 'Unknown User'}</span>
-                                          </>
+                                          <div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                              <UserOutlined style={{ color: '#1890ff' }} />
+                                              <span>{record.userFullName || record.userEmail || 'Unknown User'}</span>
+                                            </div>
+                                          </div>
                                         ) : (
                                           <>
                                             <TeamOutlined style={{ color: '#52c41a' }} />
@@ -1321,28 +1303,6 @@ const GoogleDriveFolderManagement: React.FC = () => {
                                       </Tag>
                                     );
                                   }
-                                },
-                                {
-                                  title: 'Actions',
-                                  key: 'actions',
-                                  width: 60,
-                                  render: (record: FolderPermission) => (
-                                    !record.isInherited && (
-                                      <Popconfirm
-                                        title="Remove access?"
-                                        onConfirm={() => handleRevokePermission(record)}
-                                        okText="Yes"
-                                        cancelText="No"
-                                      >
-                                        <Button
-                                          type="text"
-                                          size="small"
-                                          icon={<DeleteOutlined />}
-                                          danger
-                                        />
-                                      </Popconfirm>
-                                    )
-                                  )
                                 }
                               ]}
                             />
@@ -1587,12 +1547,9 @@ const GoogleDriveFolderManagement: React.FC = () => {
                 setGrantLoading(true);
                 // Call API directly with numeric permission values
                 const requestData = {
-                  permissionType: values.permission, // Pass numeric value directly (1=View, 2=Edit, 3=Delete, 4=Manage)
+                  permissionType: values.permission, // Pass numeric value directly (1=View, 2=Edit, 4=Manage)
                   applyToSubfolders: true, // Apply permission to all subfolders
-                  ...(values.type === 'user'
-                    ? { userId: values.userId }
-                    : { departmentId: values.departmentId }
-                  )
+                  userId: values.userId // Always send userId since we only support user permissions now
                 };
 
                 // Call the API directly with numeric permission type
@@ -1614,100 +1571,75 @@ const GoogleDriveFolderManagement: React.FC = () => {
             }}
           >
             <Form.Item
-              name="type"
-              label="Permission Type"
-              rules={[{ required: true, message: 'Please select permission type' }]}
+              name="userId"
+              label="Select User"
+              rules={[{ required: true, message: 'Please select a user' }]}
             >
-              <Select placeholder="Select type">
-                <Option value="user">User Permission</Option>
-                <Option value="department">Department Permission</Option>
+              <Select
+                placeholder="Search and select user"
+                showSearch
+                loading={usersLoading}
+                onFocus={() => loadUsers()}
+                onSearch={(value) => loadUsers(value)}
+                filterOption={false}
+                notFoundContent={usersLoading ? <Spin size="small" /> : 'No users found'}
+                style={{ width: '100%' }}
+              >
+                {users.map(user => (
+                  <Option key={user.id} value={user.id} label={`${user.fullName} (${user.email})`}>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      maxWidth: '100%',
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{
+                        flex: 1,
+                        minWidth: 0,
+                        marginRight: 8
+                      }}>
+                        <div style={{
+                          fontWeight: 500,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {user.fullName}
+                        </div>
+                        <div style={{
+                          fontSize: '12px',
+                          color: '#666',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {user.email}
+                        </div>
+                        {user.role && (
+                          <div style={{
+                            fontSize: '11px',
+                            color: '#999',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            Role: {user.role.roleName}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{
+                        fontSize: '11px',
+                        color: '#999',
+                        textAlign: 'right',
+                        flexShrink: 0,
+                      }}>
+                        {user.department?.departmentName}
+                      </div>
+                    </div>
+                  </Option>
+                ))}
               </Select>
-            </Form.Item>
-
-            <Form.Item noStyle shouldUpdate={(prev, cur) => prev.type !== cur.type}>
-              {({ getFieldValue }) => {
-                const type = getFieldValue('type');
-                if (type === 'user') {
-                  return (
-                    <Form.Item
-                      name="userId"
-                      label="Select User"
-                      rules={[{ required: true, message: 'Please select a user' }]}
-                    >
-                      <Select
-                        placeholder="Search and select user"
-                        showSearch
-                        loading={usersLoading}
-                        onFocus={() => loadUsers()}
-                        onSearch={(value) => loadUsers(value)}
-                        filterOption={false}
-                        notFoundContent={usersLoading ? <Spin size="small" /> : 'No users found'}
-                        style={{ width: '100%' }}
-                      >
-                        {users.map(user => (
-                          <Option key={user.id} value={user.id} label={`${user.fullName} (${user.email})`}>
-                            <div style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center', // Changed to 'center' for better vertical alignment
-                              maxWidth: '100%',
-                              overflow: 'hidden'
-                            }}>
-                              {/* This is the div that needs to be changed */}
-                              <div style={{
-                                flex: 1,
-                                minWidth: 0,
-                                marginRight: 8,
-                                display: 'flex',         
-                                alignItems: 'baseline',    
-                                gap: 8                  
-                              }}>
-                                <div style={{
-                                  fontWeight: 500,
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap'
-                                }}>
-                                  {user.fullName}
-                                </div>
-                                <div style={{
-                                  fontSize: '12px',
-                                  color: '#666',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap'
-                                }}>
-                                  {user.email}
-                                </div>
-                              </div>
-                              <div style={{
-                                fontSize: '11px',
-                                color: '#999',
-                                textAlign: 'right',
-                                flexShrink: 0,
-                              }}>
-                                {user.department?.departmentName}
-                              </div>
-                            </div>
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  );
-                }
-                if (type === 'department') {
-                  return (
-                    <Form.Item
-                      name="departmentId"
-                      label="Department ID"
-                      rules={[{ required: true, message: 'Please enter department id' }]}
-                    >
-                      <Input placeholder="dept-001" />
-                    </Form.Item>
-                  );
-                }
-                return null;
-              }}
             </Form.Item>
 
             <Form.Item
@@ -1742,21 +1674,6 @@ const GoogleDriveFolderManagement: React.FC = () => {
                       whiteSpace: 'nowrap'
                     }}>
                       Edit access - can view, move documents, create subfolders
-                    </div>
-                  </div>
-                </Option>
-
-                <Option value={3}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Tag color="red">Delete</Tag>
-                    <div style={{
-                      fontSize: '12px',
-                      color: '#666',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      Delete access - can view, edit, and delete documents
                     </div>
                   </div>
                 </Option>
